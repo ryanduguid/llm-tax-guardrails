@@ -51,7 +51,6 @@ def test_build_stamps_readme_and_maintenance_before_checksums(tmp_path):
     (root / "README.md").write_text(
         "> Version: `0.0.1`\n\nSources last checked: 2026-01-01\n\n"
         "Install uv `0.12.0` before building.\n\n"
-        "| TPB Code GS01 to GS01 map | tools |\n"
         "| catalogue | Complete live TPB Guidance Statement catalogue, GS01 to GS01 |\n",
         encoding="utf-8", newline="\n")
     (root / "MAINTENANCE.md").write_text(

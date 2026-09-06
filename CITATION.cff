@@ -5,8 +5,8 @@ type: dataset
 authors:
   - family-names: "Duguid"
     given-names: "Ryan"
-version: 0.3.2
-date-released: "2026-08-22"
-repository-code: "https://github.com/ryanduguid/DrDebits"
+version: 0.3.3
+date-released: "2026-09-06"
+repository-code: "https://github.com/ryanduguid/llm-tax-guardrails"
 license: CC-BY-4.0
 abstract: "Australian tax-practice and accounting-ethics guardrails for LLM-assisted work: source-linked operating controls derived from the TPB framework, APES 110, APES 220 and the sector's AML/CTF obligations."

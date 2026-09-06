@@ -1,4 +1,8 @@
 entries:
+  - version: "0.3.3"
+    date: "2026-09-06"
+    status: "Published"
+    change: "Repository renamed from DrDebits to llm-tax-guardrails on 6 September 2026; the canonical repository in the metadata, CITATION.cff and llms.txt now name it (the old URL redirects). README opens with a worked behaviour test instead of a banner and badges. Sources were not rechecked for this release: sources_checked_at and review_due are unchanged. No control change."
   - version: "0.3.2"
     date: "2026-08-22"
     status: "Published"

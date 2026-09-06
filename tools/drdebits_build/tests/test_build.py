@@ -14,12 +14,11 @@ def make_repo(tmp_path: Path) -> Path:
     (tmp_path / "src" / "data").mkdir()
     (tmp_path / "drdebits.md").write_text("placeholder", encoding="utf-8")
     (tmp_path / "LICENSE").write_text("MIT-ish\n", encoding="utf-8", newline="\n")
-    # The two README GS-range copies MAINTENANCE step 8 names. verify requires
-    # the documented copies to be present, so the fixture repo has to carry the
-    # same hand-written copies as the real one.
+    # The README GS-range copy MAINTENANCE step 8 names. verify requires the
+    # documented copy to be present, so the fixture repo has to carry the same
+    # hand-written copy as the real one.
     (tmp_path / "README.md").write_text(
         "> Version: `0.9.9-test`\n\nSources last checked: 2026-01-01\n\n"
-        "| TPB Code GS01 to GS01 map | tools |\n"
         "| catalogue | Complete live TPB Guidance Statement catalogue, GS01 to GS01 |\n",
         encoding="utf-8", newline="\n")
     (tmp_path / "MAINTENANCE.md").write_text(
