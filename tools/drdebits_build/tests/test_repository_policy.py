@@ -265,7 +265,6 @@ RELEASE_PROTOCOL_STEP_8_TOKENS = (
     "`src/guide/180-workpaper-record.md`",
     "`CITATION.cff`",
     "`GS` range",
-    "TPB Code badge",
     "`tools/drdebits_build/tests/test_repository_policy.py`",
     "`tools/drdebits_build/drdebits_build/verify.py`",
 )

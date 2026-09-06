@@ -1,6 +1,6 @@
 # Complete TPB Guidance Statement catalogue
 
-Part of [DrDebits](../drdebits.md) `0.3.2`. Retrieve this file when routing a task against TPB guidance; verify it against `SHA256SUMS` in the release.
+Part of [DrDebits](../drdebits.md) `0.3.3`. Retrieve this file when routing a task against TPB guidance; verify it against `SHA256SUMS` in the release.
 
 
 This catalogue covers all final, live TPB Guidance Statements discoverable on 16 August 2026: 55 statements, GS01 to GS55, all exposed by the filtered TPB library index. It excludes withdrawn or superseded products, historical versions, exposure drafts, consultation material, factsheets, FAQs and other non-Guidance-Statement webpages. Those sources may still matter to a particular task and must be retrieved separately with their authority and status labelled.

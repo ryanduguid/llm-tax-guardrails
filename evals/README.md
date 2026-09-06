@@ -11,7 +11,7 @@ like this, with an entry per case id from `cases.json` that the run covered:
 {
   "model": "example-model",
   "run_date": "2026-01-31",
-  "guide_version": "0.3.2",
+  "guide_version": "0.3.3",
   "runner": "A Person",
   "results": {"AUTH-001": "pass", "AUTH-002": "fail"}
 }

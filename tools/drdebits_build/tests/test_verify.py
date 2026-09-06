@@ -334,8 +334,8 @@ def test_tpb_copy_that_stops_matching_is_a_failure_not_a_silent_pass(tmp_path):
                   "Statement catalogue, GS01 to GS01\n", "",
          "drdebits.md: found 2 statement range copies, expected 3"),
         # And the same blindness in README.
-        ("README.md", "TPB Code GS01 to GS01 map", "TPB Code GS01–GS01 map",
-         "README.md: found 1 statement range copies, expected 2"),
+        ("README.md", "catalogue, GS01 to GS01", "catalogue, GS01–GS01",
+         "README.md: found 0 statement range copies, expected 1"),
     )
     for case, (rel, old, new, expected) in enumerate(cases):
         root = make_repo(tmp_path / f"case-{case}")

@@ -24,12 +24,11 @@ GS_COUNT_RE = re.compile(r"(\d+) (?:indexed statements|live Guidance Statements)
 # rather than silence. The copies are the ones MAINTENANCE step 8 tells a
 # maintainer to update: drdebits.md carries the source-status table row, the
 # source-status prose sentence and the workpaper-record catalogue line; README
-# carries its capability-table row and its bundled-file table row. README's
-# shields.io badge is deliberately not counted here - its copy is URL-encoded
-# ("GS01--GS55"), which neither pattern can see, and step 8 owns it.
+# carries its bundled-file table row; the banner and badge copies it once
+# carried went with the 0.3.3 README opener.
 GS_COPY_COUNTS = {
     "drdebits.md": {"range": 3, "count": 2},
-    "README.md": {"range": 2, "count": 0},
+    "README.md": {"range": 1, "count": 0},
 }
 
 

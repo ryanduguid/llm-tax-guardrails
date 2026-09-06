@@ -1,6 +1,6 @@
 # Primary APES 110 reference map
 
-Part of [DrDebits](../drdebits.md) `0.3.2`. Retrieve this file when locating APES 110 provisions; verify it against `SHA256SUMS` in the release.
+Part of [DrDebits](../drdebits.md) `0.3.3`. Retrieve this file when locating APES 110 provisions; verify it against `SHA256SUMS` in the release.
 
 
 The LLM should retrieve the operative paragraphs from the official compilation rather than rely on this short map.
