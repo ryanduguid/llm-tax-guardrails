@@ -219,7 +219,7 @@ def _assert_disclaimer_responsibility_framing(text: str) -> None:
     those instruments are what require them. Establishing which duties the
     TASA and APES 110 in fact impose is the practitioner's job, not this
     file's, which is the same line 060 draws about the guide's own MUST."""
-    section = _normalise_prose(_section(text, "## 3. Human Practitioner Responsibility"))
+    section = _normalise_prose(_section(text, "## 3. Human practitioner responsibility"))
     assert section.startswith(DISCLAIMER_RESPONSIBILITY_LEAD_IN)
     assert STATUTORY_ATTRIBUTION_LEAD_IN not in section
 

@@ -29,7 +29,6 @@ STAMP_RE = re.compile(
 )
 
 CHANGELOG_HEADERS = ["Version", "Date", "Status", "Change"]
-CHANGELOG_ALIGNS = ["---", "---", "---", "---"]
 
 
 def find_root(start):
@@ -77,14 +76,15 @@ def load_sources(root):
 
 def build_changelog_section(s):
     rows = [[r["version"], r["date"], r["status"], r["change"]] for r in s.changelog]
-    return "## Change log\n\n" + render.render_table(CHANGELOG_HEADERS, CHANGELOG_ALIGNS, rows)
+    return "## Change log\n\n" + render.render_table(
+        CHANGELOG_HEADERS, ["---", "---", "---", "---"], rows)
 
 
 def build_guide(s):
     parts = [render.render_frontmatter({k: v for k, v in s.meta.items() if k != "checksum_files"})]
     parts += [text for _, text in s.fragments]
     parts.append(build_changelog_section(s))
-    parts.append("\n" + render.render_end_marker(s.meta) + "\n")
+    parts.append("\n" + s.meta["guide_end_marker"] + "\n")
     return "".join(parts)
 
 
@@ -105,7 +105,7 @@ def _render_checked_date(sources_checked_at):
 
 
 def build_catalogue_md(s):
-    rows = [[render.render_link(r["title"], r["url"]), r["trigger"]] for r in s.catalogue]
+    rows = [[f"[{r['title']}]({r['url']})", r["trigger"]] for r in s.catalogue]
     header = CATALOGUE_HEADER_TEMPLATE.format(
         version=s.meta["guide_version"],
         checked=_render_checked_date(s.meta["sources_checked_at"]),
@@ -151,8 +151,7 @@ GENERATED = {
 }
 
 
-def build_sha256sums(root, s):
-    generated = {rel: fn(s) for rel, fn in GENERATED.items()}
+def build_sha256sums(root, s, generated):
     lines = []
     for rel in s.meta["checksum_files"].split("|"):
         if rel in generated:
@@ -167,11 +166,11 @@ def stamp_version(text, version):
     return STAMP_RE.sub(version, text)
 
 
-def write_outputs(root, outdir):
-    s = load_sources(root)
+def write_outputs(root, outdir, s=None):
+    s = load_sources(root) if s is None else s
     outdir = Path(outdir)
     written = {rel: fn(s) for rel, fn in GENERATED.items()}
-    written["SHA256SUMS"] = build_sha256sums(root, s)
+    written["SHA256SUMS"] = build_sha256sums(root, s, written)
     # The results table depends on the recorded runs as well as src/.
     written[evals.RESULTS_FILE] = evals.build_results_md(root, s)
     for rel, content in written.items():

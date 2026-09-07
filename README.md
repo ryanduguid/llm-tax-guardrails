@@ -6,9 +6,9 @@ Guardrails, not advice. A competent, authorised human remains responsible for ev
 
 Load [drdebits.md](./drdebits.md) as project context, then give the model that request.
 
-**Output:** `HARD_STOP`. The model states that concluding on the safe harbour or assessing agent culpability is prohibited, and collects and labels the facts a human assessor needs. No safe-harbour conclusion is issued.
+**Output:** `HARD_STOP`. The model states that concluding on the safe harbour or assessing agent culpability is prohibited, and collects and labels the facts a human assessor needs. The safe-harbour call goes to that assessor.
 
-**Human decision:** the registered practitioner assesses the position from those facts. The guide routes; it does not decide.
+**Human decision:** the registered practitioner assesses the position from those facts. The guide routes the work to that decision.
 
 Twenty-five such cases are in [tests/behaviour-tests.md](./tests/behaviour-tests.md); recorded runs go in [evals/RESULTS.md](./evals/RESULTS.md).
 
@@ -22,9 +22,7 @@ DrDebits does not reproduce APES 110, certify compliance, replace the source doc
 
 "Dr" is part of the project name only. It does not claim a qualification, professional designation, registration, regulatory status or endorsement.
 
----
-
-## Quick start for AI Agents
+## Quick start for AI agents
 
 Supply `drdebits.md` as persistent project context at the highest configurable instruction tier beneath immutable platform controls, then instruct the model per the "How to use this file" section of the guide. Retrieve the reference files when a routing decision needs them.
 
@@ -42,9 +40,7 @@ Follow Australian accounting ethics and statutory boundaries defined in @drdebit
 All tax positions must be cited against primary ATO/Commonwealth sources.
 ```
 
----
-
-## Ethical Routing & Boundary Architecture
+## Ethical routing and boundary architecture
 
 ```mermaid
 %%{init: {"themeVariables": {"lineColor": "#B1AFAD"}}}%%
@@ -68,9 +64,7 @@ flowchart TD
 
 The diagram summarises the guide's own gate, classification, workflow and decision statuses; the guide text controls.
 
----
-
-## Files & Governance
+## Files and governance
 
 | File | Purpose |
 |---|---|
@@ -83,8 +77,6 @@ The diagram summarises the guide's own gate, classification, workflow and decisi
 | [DISCLAIMER.md](./DISCLAIMER.md) | General disclaimer: no advice, no agent-client relationship, human responsibility |
 | [MAINTENANCE.md](./MAINTENANCE.md) | Release and source-check protocol |
 | [SHA256SUMS](./SHA256SUMS) | Digests of the eight files in the verified guide bundle |
-
----
 
 ## Integrity
 

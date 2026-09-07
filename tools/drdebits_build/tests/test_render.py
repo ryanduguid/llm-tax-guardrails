@@ -1,5 +1,5 @@
 """Tests for markdown rendering primitives."""
-from drdebits_build.render import render_frontmatter, render_table, render_link, render_end_marker
+from drdebits_build.render import render_frontmatter, render_table
 
 
 def test_frontmatter_verbatim_values_in_order():
@@ -16,8 +16,3 @@ def test_table_single_space_padding_and_alignment_tokens():
         "| AUTH-001 | says x |\n"
         "| INJ-001 | says y |\n"
     )
-
-
-def test_link_and_marker():
-    assert render_link("T", "https://x.invalid/a") == "[T](https://x.invalid/a)"
-    assert render_end_marker({"guide_end_marker": "DRDEBITS-END-v0.2.0-draft"}) == "DRDEBITS-END-v0.2.0-draft"
