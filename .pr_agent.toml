@@ -1,0 +1,25 @@
+# Qodo code review settings for this repository. Repository settings take
+# precedence over the Qodo portal and take effect once merged to main.
+# Key reference: https://docs.qodo.ai/install-and-configure/configuration-overview/configuration-and-command-reference
+
+[github_app]
+# Review only. Pull request descriptions are written by hand, so the
+# generated summary duplicated them.
+pr_commands = ["/agentic_review"]
+# Re-review each push so the review tracks the head that gets merged.
+handle_push_trigger = true
+
+[review_agent]
+# Only "action required" findings open an inline thread; lower severities
+# stay in the summary comment where they can be read without blocking a
+# merge that requires every thread to be resolved.
+inline_comments_severity_threshold = 3
+# Bug and quality findings come from the Issues agent; rule violations come
+# from the Compliance agent, so each gets the guidance it acts on.
+issues_user_guidelines = "Australian English spellings are correct, not typos. Do not propose tax classifications, individual tax positions or Division 7A treatment."
+compliance_user_guidelines = "Check a claim against the repository's AGENTS.md, CLAUDE.md and CONTRIBUTING.md before raising a rule violation. Do not raise rule violations that propose tax classifications, individual tax positions or Division 7A treatment."
+
+[review_agent_ux]
+show_daily_tips = false
+use_images_and_animations = false
+show_comment_footer = false
