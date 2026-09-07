@@ -5,7 +5,7 @@ import pytest
 from drdebits_build.build import (
     BuildError, find_root, load_sources, build_guide, build_catalogue_md,
     build_behaviour_md, build_apes_md, build_sha256sums,
-    write_outputs, stamp_version,
+    write_outputs, stamp_version, GENERATED,
 )
 
 
@@ -149,7 +149,7 @@ def test_apes_md_header_version_and_both_tables(tmp_path):
 def test_sha256sums_covers_generated_and_static(tmp_path):
     root = make_repo(tmp_path)
     s = load_sources(root)
-    out = build_sha256sums(root, s)
+    out = build_sha256sums(root, s, {rel: fn(s) for rel, fn in GENERATED.items()})
     lines = out.rstrip("\n").split("\n")
     assert lines[0].endswith(" *LICENSE") and lines[2].endswith(" *drdebits.md")
     assert all(len(line.split(" *")[0]) == 64 for line in lines)

@@ -56,7 +56,7 @@ def run_verify(root, today=None):
 
     # A missing checksum_files member must surface as a finding, not a crash.
     try:
-        built["SHA256SUMS"] = build_sha256sums(root, s)
+        built["SHA256SUMS"] = build_sha256sums(root, s, built)
     except (ModelError, BuildError, OSError) as exc:
         failures.append(f"SHA256SUMS: cannot rebuild ({exc})")
         # SHA256SUMS drops out of the parity check below; all other entries still checked
@@ -74,15 +74,17 @@ def run_verify(root, today=None):
         elif committed.read_bytes() != content.encode("utf-8"):
             failures.append(f"{rel}: committed file differs from build output; edit src/ and run build")
 
+    # The committed guide is read once here and reused by the checks below; a
+    # missing file is already reported above, so those checks simply skip.
+    committed_guide = root / "drdebits.md"
+    committed_text = committed_guide.read_text(encoding="utf-8") if committed_guide.is_file() else None
+
     # The end marker is checked on the committed guide, not the rebuild, so a
-    # truncated commit is caught; skip if the file was already reported missing.
-    if not any("drdebits.md: missing committed file" in f for f in failures):
-        committed_guide = root / "drdebits.md"
-        if committed_guide.is_file():
-            committed_text = committed_guide.read_text(encoding="utf-8")
-            last = committed_text.rstrip("\n").rsplit("\n", 1)[-1]
-            if last != s.meta["guide_end_marker"]:
-                failures.append(f"end marker: last line {last!r} != {s.meta['guide_end_marker']!r}")
+    # truncated commit is caught.
+    if committed_text is not None:
+        last = committed_text.rstrip("\n").rsplit("\n", 1)[-1]
+        if last != s.meta["guide_end_marker"]:
+            failures.append(f"end marker: last line {last!r} != {s.meta['guide_end_marker']!r}")
 
     # Stamped files must exist and carry at least one version token each;
     # zero matches would let a stripped stamp verify vacuously.
@@ -106,13 +108,10 @@ def run_verify(root, today=None):
     # instead of shipping a self-contradictory release.
 
     # (a) the committed drdebits.md header must carry the exact version line
-    if not any("drdebits.md: missing committed file" in f for f in failures):
-        committed_guide = root / "drdebits.md"
-        if committed_guide.is_file():
-            committed_text = committed_guide.read_text(encoding="utf-8")
-            version_line = "> Version: `" + s.meta["guide_version"] + "`"
-            if version_line not in committed_text.splitlines():
-                failures.append("drdebits.md: header version line does not match guide_version")
+    if committed_text is not None:
+        version_line = "> Version: `" + s.meta["guide_version"] + "`"
+        if version_line not in committed_text.splitlines():
+            failures.append("drdebits.md: header version line does not match guide_version")
 
     # (b) release_tag must be "v" + guide_version
     if s.meta["release_tag"] != "v" + s.meta["guide_version"]:
@@ -142,12 +141,10 @@ def run_verify(root, today=None):
         # Substring, not whole-line: the real header line carries a timezone
         # suffix after the backticked date.
         guide_line = f"> Sources last checked: `{checked_date}`"
-        committed_guide = root / "drdebits.md"
-        if committed_guide.is_file():
-            if guide_line not in committed_guide.read_text(encoding="utf-8"):
-                failures.append(
-                    "drdebits.md: header source-check date line does not match "
-                    f"sources_checked_at ({checked_date})")
+        if committed_text is not None and guide_line not in committed_text:
+            failures.append(
+                "drdebits.md: header source-check date line does not match "
+                f"sources_checked_at ({checked_date})")
         readme = root / "README.md"
         if readme.is_file():
             if f"Sources last checked: {checked_date}" not in readme.read_text(encoding="utf-8"):

@@ -1,12 +1,12 @@
-# DrDebits - Tax Ethics & LLM Guidance System
+# DrDebits - tax ethics and LLM guardrails
 > High-density context for AI agent prompts, system instructions, and compliance governance.
 
-## Package Overview
+## Package overview
 - **Repository**: https://github.com/ryanduguid/llm-tax-guardrails
 - **Domain**: Versioned, primary-source-grounded ethical instructions and operational safety guardrails for LLM-assisted Australian accounting and taxation work.
 - **Regulatory Frameworks**: *APES 110 Code of Ethics for Professional Accountants* (including Independence, Integrity, Objectivity, Professional Competence and Due Care, Confidentiality, and Professional Behaviour), *Tax Agent Services Act 2009 (TASA)* TPB Code of Professional Conduct.
 
-## Policy Specifications
+## Policy specifications
 1. **Source Grounding**: Statutory assertions are grounded per the guide's Source status and Authority and conflicts sections; source types carry different authority and the guide sets out which binds whom.
 2. **Professional Demarcation**: AI agents assist with computational validation and initial synthesis; a competent, appropriately authorised human remains responsible for every professional service, judgement, and consequential action.
 
