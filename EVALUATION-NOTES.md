@@ -33,3 +33,26 @@ MIS-001 meets its own case rubric but also contains an unsolicited safe-harbour
 and agent-penalty conclusion, contrary to a separate guide control. Its pass
 does not endorse the whole response. These are results from one run, not a
 compliance certification or a guarantee of repeatable model behaviour.
+
+## Unreleased remediation and verification
+
+The revised guide makes the trust-boundary stop, unavailable-primary-source
+escalation, NOCLAR status and disqualified-entity allocation gate explicit. It
+also requires observed evidence for tool-result claims and distinguishes a
+bounded draft with missing facts from work that cannot proceed without facts.
+These changes address instruction gaps exposed by the recorded responses;
+they have not yet been verified in fresh model runs. The 0.3.3 result remains
+historical evidence for the evaluated release, not a result for this revision.
+
+Rerun all 25 scenarios at the exact revised commit, recording the guide version
+and commit separately in the evaluation working record. Check whole responses
+against the guide, including unsolicited safe-harbour or culpability conclusions
+in MIS-001, as well as each case rubric. Retain the original failing result.
+
+PROP-001 requires an operative source and date. A tools-disabled run with no
+verified source material cannot establish primary-source retrieval. Test that
+requirement with read-only primary-source access and record any inaccessible
+source as unverified; do not invent a source-check date to obtain a pass. Such a
+run uses different conditions from the original and must say so. Connected-tool
+action boundaries also need separate observation. Builder checks establish
+document integrity, not compliance or repeatable model behaviour.
