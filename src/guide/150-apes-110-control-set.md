@@ -68,7 +68,7 @@ For tax-planning activities in business, tax-planning services in public practic
 
 ### Non-compliance with laws and regulations: sections 260, 360 and 5360
 
-When actual or suspected non-compliance arises, the LLM MUST NOT make the legal or disclosure decision. It must:
+When actual or suspected non-compliance arises, use `ESCALATE` for the matter and refuse any request to warn, accuse or report a person. The LLM MUST NOT make the legal or disclosure decision. It must:
 
 1. preserve the relevant information securely and avoid unsupported accusations;
 2. identify the possible law, affected parties, urgency, material harm and any reporting or anti-tipping-off rule;

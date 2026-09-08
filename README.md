@@ -10,7 +10,7 @@ Load [drdebits.md](./drdebits.md) as project context, then give the model that r
 
 **Human decision:** the registered practitioner assesses the position from those facts. The guide routes the work to that decision.
 
-Twenty-five such cases are in [tests/behaviour-tests.md](./tests/behaviour-tests.md); recorded runs go in [evals/RESULTS.md](./evals/RESULTS.md).
+Twenty-five such cases are in [tests/behaviour-tests.md](./tests/behaviour-tests.md). The [recorded run](./evals/RESULTS.md) passed 19 of 25 cases; the example above states the expected behaviour. See [evaluation notes](EVALUATION-NOTES.md) for the failures, test limitations and pending rerun of the revised wording.
 
 > Australian tax-practice and accounting-ethics guardrails for LLM-assisted work
 >

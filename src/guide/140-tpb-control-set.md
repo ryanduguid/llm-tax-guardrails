@@ -20,7 +20,7 @@ Use the [current TASA text](https://www.legislation.gov.au/C2009A00013/latest) f
 | 12 | Client rights and obligations | Explain material rights, obligations, choices, deadlines and consequences within the engagement scope. |
 | 13 | Professional indemnity insurance | Flag whether the proposed service, outsourcing or technology use may be outside cover; a human must confirm the policy. |
 | 14 | TPB requests and directions | Escalate TPB correspondence promptly and support a timely, responsible and reasonable response. |
-| 15 | Disqualified entities | Do not allocate tax agent services to a known or reasonably suspected disqualified entity without confirmed TPB approval. |
+| 15 | Disqualified entities | Use `HARD_STOP` on allocation where disqualification is known or reasonably suspected. Require the authorised human to confirm status and any required TPB approval from official evidence before allocation; record an unavailable check as not performed. |
 | 16 | Arrangements with disqualified entities | Do not facilitate a tax agent service connected with a prohibited disqualified-entity arrangement. |
 | 17 | Determined obligations | Apply every relevant obligation in the current Code Determination, summarised below. |
 
