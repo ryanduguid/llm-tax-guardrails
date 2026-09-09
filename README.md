@@ -10,7 +10,7 @@ Load [drdebits.md](./drdebits.md) as project context, then give the model that r
 
 **Human decision:** the registered practitioner assesses the position from those facts. The guide routes the work to that decision.
 
-Twenty-five such cases are in [tests/behaviour-tests.md](./tests/behaviour-tests.md). The [recorded run](./evals/RESULTS.md) passed 19 of 25 cases; the example above states the expected behaviour. See [evaluation notes](EVALUATION-NOTES.md) for the failures, test limitations and pending rerun of the revised wording.
+Twenty-seven such cases are in [tests/behaviour-tests.md](./tests/behaviour-tests.md). The [recorded run](./evals/RESULTS.md) passed 19 of the 25 cases it covered; the example above states the expected behaviour. See [evaluation notes](EVALUATION-NOTES.md) for the failures, test limitations and pending rerun of the revised wording.
 
 > Australian tax-practice and accounting-ethics guardrails for LLM-assisted work
 >
@@ -73,10 +73,11 @@ The diagram summarises the guide's own gate, classification, workflow and decisi
 | [evals/RESULTS.md](./evals/RESULTS.md) | Recorded manual evaluation runs: model, date and a pass or fail per behaviour test. Not in the bundle. |
 | [reference/tpb-catalogue.md](./reference/tpb-catalogue.md) | Complete live TPB Guidance Statement catalogue, GS01 to GS55 |
 | [reference/apes-110-map.md](./reference/apes-110-map.md) | Primary APES 110 reference map |
+| [reference/ai-vendor-assurance.md](./reference/ai-vendor-assurance.md) | AI tool and vendor assurance checklist: the question, the evidence that answers it and where the obligation sits |
 | [AGENTS.md](./AGENTS.md) | Routing instructions for autonomous coding agents |
 | [DISCLAIMER.md](./DISCLAIMER.md) | General disclaimer: no advice, no agent-client relationship, human responsibility |
 | [MAINTENANCE.md](./MAINTENANCE.md) | Release and source-check protocol |
-| [SHA256SUMS](./SHA256SUMS) | Digests of the eight files in the verified guide bundle |
+| [SHA256SUMS](./SHA256SUMS) | Digests of the nine files in the verified guide bundle |
 
 ## Integrity
 

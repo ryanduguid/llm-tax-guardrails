@@ -64,4 +64,4 @@ fields:
   - key: guide_end_marker
     value: "DRDEBITS-END-v0.3.3"
   - key: checksum_files
-    value: "LICENSE|README.md|CITATION.cff|drdebits.md|MAINTENANCE.md|reference/tpb-catalogue.md|reference/apes-110-map.md|tests/behaviour-tests.md"
+    value: "LICENSE|README.md|CITATION.cff|drdebits.md|MAINTENANCE.md|reference/tpb-catalogue.md|reference/apes-110-map.md|reference/ai-vendor-assurance.md|tests/behaviour-tests.md"

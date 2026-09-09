@@ -31,7 +31,7 @@ The behaviour tests can be run against a model by hand and the outcome recorded 
 For each future GitHub release:
 
 1. Start from a clean worktree. Run the complete pytest suite, builder `verify`, a deterministic second build and the reviewed link-check result. Resolve every failure or classify every unreachable link before staging a release.
-2. Confirm the verified guide bundle contains `LICENSE`, `README.md`, `CITATION.cff`, `drdebits.md`, `MAINTENANCE.md`, `reference/tpb-catalogue.md`, `reference/apes-110-map.md`, `tests/behaviour-tests.md` and the generated `SHA256SUMS` manifest. The manifest covers the first eight files and travels with them; it does not hash itself.
+2. Confirm the verified guide bundle contains `LICENSE`, `README.md`, `CITATION.cff`, `drdebits.md`, `MAINTENANCE.md`, `reference/tpb-catalogue.md`, `reference/apes-110-map.md`, `reference/ai-vendor-assurance.md`, `tests/behaviour-tests.md` and the generated `SHA256SUMS` manifest. The manifest covers the first nine files and travels with them; it does not hash itself.
 3. Create a signed release commit and a signed annotated tag that identify the approved revision.
 4. Confirm immutable releases are enabled for the repository before creating the release. Create a GitHub draft release, stage every asset, and include the checksum and verification instructions.
 5. Download every staged asset into a clean location while the release is still a draft. Independently verify the signed commit and tag, bundle membership, every `SHA256SUMS` entry and any available asset attestations.

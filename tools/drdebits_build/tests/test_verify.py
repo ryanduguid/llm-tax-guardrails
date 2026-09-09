@@ -26,6 +26,19 @@ def test_clean_repo_verifies(tmp_path):
     assert verify(root) == []
 
 
+def test_malformed_source_key_is_reported_not_raised(tmp_path):
+    """run_verify returns messages; it does not raise. A complex YAML key
+    constructs to a list, so the duplicate-key check has to reject it as a
+    ConstructorError rather than letting `key in mapping` throw a TypeError
+    that escapes _read's conversion and this function's own handler."""
+    root = make_repo(tmp_path)
+    sync(root)
+    (root / "src" / "data" / "metadata.yaml").write_text(
+        "? [complex, key]\n: value\n", encoding="utf-8", newline="\n")
+    failures = verify(root)
+    assert any("unhashable key" in f for f in failures), failures
+
+
 def test_tampered_output_names_file_and_src(tmp_path):
     root = make_repo(tmp_path)
     sync(root)

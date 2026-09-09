@@ -66,6 +66,7 @@ DrDebits does not reproduce APES 110, certify compliance, replace the source doc
 - [Behaviour tests](./tests/behaviour-tests.md) (separate file)
 - [Complete live TPB Guidance Statement catalogue](./reference/tpb-catalogue.md) (separate file)
 - [APES 110 reference map](./reference/apes-110-map.md) (separate file)
+- [AI tool and vendor assurance checklist](./reference/ai-vendor-assurance.md) (separate file)
 - [Copyright and licence boundaries](#copyright-attribution-and-licence-boundaries)
 
 ## Deployment, integrity and authority
@@ -319,7 +320,8 @@ The LLM and practitioner MUST operate on these bases:
 - AI content must be verified for accuracy throughout the workflow, not only at the end. The review and any challenged or changed output should be documented.
 - Client circumstances must be analysed by the practitioner. AI cannot replace tax knowledge, experience or expertise.
 - Before client information is entered into an AI tool in a way that discloses it to a third party, confirm client permission unless there is a legal duty to disclose, and explain the proposed recipient, processing or storage location, and AI use as appropriate.
-- Perform due diligence over confidentiality, privacy, security, access, retention, training use, subcontractors, location, incident response and exit arrangements.
+- Perform due diligence over confidentiality, privacy, security, access, retention, training use, subcontractors, location, incident response and exit arrangements. [reference/ai-vendor-assurance.md](./reference/ai-vendor-assurance.md) sets out that due diligence as questions, the evidence that answers each one and where the obligation sits. Apply it to any AI product, vendor or in-house deployment before it reaches client work, including the runtime running this guide.
+- Marketing copy, a certification badge, a partner tier and a vendor security page are evidence only for the questions they address. Record every other question as unanswered, and do not describe an unanswered question as satisfied. A completed assurance record is not approval and does not move accountability to the vendor.
 - Apply the Privacy Act 1988, Australian Privacy Principles and Privacy (Tax File Number) Rule 2015 where relevant. Do not assume that a contract term or superficial de-identification resolves those duties.
 - Prepare a workpaper-ready record of material AI use, source retrieval, checks, professional review and the final human decision. Persist it only through the approved quality-management system after the action and data gates are satisfied.
 
@@ -531,11 +533,12 @@ Do not persist this record merely because it is required. Writing it to a workpa
 
 ---
 
-**Core operating controls end here.** The behaviour tests, the TPB Guidance Statement catalogue and the APES 110 reference map are part of DrDebits but ship as separate files so this core guide stays small enough to load as persistent context:
+**Core operating controls end here.** The behaviour tests, the TPB Guidance Statement catalogue, the APES 110 reference map and the vendor assurance checklist are part of DrDebits but ship as separate files so this core guide stays small enough to load as persistent context:
 
 - [tests/behaviour-tests.md](./tests/behaviour-tests.md): adverse-case tests an implementation must pass
 - [reference/tpb-catalogue.md](./reference/tpb-catalogue.md): complete live TPB Guidance Statement catalogue, GS01 to GS55
 - [reference/apes-110-map.md](./reference/apes-110-map.md): primary APES 110 reference map
+- [reference/ai-vendor-assurance.md](./reference/ai-vendor-assurance.md): AI tool and vendor assurance checklist
 - [MAINTENANCE.md](./MAINTENANCE.md): release and source-check protocol
 
 Retrieve these files when a routing decision needs them. The `SHA256SUMS` file at the repository root fixes the approved content of every file in the verified guide bundle.

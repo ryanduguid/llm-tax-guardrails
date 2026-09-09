@@ -4,9 +4,10 @@ from pathlib import Path
 import pytest
 from drdebits_build.build import (
     BuildError, find_root, load_sources, build_guide, build_catalogue_md,
-    build_behaviour_md, build_apes_md, build_sha256sums,
+    build_behaviour_md, build_apes_md, build_vendor_assurance_md, build_sha256sums,
     write_outputs, stamp_version, GENERATED,
 )
+from drdebits_build.model import ModelError
 
 
 def make_repo(tmp_path: Path) -> Path:
@@ -80,6 +81,26 @@ def make_repo(tmp_path: Path) -> Path:
           - label: "Scope"
             value: "R1.2"
     """), encoding="utf-8", newline="\n")
+    # No URL here: tests/test_linkcheck.py counts the URLs this fixture repo
+    # contributes to a probe run.
+    (tmp_path / "src" / "data" / "ai-vendor-assurance.yaml").write_text(textwrap.dedent("""\
+        sections:
+          - "First"
+          - "Second"
+        entries:
+          - id: "VA-01"
+            section: "First"
+            question: "q1"
+            evidence: "e1"
+            obligation: "o1"
+            if_absent: "a1"
+          - id: "VA-02"
+            section: "Second"
+            question: "q2"
+            evidence: "e2"
+            obligation: "o2"
+            if_absent: "a2"
+    """), encoding="utf-8", newline="\n")
     (tmp_path / "src" / "data" / "changelog.yaml").write_text(textwrap.dedent("""\
         entries:
           - version: "0.9.9-test"
@@ -144,6 +165,37 @@ def test_apes_md_header_version_and_both_tables(tmp_path):
     assert "Key paragraph-level retrieval points are:" in out
     assert "| Control | APES 110 retrieval points |" in out
     assert "| Scope | R1.2 |" in out
+
+
+def test_vendor_assurance_md_renders_one_table_per_declared_section(tmp_path):
+    s = load_sources(make_repo(tmp_path))
+    out = build_vendor_assurance_md(s)
+    assert out.count("0.9.9-test") == 1
+    assert out.startswith("# AI tool and vendor assurance checklist\n")
+    assert out.count("| ID | Question | Evidence that answers it | "
+                     "Where the obligation sits | If nobody answers |") == 2
+    assert "## First" in out and "## Second" in out
+    assert "| VA-01 | q1 | e1 | o1 | a1 |" in out
+    assert "| VA-02 | q2 | e2 | o2 | a2 |" in out
+    # Sections render in the declared order, and the file ends with one newline.
+    assert out.index("## First") < out.index("## Second")
+    assert out.endswith("| VA-02 | q2 | e2 | o2 | a2 |\n")
+
+
+def test_vendor_assurance_md_puts_each_row_under_its_own_section(tmp_path):
+    """The render picks a section's rows by matching the section field. A row
+    that names a different section must move with it, or the file would claim
+    an obligation belongs to a heading that does not describe it."""
+    root = make_repo(tmp_path)
+    source = root / "src" / "data" / "ai-vendor-assurance.yaml"
+    source.write_text(
+        source.read_text(encoding="utf-8").replace(
+            'section: "Second"', 'section: "First"', 1),
+        encoding="utf-8", newline="\n")
+    # Every declared section must still carry rows, so the load fails rather
+    # than rendering "Second" as a bare heading with no table.
+    with pytest.raises(ModelError):
+        load_sources(root)
 
 
 def test_sha256sums_covers_generated_and_static(tmp_path):

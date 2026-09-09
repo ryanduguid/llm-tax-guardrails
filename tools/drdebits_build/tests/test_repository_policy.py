@@ -242,6 +242,7 @@ CHECKSUM_FILES = (
     "MAINTENANCE.md",
     "reference/tpb-catalogue.md",
     "reference/apes-110-map.md",
+    "reference/ai-vendor-assurance.md",
     "tests/behaviour-tests.md",
 )
 PROHIBITED_CONCLUSION_TESTS = ("IND-001", "SAFE-001", "CERT-001")
