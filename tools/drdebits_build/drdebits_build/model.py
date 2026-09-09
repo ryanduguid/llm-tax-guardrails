@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Hashable
 from datetime import date
 
 import yaml
@@ -49,12 +50,32 @@ class _UniqueKeyLoader(yaml.SafeLoader):
 
 
 def _construct_unique_mapping(loader, node, deep=False):
+    """SafeConstructor's mapping construction, less the silent overwrite.
+
+    Everything but the duplicate check mirrors PyYAML, deliberately: merge
+    keys are flattened first, and an unhashable key (a sequence or mapping
+    written as a complex key) raises ConstructorError. Dropping that guard
+    would let a `TypeError` out of `key in mapping` instead, which `_read`
+    does not convert and `run_verify` cannot report, so a malformed source
+    would produce a traceback where the contract promises a finding.
+
+    A merge that overrides a key it imported now fails as a duplicate rather
+    than resolving silently. No source uses anchors, and a file that is the
+    authority for a generated control should say what it means once.
+    """
+    if isinstance(node, yaml.nodes.MappingNode):
+        loader.flatten_mapping(node)
     mapping = {}
     for key_node, value_node in node.value:
         key = loader.construct_object(key_node, deep=deep)
+        if not isinstance(key, Hashable):
+            raise yaml.constructor.ConstructorError(
+                "while constructing a mapping", node.start_mark,
+                "found unhashable key", key_node.start_mark)
         if key in mapping:
             raise yaml.constructor.ConstructorError(
-                None, None, f"duplicate key {key!r}", key_node.start_mark)
+                "while constructing a mapping", node.start_mark,
+                f"found duplicate key {key!r}", key_node.start_mark)
         mapping[key] = loader.construct_object(value_node, deep=deep)
     return mapping
 

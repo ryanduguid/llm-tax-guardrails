@@ -111,6 +111,19 @@ def test_missing_source_file_becomes_model_error(tmp_path):
         load_metadata(tmp_path / "does-not-exist.yaml")
 
 
+def test_unhashable_yaml_key_becomes_a_finding_not_a_traceback(tmp_path):
+    """A complex key constructs to a list, which `key in mapping` cannot test.
+    PyYAML's own constructor raises ConstructorError for it, and the duplicate
+    check has to keep doing so: _read converts only YAMLError and OSError, and
+    run_verify returns messages rather than raising, so a TypeError here would
+    surface as a traceback instead of a source-validation finding."""
+    with pytest.raises(ModelError, match="unhashable key"):
+        load_metadata(write(tmp_path, "u.yaml", """\
+            ? [complex, key]
+            : value
+        """))
+
+
 def test_duplicate_yaml_keys_are_refused_at_the_read_boundary(tmp_path):
     """PyYAML keeps the last of a repeated key and drops the earlier one in
     silence. These files are the authority for generated controls, so a
