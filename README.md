@@ -77,7 +77,7 @@ The diagram summarises the guide's own gate, classification, workflow and decisi
 | [AGENTS.md](./AGENTS.md) | Routing instructions for autonomous coding agents |
 | [DISCLAIMER.md](./DISCLAIMER.md) | General disclaimer: no advice, no agent-client relationship, human responsibility |
 | [MAINTENANCE.md](./MAINTENANCE.md) | Release and source-check protocol |
-| [SHA256SUMS](./SHA256SUMS) | Digests of the eight files in the verified guide bundle |
+| [SHA256SUMS](./SHA256SUMS) | Digests of the nine files in the verified guide bundle |
 
 ## Integrity
 

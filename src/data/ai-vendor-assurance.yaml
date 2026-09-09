@@ -144,7 +144,7 @@ entries:
     section: "Records, evidence and disclosure"
     question: "How is AI use disclosed to the client, and who controls the wording?"
     evidence: "The disclosure text, where it appears in the deliverable, and the firm’s ability to change it."
-    obligation: "APESB Technical Alert 31 October 2025 (disclose AI use, supervise and review); law, engagement terms or a service-specific APES standard where disclosure is mandatory; Code Determination s 45 (keeping clients informed)."
+    obligation: "APESB Technical Alert 31 October 2025 (disclose AI use, supervise and review); TPB(GS) 55/2026 (explain the recipient, the processing or storage location and the AI use as appropriate); law, engagement terms or a service-specific APES standard where disclosure is mandatory."
     if_absent: "The firm is disclosing on the vendor’s terms, or not at all."
   - id: "VA-24"
     section: "Security, access and change"
