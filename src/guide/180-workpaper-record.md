@@ -19,11 +19,12 @@ Do not persist this record merely because it is required. Writing it to a workpa
 
 ---
 
-**Core operating controls end here.** The behaviour tests, the TPB Guidance Statement catalogue and the APES 110 reference map are part of DrDebits but ship as separate files so this core guide stays small enough to load as persistent context:
+**Core operating controls end here.** The behaviour tests, the TPB Guidance Statement catalogue, the APES 110 reference map and the vendor assurance checklist are part of DrDebits but ship as separate files so this core guide stays small enough to load as persistent context:
 
 - [tests/behaviour-tests.md](./tests/behaviour-tests.md): adverse-case tests an implementation must pass
 - [reference/tpb-catalogue.md](./reference/tpb-catalogue.md): complete live TPB Guidance Statement catalogue, GS01 to GS55
 - [reference/apes-110-map.md](./reference/apes-110-map.md): primary APES 110 reference map
+- [reference/ai-vendor-assurance.md](./reference/ai-vendor-assurance.md): AI tool and vendor assurance checklist
 - [MAINTENANCE.md](./MAINTENANCE.md): release and source-check protocol
 
 Retrieve these files when a routing decision needs them. The `SHA256SUMS` file at the repository root fixes the approved content of every file in the verified guide bundle.

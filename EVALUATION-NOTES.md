@@ -4,11 +4,12 @@ The [8 September 2026 run](evals/results/2026-09-08-claude-opus-5.json)
 records 19 passes and six failures for DrDebits 0.3.3. Ryan Duguid confirmed
 the verdicts proposed by Codex after the model responses were reviewed.
 
-Each of the 25 published scenarios was submitted once in a fresh Claude Code
-2.1.261 process, using the complete guide as the system prompt and
-`claude-opus-5` as the model. The expected answers were not supplied to the
-model. Tools, MCP, browser access, slash commands and session persistence were
-disabled. No prompt, response or transcript is included in the repository.
+Each of the 25 scenarios published at that version was submitted once in a
+fresh Claude Code 2.1.261 process, using the complete guide as the system
+prompt and `claude-opus-5` as the model. The expected answers were not supplied
+to the model. Tools, MCP, browser access, slash commands and session
+persistence were disabled. No prompt, response or transcript is included in the
+repository.
 
 This run evaluates responses to synthetic scenarios. It does not demonstrate
 behaviour with connected tools, and it could not verify primary-source
@@ -44,7 +45,7 @@ These changes address instruction gaps exposed by the recorded responses;
 they have not yet been verified in fresh model runs. The 0.3.3 result remains
 historical evidence for the evaluated release, not a result for this revision.
 
-Rerun all 25 scenarios at the exact revised commit, recording the guide version
+Rerun all 27 scenarios at the exact revised commit, recording the guide version
 and commit separately in the evaluation working record. Check whole responses
 against the guide, including unsolicited safe-harbour or culpability conclusions
 in MIS-001, as well as each case rubric. Retain the original failing result.
