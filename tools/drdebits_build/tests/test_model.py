@@ -111,6 +111,48 @@ def test_missing_source_file_becomes_model_error(tmp_path):
         load_metadata(tmp_path / "does-not-exist.yaml")
 
 
+def test_duplicate_yaml_keys_are_refused_at_the_read_boundary(tmp_path):
+    """PyYAML keeps the last of a repeated key and drops the earlier one in
+    silence. These files are the authority for generated controls, so a
+    second `question:` in one entry would otherwise build, hash and verify
+    clean while publishing only the final text: rebuild-and-compare cannot
+    see a control that never reached the output. Every loader shares the read
+    boundary, so the guarantee has to sit there."""
+    with pytest.raises(ModelError, match="duplicate key"):
+        load_metadata(write(tmp_path, "m.yaml", """\
+            fields:
+              - key: title
+                value: "DrDebits"
+                value: "Something else"
+        """))
+    with pytest.raises(ModelError, match="duplicate key"):
+        load_vendor_assurance(write(tmp_path, "v.yaml", """\
+            sections:
+              - "Authority"
+            entries:
+              - id: "VA-01"
+                section: "Authority"
+                question: "the control as written"
+                question: "the control as replaced"
+                evidence: "e"
+                obligation: "o"
+                if_absent: "a"
+        """))
+    with pytest.raises(ModelError, match="duplicate key"):
+        load_catalogue(write(tmp_path, "c.yaml", """\
+            entries:
+              - id: "GS01"
+                title: "T"
+                url: "https://x.invalid/a"
+                trigger: "g"
+            entries:
+              - id: "GS02"
+                title: "T2"
+                url: "https://x.invalid/b"
+                trigger: "h"
+        """))
+
+
 def test_apes_map_missing_key_names_the_key(tmp_path):
     p = write(tmp_path, "am.yaml", """\
         retrieval_points:

@@ -31,10 +31,46 @@ class ModelError(Exception):
     pass
 
 
+class _UniqueKeyLoader(yaml.SafeLoader):
+    """SafeLoader that refuses a repeated mapping key.
+
+    PyYAML keeps the last of a repeated key and drops the earlier one without
+    a word. These files are the authority for generated controls, so that
+    silence is the whole problem: a second `question:` in one entry would
+    build, hash and verify clean while publishing only the final text, and
+    the rebuild-and-compare check cannot see a control that never reached the
+    output. evals.py already refuses duplicate keys in a result file for the
+    same reason; this extends the guarantee to every YAML source.
+
+    Subclassing SafeLoader keeps the safe constructor set: the loader
+    resolves the same tags safe_load does, and only mapping construction
+    changes.
+    """
+
+
+def _construct_unique_mapping(loader, node, deep=False):
+    mapping = {}
+    for key_node, value_node in node.value:
+        key = loader.construct_object(key_node, deep=deep)
+        if key in mapping:
+            raise yaml.constructor.ConstructorError(
+                None, None, f"duplicate key {key!r}", key_node.start_mark)
+        mapping[key] = loader.construct_object(value_node, deep=deep)
+    return mapping
+
+
+_UniqueKeyLoader.add_constructor(
+    yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, _construct_unique_mapping)
+
+
 def _read(path):
     try:
         with open(path, encoding="utf-8") as fh:
-            data = yaml.safe_load(fh)
+            loader = _UniqueKeyLoader(fh.read())
+            try:
+                data = loader.get_single_data()
+            finally:
+                loader.dispose()
     except yaml.YAMLError as e:
         raise ModelError(f"{path}: {e}") from e
     except OSError as e:
