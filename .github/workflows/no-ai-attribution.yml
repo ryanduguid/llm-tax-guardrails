@@ -1,0 +1,95 @@
+name: No AI attribution
+
+# Fails a pull request that carries AI authorship credit in its description or
+# in any commit message on the branch. Product copy that names a tool is not
+# attribution and passes: only trailer and footer shapes are matched.
+#
+# Ryan's rule, 9 September 2026: no AI attribution anywhere on this account.
+# The local commit-msg guard at C:\Tools\wm-guard catches commits on this box;
+# this workflow is the server-side backstop for pull request bodies, which no
+# local hook can see.
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Scan the pull request body and its commits
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          python - <<'PY'
+          import os
+          import re
+          import subprocess
+          import sys
+
+          VENDOR = (r"(?:claude|anthropic|codex|openai|cursor|hermes|nousresearch|"
+                    r"copilot|chatgpt|gemini|devin|windsurf|antigravity)")
+
+          PATTERNS = [
+              ("co-author trailer",
+               r"^\s*co-?authored-by:\s*.*" + VENDOR),
+              ("agent by-line trailer",
+               r"^\s*(?:assisted|generated|authored|created|written|reviewed)-by:\s*.*" + VENDOR),
+              ("session trailer",
+               r"^\s*" + VENDOR + r"[-_]?(?:session|run|thread|trace):"),
+              ("robot emoji credit",
+               r"^\s*_?\s*\U0001F916.*" + VENDOR),
+              ("generated-with footer",
+               r"^\s*_?(?:generated|addressed|authored|written|created|produced|"
+               r"reviewed|fixed|resolved|implemented)\s+(?:with|by)\s+\[?[^\]\n]*" + VENDOR),
+              ("session or product url",
+               r"^\s*_?<?https?://(?:claude\.ai|claude\.com|cursor\.com)\S*"),
+          ]
+          RX = [(name, re.compile(p, re.I)) for name, p in PATTERNS]
+
+          def scan(label, text):
+              bad = []
+              fenced = False
+              for n, line in enumerate(text.split("\n"), 1):
+                  if re.match(r"\s*(```|~~~)", line):
+                      fenced = not fenced
+                      continue
+                  if fenced:
+                      continue
+                  for name, rx in RX:
+                      if rx.match(line):
+                          bad.append("%s line %d: %s (%s)" % (label, n, line.strip()[:120], name))
+                          break
+              return bad
+
+          failures = scan("pull request body", os.environ.get("PR_BODY") or "")
+
+          base, head = os.environ["BASE_SHA"], os.environ["HEAD_SHA"]
+          log = subprocess.run(
+              ["git", "log", "--format=%H%x1f%B%x1e", base + ".." + head],
+              capture_output=True, text=True, errors="replace").stdout
+          for rec in log.split("\x1e"):
+              if "\x1f" not in rec:
+                  continue
+              sha, msg = rec.split("\x1f", 1)
+              failures += scan("commit " + sha.strip()[:12], msg)
+
+          if failures:
+              print("AI attribution found:\n")
+              for f in failures:
+                  print("  " + f)
+              print("\nRemove the credit line. Naming a tool in product copy is fine;")
+              print("crediting it as an author is not.")
+              sys.exit(1)
+          print("No AI attribution found.")
+          PY
