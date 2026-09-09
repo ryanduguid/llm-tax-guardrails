@@ -4,10 +4,9 @@ name: No AI attribution
 # in any commit message on the branch. Product copy that names a tool is not
 # attribution and passes: only trailer and footer shapes are matched.
 #
-# Ryan's rule, 9 September 2026: no AI attribution anywhere on this account.
-# The local commit-msg guard at C:\Tools\wm-guard catches commits on this box;
-# this workflow is the server-side backstop for pull request bodies, which no
-# local hook can see.
+# The local commit-msg guard catches commits written on Ryan's machine; this
+# workflow is the server-side backstop and the only layer that can see a pull
+# request body.
 
 on:
   pull_request:
@@ -38,47 +37,81 @@ jobs:
           import sys
 
           VENDOR = (r"(?:claude|anthropic|codex|openai|cursor|hermes|nousresearch|"
-                    r"copilot|chatgpt|gemini|devin|windsurf|antigravity)")
+                    r"copilot|chatgpt|gemini|devin|windsurf|antigravity|aider)")
+
+          # Domains for the bare-URL rule, kept in step with VENDOR.
+          DOMAIN = (r"(?:claude\.ai|claude\.com|anthropic\.com|openai\.com|"
+                    r"chatgpt\.com|cursor\.com|cursor\.sh|codeium\.com|"
+                    r"windsurf\.com|cognition\.ai|devin\.ai|nousresearch\.com)")
+
+          CREDIT_VERB = (r"(?:generated|addressed|authored|written|created|produced|"
+                         r"reviewed|fixed|resolved|implemented|assisted|handled)")
 
           PATTERNS = [
               ("co-author trailer",
                r"^\s*co-?authored-by:\s*.*" + VENDOR),
+              # Both "Addressed-by: Claude" and "Assisted by Claude" forms.
               ("agent by-line trailer",
-               r"^\s*(?:assisted|generated|authored|created|written|reviewed)-by:\s*.*" + VENDOR),
+               r"^\s*" + CREDIT_VERB + r"[-_ ]by:\s*.*" + VENDOR),
               ("session trailer",
-               r"^\s*" + VENDOR + r"[-_]?(?:session|run|thread|trace):"),
+               r"^\s*" + VENDOR + r"[-_ ]?(?:session|run|thread|trace|id):"),
               ("robot emoji credit",
                r"^\s*_?\s*\U0001F916.*" + VENDOR),
               ("generated-with footer",
-               r"^\s*_?(?:generated|addressed|authored|written|created|produced|"
-               r"reviewed|fixed|resolved|implemented)\s+(?:with|by)\s+\[?[^\]\n]*" + VENDOR),
-              ("session or product url",
-               r"^\s*_?<?https?://(?:claude\.ai|claude\.com|cursor\.com)\S*"),
+               r"^\s*_?" + CREDIT_VERB + r"\s+(?:with|by)\s+\[?[^\]\n]*" + VENDOR),
+              ("bare vendor url",
+               r"^\s*[_<(]*https?://(?:[\w.-]+\.)?" + DOMAIN + r"\b"),
           ]
           RX = [(name, re.compile(p, re.I)) for name, p in PATTERNS]
 
+          FENCE = re.compile(r"^(?P<indent> {0,3})(?P<fence>`{3,}|~{3,})(?P<info>.*)$")
+
           def scan(label, text):
+              """Report every credit line outside fenced code blocks.
+
+              Fence state tracks the opening character and length, per CommonMark:
+              a closing fence must use the same character, be at least as long, and
+              carry no info string. Tracking the character and length stops a
+              shorter or different fence from ending a block early, and stops an
+              indented code line that merely looks like a fence from flipping the
+              state for the rest of the document.
+              """
               bad = []
-              fenced = False
+              open_char = None
+              open_len = 0
               for n, line in enumerate(text.split("\n"), 1):
-                  if re.match(r"\s*(```|~~~)", line):
-                      fenced = not fenced
-                      continue
-                  if fenced:
+                  m = FENCE.match(line)
+                  if m:
+                      ch = m.group("fence")[0]
+                      length = len(m.group("fence"))
+                      if open_char is None:
+                          open_char, open_len = ch, length
+                          continue
+                      if ch == open_char and length >= open_len and not m.group("info").strip():
+                          open_char, open_len = None, 0
+                          continue
+                  if open_char is not None:
                       continue
                   for name, rx in RX:
                       if rx.match(line):
-                          bad.append("%s line %d: %s (%s)" % (label, n, line.strip()[:120], name))
+                          bad.append("%s line %d: %s (%s)"
+                                     % (label, n, line.strip()[:120], name))
                           break
               return bad
 
           failures = scan("pull request body", os.environ.get("PR_BODY") or "")
 
           base, head = os.environ["BASE_SHA"], os.environ["HEAD_SHA"]
-          log = subprocess.run(
+          proc = subprocess.run(
               ["git", "log", "--format=%H%x1f%B%x1e", base + ".." + head],
-              capture_output=True, text=True, errors="replace").stdout
-          for rec in log.split("\x1e"):
+              capture_output=True, text=True, errors="replace")
+          if proc.returncode != 0:
+              # Fail closed: an unscannable range must not read as clean.
+              print("Could not read the commit range %s..%s" % (base[:12], head[:12]))
+              print(proc.stderr.strip()[:500])
+              sys.exit(1)
+
+          for rec in proc.stdout.split("\x1e"):
               if "\x1f" not in rec:
                   continue
               sha, msg = rec.split("\x1f", 1)
