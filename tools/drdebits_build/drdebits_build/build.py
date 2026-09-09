@@ -46,6 +46,7 @@ class Sources:
     catalogue: list
     behaviour: list
     apes: dict
+    vendor: dict
     changelog: list
 
 
@@ -70,6 +71,7 @@ def load_sources(root):
         catalogue=catalogue,
         behaviour=model.load_behaviour_tests(data / "behaviour-tests.yaml"),
         apes=model.load_apes_map(data / "apes-110-map.yaml"),
+        vendor=model.load_vendor_assurance(data / "ai-vendor-assurance.yaml"),
         changelog=model.load_changelog(data / "changelog.yaml"),
     )
 
@@ -142,11 +144,30 @@ def build_apes_md(s):
     return header + a + APES_BETWEEN_TABLES + b
 
 
+VENDOR_HEADER_TEMPLATE = '# AI tool and vendor assurance checklist\n\nPart of [DrDebits](../drdebits.md) `{version}`. Retrieve this file when a firm is assessing an AI product, vendor or in-house deployment before it reaches client work; verify it against `SHA256SUMS` in the release.\n\n\nThe AI-specific TPB rules in the guide require due diligence over confidentiality, privacy, security, access, retention, training use, subcontractors, location, incident response and exit arrangements. This checklist turns that requirement into questions a firm can send, with the evidence that answers each one, where the underlying obligation sits, and what follows when nobody answers.\n\nThe checklist names no vendor and favours none. Apply it to a hosted product, to a general-purpose assistant, to a firm’s own deployment, and to DrDebits and the runtime it loads into.\n\nThree rules govern its use. An unanswered question is unanswered, not passed. Marketing copy, a certification badge, a partner tier and a security web page answer only the questions they address, and the firm records the rest as open. A completed checklist is a record of what the firm asked and what it received: it is not approval, it is not a compliance certification, and it leaves the practitioner’s accountability where it already sat.\n\nThe obligation column locates the operative text without quoting it. Retrieve the current source before relying on any row, and read the row as a DrDebits project control rather than as a statement of what the law or a standard requires.\n\n'
+VENDOR_HEADERS = ["ID", "Question", "Evidence that answers it",
+                  "Where the obligation sits", "If nobody answers"]
+
+
+def build_vendor_assurance_md(s):
+    parts = [VENDOR_HEADER_TEMPLATE.format(version=s.meta["guide_version"])]
+    for title in s.vendor["sections"]:
+        rows = [[r["id"], r["question"], r["evidence"], r["obligation"], r["if_absent"]]
+                for r in s.vendor["entries"] if r["section"] == title]
+        parts.append(f"## {title}\n\n")
+        parts.append(render.render_table(VENDOR_HEADERS, ["---"] * len(VENDOR_HEADERS), rows))
+        parts.append("\n")
+    # Every section contributed a trailing blank line; the file ends with one
+    # newline, as the other generated files do.
+    return "".join(parts).rstrip("\n") + "\n"
+
+
 GENERATED = {
     "drdebits.md": build_guide,
     "reference/tpb-catalogue.md": build_catalogue_md,
     "tests/behaviour-tests.md": build_behaviour_md,
     "reference/apes-110-map.md": build_apes_md,
+    "reference/ai-vendor-assurance.md": build_vendor_assurance_md,
     evals.CASES_FILE: evals.build_cases,
 }
 
