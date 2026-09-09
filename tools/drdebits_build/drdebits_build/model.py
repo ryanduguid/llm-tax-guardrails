@@ -15,6 +15,12 @@ import yaml
 # rows and therefore agree with each other about bad data.
 CATALOGUE_ID_RE = re.compile(r"GS(\d+)\Z")
 
+# A vendor assurance id. The checklist renders as one table per section and is
+# cited by id, so the same invariants the catalogue needs apply here: numbered
+# ids in ascending order, so a duplicated or reordered row is visible instead
+# of silently renumbering what a firm recorded against last quarter.
+VENDOR_ID_RE = re.compile(r"VA-(\d+)\Z")
+
 ALLOWED_STATUSES = frozenset({
     "HARD_STOP", "ESCALATE", "NEEDS_FACTS", "PROCEED_DRAFT_ONLY",
     "Low impact — proportionate answer",
@@ -145,6 +151,70 @@ def load_apes_map(path):
         out[key] = _rows(path, {key: data.get(key)}, key, ("label", "value"),
                          table_safe=True)
     return out
+
+
+VENDOR_FIELDS = ("id", "section", "question", "evidence", "obligation", "if_absent")
+
+
+def load_vendor_assurance(path):
+    """Load the AI vendor assurance checklist: declared sections, then rows.
+
+    The builder renders one heading and one table per declared section, in the
+    declared order, and picks each table's rows by matching the section field.
+    That render is only faithful if the rows carry the grouping it assumes, so
+    the checks below make the two agree at load: every row names a declared
+    section, a section's rows sit together, and every declared section has
+    rows. Without them a row could drift under a heading that does not
+    describe it, or a section could render as a bare heading with no table,
+    and the rebuild would reproduce either one byte for byte.
+    """
+    data = _read(path)
+    titles = data.get("sections")
+    if not isinstance(titles, list) or not titles:
+        raise ModelError(f"{path}: 'sections' must be a non-empty list")
+    declared = []
+    for i, title in enumerate(titles):
+        title = _require_str(path, f"section {i}", title)
+        # A heading is rendered from this value, so a newline would inject
+        # document structure the sources never declared.
+        if "\n" in title or "\r" in title:
+            raise ModelError(f"{path}: section {i} contains a newline")
+        declared.append(title)
+    if len(declared) != len(set(declared)):
+        raise ModelError(f"{path}: duplicate section titles")
+
+    rows = _rows(path, data, "entries", VENDOR_FIELDS, table_safe=True)
+    _unique_ids(path, rows)
+    previous = None
+    order = []
+    for r in rows:
+        match = VENDOR_ID_RE.match(r["id"])
+        if match is None:
+            raise ModelError(
+                f"{path}: id {r['id']!r} must be a checklist id (VA- followed by digits)")
+        number = int(match.group(1))
+        if previous is not None and number <= previous[0]:
+            raise ModelError(
+                f"{path}: id {r['id']} does not come after {previous[1]}; entries must "
+                "be in ascending id order so a firm's recorded reference keeps meaning "
+                "the same row")
+        previous = (number, r["id"])
+        if r["section"] not in declared:
+            raise ModelError(
+                f"{path}: {r['id']} names section {r['section']!r}, which is not declared")
+        if not order or order[-1] != r["section"]:
+            if r["section"] in order:
+                raise ModelError(
+                    f"{path}: {r['id']} resumes section {r['section']!r} after another "
+                    "section; a section's entries must be contiguous, because each "
+                    "section renders as one table")
+            order.append(r["section"])
+    if order != declared:
+        missing = [t for t in declared if t not in order]
+        raise ModelError(
+            f"{path}: sections with entries {order} do not match the declared order "
+            f"{declared}; sections without entries: {missing}")
+    return {"sections": declared, "entries": rows}
 
 
 # Every key the builders and verifier dereference unconditionally. A missing

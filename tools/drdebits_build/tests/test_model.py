@@ -3,8 +3,8 @@ import textwrap
 import pytest
 from drdebits_build.model import (
     ModelError, ALLOWED_STATUSES, load_metadata, load_catalogue,
-    load_behaviour_tests, load_changelog, load_apes_map, validate_counts,
-    validate_required_metadata,
+    load_behaviour_tests, load_changelog, load_apes_map, load_vendor_assurance,
+    validate_counts, validate_required_metadata,
 )
 
 
@@ -181,3 +181,75 @@ def test_changelog_and_apes_map_shapes(tmp_path):
             value: "R1.2"
     """))
     assert am["contexts"][0]["label"] == "All members"
+
+
+VENDOR_SOURCE = """\
+    sections:
+      - "Authority"
+      - "Privacy"
+    entries:
+      - id: "VA-01"
+        section: "Authority"
+        question: "q1"
+        evidence: "e1"
+        obligation: "o1"
+        if_absent: "a1"
+      - id: "VA-02"
+        section: "Authority"
+        question: "q2"
+        evidence: "e2"
+        obligation: "o2"
+        if_absent: "a2"
+      - id: "VA-03"
+        section: "Privacy"
+        question: "q3"
+        evidence: "e3"
+        obligation: "o3"
+        if_absent: "a3"
+"""
+
+
+def test_vendor_assurance_keeps_sections_and_row_order(tmp_path):
+    out = load_vendor_assurance(write(tmp_path, "v.yaml", VENDOR_SOURCE))
+    assert out["sections"] == ["Authority", "Privacy"]
+    assert [r["id"] for r in out["entries"]] == ["VA-01", "VA-02", "VA-03"]
+    assert out["entries"][2]["section"] == "Privacy"
+
+
+def test_vendor_assurance_ids_must_be_va_numbered_and_ascending(tmp_path):
+    """A firm records an answer against an id. Ascending, VA-numbered ids make
+    a duplicated or reordered row a load failure rather than a silent
+    renumbering of what somebody already answered."""
+    with pytest.raises(ModelError, match="checklist id"):
+        load_vendor_assurance(write(tmp_path, "b.yaml", VENDOR_SOURCE.replace(
+            'id: "VA-02"', 'id: "Q2"', 1)))
+    with pytest.raises(ModelError, match="ascending id order"):
+        load_vendor_assurance(write(tmp_path, "d.yaml", VENDOR_SOURCE.replace(
+            'id: "VA-03"', 'id: "VA-00"', 1)))
+
+
+def test_vendor_assurance_sections_must_be_declared_contiguous_and_used(tmp_path):
+    """Each declared section renders as one heading and one table whose rows
+    are selected by the section field. An undeclared section would drop its
+    rows from the file, a resumed section would move rows under a heading that
+    does not describe them, and an unused section would render as a heading
+    with no table."""
+    with pytest.raises(ModelError, match="not declared"):
+        load_vendor_assurance(write(tmp_path, "u.yaml", VENDOR_SOURCE.replace(
+            'section: "Privacy"', 'section: "Security"', 1)))
+    interleaved = VENDOR_SOURCE.replace(
+        'section: "Authority"\n        question: "q2"',
+        'section: "Privacy"\n        question: "q2"', 1).replace(
+        'section: "Privacy"\n        question: "q3"',
+        'section: "Authority"\n        question: "q3"', 1)
+    with pytest.raises(ModelError, match="contiguous"):
+        load_vendor_assurance(write(tmp_path, "i.yaml", interleaved))
+    with pytest.raises(ModelError, match="sections without entries"):
+        load_vendor_assurance(write(tmp_path, "e.yaml", VENDOR_SOURCE.replace(
+            'section: "Privacy"', 'section: "Authority"', 1)))
+    with pytest.raises(ModelError, match="duplicate section titles"):
+        load_vendor_assurance(write(tmp_path, "s.yaml", VENDOR_SOURCE.replace(
+            '- "Privacy"', '- "Authority"', 1)))
+    with pytest.raises(ModelError, match="contains a newline"):
+        load_vendor_assurance(write(tmp_path, "n.yaml", VENDOR_SOURCE.replace(
+            '- "Privacy"', '- "Privacy\\n## Injected"', 1)))
