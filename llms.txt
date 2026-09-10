@@ -1,5 +1,4 @@
 # DrDebits - tax ethics and LLM guardrails
-> High-density context for AI agent prompts, system instructions, and compliance governance.
 
 ## Package overview
 - **Repository**: https://github.com/ryanduguid/llm-tax-guardrails
