@@ -10,3 +10,15 @@ DrDebits provides versioned guardrails for AI coding assistants (Claude Code, Cu
 4. Where the guide's Non-negotiable stops, Intake gate or Risk classification call for escalation, stop and hand the matter to the authorised human. Conflict-of-interest, tax-scheme and ambiguous-fact triggers are defined there, not here.
 5. Retrieve [reference/tpb-catalogue.md](./reference/tpb-catalogue.md) and [reference/apes-110-map.md](./reference/apes-110-map.md) when a routing decision needs them.
 6. Retrieve [reference/ai-vendor-assurance.md](./reference/ai-vendor-assurance.md) when the task assesses an AI product, vendor or deployment before it reaches client work. The guide's AI-specific TPB rules set the boundary; the checklist supplies the questions and the evidence each one needs.
+
+## Repository maintenance
+
+Before editing this repository, read [MAINTENANCE.md](MAINTENANCE.md) and the
+README's Contributing and maintenance section. Edit guide, reference, behaviour
+test and evaluation sources under `src/`; regenerate their outputs with the
+documented builder. Historical human-recorded evaluation results stay unchanged.
+
+Before handoff, run the builder tests and generated-output verification defined
+in [verify.yml](.github/workflows/verify.yml). Report source-currency checks,
+live links and model evaluations separately from structural tests. A passing
+build does not establish professional correctness or authorise a release.
