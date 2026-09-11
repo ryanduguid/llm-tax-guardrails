@@ -63,25 +63,25 @@ jobs:
           import unicodedata
 
           VENDOR = (r"(?:claude|anthropic|codex|openai|cursor|hermes|nousresearch|"
-                    r"copilot|chatgpt|gemini|devin|codeium|windsurf|antigravity|aider|qodo)")
+                    r"copilot|chatgpt|gemini|devin|codeium|windsurf|antigravity|aider|qodo|openhands)")
 
           # Domains for the bare-URL rule, kept in step with VENDOR.
           DOMAIN = (r"(?:claude\.ai|claude\.com|anthropic\.com|openai\.com|"
                     r"chatgpt\.com|cursor\.com|cursor\.sh|codeium\.com|"
-                    r"windsurf\.com|cognition\.ai|devin\.ai|nousresearch\.com)")
+                    r"windsurf\.com|cognition\.ai|devin\.ai|nousresearch\.com|qodo\.ai|openhands\.dev|all-hands\.dev)")
 
           AI_NAME = re.compile(
               r"(?:anthropic|codex|openai|cursor|nousresearch|copilot|chatgpt|"
-              r"codeium|windsurf|antigravity|aider|qodo)|" +
+              r"codeium|windsurf|antigravity|aider|qodo|openhands)|" +
               VENDOR + r"(?:[-_ ](?:agent|code|bot)(?:\[bot\])?|\[bot\])|"
               r"claude (?:opus|sonnet|haiku|fable)(?: [0-9.]+)?|"
               r"hermes review|review (?:bot|agent|fixes)|"
               r"(?:openai[-_ ]codex|github[-_ ]copilot|qodo[-_ ]code[-_ ]review|gemini[-_ ]code[-_ ]assist)(?:\[bot\])?", re.I)
 
           def comparable(text):
-              # Compare visible letters without combining marks or variation selectors.
+              # Compare visible letters without hidden characters or combining marks.
               return "".join(char for char in unicodedata.normalize("NFKD", text)
-                             if not unicodedata.category(char).startswith("M"))
+                             if char.isprintable() and not unicodedata.category(char).startswith("M"))
 
           CREDIT_VERB = (r"(?:generated|addressed|authored|written|created|produced|"
                          r"reviewed|fixed|resolved|implemented|assisted|handled)")
@@ -193,7 +193,7 @@ jobs:
                       sys.exit("Non-printable commit identity")
                   name, email = comparable(name), comparable(email)
                   account = re.fullmatch(r"(?:[0-9]+\+)?([^@]+)@users\.noreply\.github\.com", email, re.I)
-                  if (AI_NAME.fullmatch(name.strip()) or email.casefold() == "noreply@anthropic.com"
+                  if (AI_NAME.fullmatch(name.strip()) or email.casefold() in {"noreply@anthropic.com", "openhands@all-hands.dev"}
                           or (account and AI_NAME.fullmatch(account[1]))):
                       failures.append("commit %s: AI %s identity" % (sha[:12], role))
               failures += scan("commit " + sha[:12], msg.decode("utf-8", "replace"))
