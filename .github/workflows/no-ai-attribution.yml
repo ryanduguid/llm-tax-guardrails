@@ -1,34 +1,41 @@
 name: No AI attribution
 
 # Fails a pull request that carries AI authorship credit in its description or
-# in any commit message on the branch. Product copy that names a tool is not
-# attribution and passes: only trailer and footer shapes are matched.
+# in commit messages or author and committer identities on the branch.
+# Product references are allowed.
 #
 # The local commit-msg guard catches commits written on Ryan's machine; this
-# workflow is the server-side backstop and the only layer that can see a pull
-# request body.
+# workflow checks pull request metadata from the trusted base branch and audits
+# commits after a default-branch push. It never runs pull request code.
 
 on:
   pull_request:
-    types: [opened, edited, synchronize, reopened]
+    types: [opened, edited, synchronize, reopened, ready_for_review]
+  pull_request_target:
+    types: [opened, edited, synchronize, reopened, ready_for_review]
+  push:
+    branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
   pull-requests: read
 
 jobs:
-  check:
+  attribution-policy:
+    name: ${{ github.event_name == 'pull_request' && 'check' || 'Attribution policy' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          ref: ${{ github.event.pull_request.base.sha || github.sha }}
 
       - name: Scan the pull request body and its commits
         env:
           PR_BODY: ${{ github.event.pull_request.body }}
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before || '0000000000000000000000000000000000000000' }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           python - <<'PY'
           import os
@@ -43,6 +50,12 @@ jobs:
           DOMAIN = (r"(?:claude\.ai|claude\.com|anthropic\.com|openai\.com|"
                     r"chatgpt\.com|cursor\.com|cursor\.sh|codeium\.com|"
                     r"windsurf\.com|cognition\.ai|devin\.ai|nousresearch\.com)")
+
+          AI_NAME = re.compile(
+              VENDOR + r"(?: (?:agent|code))?|"
+              r"claude (?:opus|sonnet|haiku|fable)(?: [0-9.]+)?|"
+              r"hermes review|review (?:bot|agent|fixes)|"
+              r"(?:copilot|qodo-code-review|openai-codex)\[bot\]", re.I)
 
           CREDIT_VERB = (r"(?:generated|addressed|authored|written|created|produced|"
                          r"reviewed|fixed|resolved|implemented|assisted|handled)")
@@ -102,8 +115,22 @@ jobs:
           failures = scan("pull request body", os.environ.get("PR_BODY") or "")
 
           base, head = os.environ["BASE_SHA"], os.environ["HEAD_SHA"]
+          # The policy runs from the base branch. Fetch PR objects as data only.
+          for ref in (base, head):
+              if not re.fullmatch(r"[0-9a-f]{40}", ref):
+                  sys.exit("Invalid commit identifier")
+              if ref == "0" * 40:
+                  continue
+              present = subprocess.run(["git", "cat-file", "-e", ref + "^{commit}"],
+                                       capture_output=True)
+              if present.returncode:
+                  fetched = subprocess.run(["git", "fetch", "--no-tags", "origin", ref],
+                                           capture_output=True, text=True)
+                  if fetched.returncode:
+                      sys.exit("Could not read the commit range: commit fetch failed")
+          commit_range = head if base == "0" * 40 else base + ".." + head
           proc = subprocess.run(
-              ["git", "log", "--format=%H%x1f%B%x1e", base + ".." + head],
+              ["git", "log", "--format=%H%x1f%an%x1f%ae%x1f%cn%x1f%ce%x1f%B%x1e", commit_range],
               capture_output=True, text=True, errors="replace")
           if proc.returncode != 0:
               # Fail closed: an unscannable range must not read as clean.
@@ -114,15 +141,20 @@ jobs:
           for rec in proc.stdout.split("\x1e"):
               if "\x1f" not in rec:
                   continue
-              sha, msg = rec.split("\x1f", 1)
+              sha, author_name, author_email, committer_name, committer_email, msg = rec.split("\x1f", 5)
+              # Raw identities matter: GitHub derives squash co-authors from them.
+              for role, name, email in (
+                      ("author", author_name, author_email),
+                      ("committer", committer_name, committer_email)):
+                  if AI_NAME.fullmatch(name.strip()) or email.casefold() == "noreply@anthropic.com":
+                      failures.append("commit %s: AI %s identity" % (sha.strip()[:12], role))
               failures += scan("commit " + sha.strip()[:12], msg)
 
           if failures:
               print("AI attribution found:\n")
               for f in failures:
                   print("  " + f)
-              print("\nRemove the credit line. Naming a tool in product copy is fine;")
-              print("crediting it as an author is not.")
+              print("\nRemove AI credits and correct AI author or committer identities before merging.")
               sys.exit(1)
           print("No AI attribution found.")
           PY
