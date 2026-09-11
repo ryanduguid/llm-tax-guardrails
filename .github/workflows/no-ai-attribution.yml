@@ -36,9 +36,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          POLICY_CONTEXT: ${{ github.event_name == 'pull_request_target' && 'Attribution policy' || 'Attribution audit' }}
         run: |
           gh api "repos/$GITHUB_REPOSITORY/statuses/$HEAD_SHA" --method POST \
-            -f state=pending -f context='Attribution policy' \
+            -f state=pending -f context="$POLICY_CONTEXT" \
             -f description='Checking commit identities and authorship credits' \
             -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" --silent
 
@@ -49,21 +50,20 @@ jobs:
 
       - name: Scan pull request metadata and commits
         env:
-          GH_TOKEN: ${{ github.token }}
           PR_TITLE: ${{ github.event.pull_request.title }}
           PR_BODY: ${{ github.event.pull_request.body }}
           BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before || '0000000000000000000000000000000000000000' }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           python - <<'PY'
-          import json
           import os
           import re
           import subprocess
           import sys
+          import unicodedata
 
           VENDOR = (r"(?:claude|anthropic|codex|openai|cursor|hermes|nousresearch|"
-                    r"copilot|chatgpt|gemini|devin|codeium|windsurf|antigravity|aider)")
+                    r"copilot|chatgpt|gemini|devin|codeium|windsurf|antigravity|aider|qodo)")
 
           # Domains for the bare-URL rule, kept in step with VENDOR.
           DOMAIN = (r"(?:claude\.ai|claude\.com|anthropic\.com|openai\.com|"
@@ -72,11 +72,16 @@ jobs:
 
           AI_NAME = re.compile(
               r"(?:anthropic|codex|openai|cursor|nousresearch|copilot|chatgpt|"
-              r"codeium|windsurf|antigravity|aider)|" +
+              r"codeium|windsurf|antigravity|aider|qodo)|" +
               VENDOR + r"(?:[-_ ](?:agent|code|bot)(?:\[bot\])?|\[bot\])|"
               r"claude (?:opus|sonnet|haiku|fable)(?: [0-9.]+)?|"
               r"hermes review|review (?:bot|agent|fixes)|"
-              r"(?:openai[-_ ]codex|github[-_ ]copilot|qodo-code-review|gemini-code-assist)(?:\[bot\])?", re.I)
+              r"(?:openai[-_ ]codex|github[-_ ]copilot|qodo[-_ ]code[-_ ]review|gemini[-_ ]code[-_ ]assist)(?:\[bot\])?", re.I)
+
+          def comparable(text):
+              # Compare visible letters without combining marks or variation selectors.
+              return "".join(char for char in unicodedata.normalize("NFKD", text)
+                             if not unicodedata.category(char).startswith("M"))
 
           CREDIT_VERB = (r"(?:generated|addressed|authored|written|created|produced|"
                          r"reviewed|fixed|resolved|implemented|assisted|handled)")
@@ -127,7 +132,7 @@ jobs:
                   if open_char is not None:
                       continue
                   for name, rx in RX:
-                      if rx.match(line):
+                      if rx.match(comparable(line)):
                           bad.append("%s line %d: %s (%s)"
                                      % (label, n, line.strip()[:120], name))
                           break
@@ -136,11 +141,12 @@ jobs:
           # Titles are plain text. Check explicit by-lines, without interpreting
           # fences or treating a product URL or cursor pagination as a footer.
           title_credit = re.compile(
-              r"(?:co-?authored-by:\s*|" + CREDIT_VERB + r"[-_ ]by[: ]+).*?\b" + VENDOR + r"\b|" +
-              CREDIT_VERB + r"\s+with\s+\[?" + VENDOR +
-              r"(?:\s+(?:code|agent))?(?:\]\([^)]*\))?[\s.!]*$", re.I)
+              r"(?:^|[|:;(\[]| - )[\s`~*_]*(?:co-?authored-by:\s*|" +
+              CREDIT_VERB + r"[-_ ]+(?:by|with)[: ]+)[\s\[*_`]*" +
+              r"(?:github[-_ ]copilot|" + VENDOR + r")\b"
+              r"(?![ -]+(?:pagination|api|integration)\b)", re.I)
           def scan_pr(title, body):
-              bad = ["pull request title: authorship credit"] if title_credit.search(title or "") else []
+              bad = ["pull request title: authorship credit"] if title_credit.search(comparable(title or "")) else []
               return bad + scan("pull request body", body or "")
 
           failures = scan_pr(os.environ.get("PR_TITLE"), os.environ.get("PR_BODY"))
@@ -160,15 +166,6 @@ jobs:
                   if fetched.returncode:
                       sys.exit("Could not read the commit range: commit fetch failed")
           commit_range = head if base == "0" * 40 else base + ".." + head
-          # A manual branch audit must not clear a failed PR metadata status.
-          if os.environ.get("GITHUB_EVENT_NAME") == "workflow_dispatch":
-              endpoint = "repos/%s/commits/%s/pulls?per_page=100" % (os.environ["GITHUB_REPOSITORY"], head)
-              response = subprocess.run(["gh", "api", "--paginate", "--slurp", endpoint],
-                                        capture_output=True, text=True, check=True)
-              for page in json.loads(response.stdout):
-                  for pr in page:
-                      if pr["state"] == "open" and pr["head"]["sha"] == head:
-                          failures += scan_pr(pr["title"], pr["body"])
           proc = subprocess.run(
               ["git", "rev-list", commit_range], capture_output=True, text=True)
           if proc.returncode != 0:
@@ -194,6 +191,7 @@ jobs:
                   name, email = identity.groups()
                   if any(not char.isprintable() or char == "\ufffd" for char in name + email):
                       sys.exit("Non-printable commit identity")
+                  name, email = comparable(name), comparable(email)
                   account = re.fullmatch(r"(?:[0-9]+\+)?([^@]+)@users\.noreply\.github\.com", email, re.I)
                   if (AI_NAME.fullmatch(name.strip()) or email.casefold() == "noreply@anthropic.com"
                           or (account and AI_NAME.fullmatch(account[1]))):
@@ -214,10 +212,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          POLICY_CONTEXT: ${{ github.event_name == 'pull_request_target' && 'Attribution policy' || 'Attribution audit' }}
           STATE: ${{ job.status == 'success' && 'success' || 'failure' }}
         run: |
           gh api "repos/$GITHUB_REPOSITORY/statuses/$HEAD_SHA" --method POST \
-            -f state="$STATE" -f context='Attribution policy' \
+            -f state="$STATE" -f context="$POLICY_CONTEXT" \
             -f description='Commit identity and authorship credit policy' \
             -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" --silent
 
