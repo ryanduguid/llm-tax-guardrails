@@ -49,12 +49,14 @@ jobs:
 
       - name: Scan pull request metadata and commits
         env:
+          GH_TOKEN: ${{ github.token }}
           PR_TITLE: ${{ github.event.pull_request.title }}
           PR_BODY: ${{ github.event.pull_request.body }}
           BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before || '0000000000000000000000000000000000000000' }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           python - <<'PY'
+          import json
           import os
           import re
           import subprocess
@@ -137,8 +139,11 @@ jobs:
               r"(?:co-?authored-by:\s*|" + CREDIT_VERB + r"[-_ ]by[: ]+).*?\b" + VENDOR + r"\b|" +
               CREDIT_VERB + r"\s+with\s+\[?" + VENDOR +
               r"(?:\s+(?:code|agent))?(?:\]\([^)]*\))?[\s.!]*$", re.I)
-          failures = ["pull request title: authorship credit"] if title_credit.search(os.environ.get("PR_TITLE") or "") else []
-          failures += scan("pull request body", os.environ.get("PR_BODY") or "")
+          def scan_pr(title, body):
+              bad = ["pull request title: authorship credit"] if title_credit.search(title or "") else []
+              return bad + scan("pull request body", body or "")
+
+          failures = scan_pr(os.environ.get("PR_TITLE"), os.environ.get("PR_BODY"))
 
           base, head = os.environ["BASE_SHA"], os.environ["HEAD_SHA"]
           # The policy runs from the base branch. Fetch PR objects as data only.
@@ -155,6 +160,15 @@ jobs:
                   if fetched.returncode:
                       sys.exit("Could not read the commit range: commit fetch failed")
           commit_range = head if base == "0" * 40 else base + ".." + head
+          # A manual branch audit must not clear a failed PR metadata status.
+          if os.environ.get("GITHUB_EVENT_NAME") == "workflow_dispatch":
+              endpoint = "repos/%s/commits/%s/pulls?per_page=100" % (os.environ["GITHUB_REPOSITORY"], head)
+              response = subprocess.run(["gh", "api", "--paginate", "--slurp", endpoint],
+                                        capture_output=True, text=True, check=True)
+              for page in json.loads(response.stdout):
+                  for pr in page:
+                      if pr["state"] == "open" and pr["head"]["sha"] == head:
+                          failures += scan_pr(pr["title"], pr["body"])
           proc = subprocess.run(
               ["git", "rev-list", commit_range], capture_output=True, text=True)
           if proc.returncode != 0:
