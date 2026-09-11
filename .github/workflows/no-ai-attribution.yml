@@ -144,17 +144,18 @@ jobs:
           # keep punctuation variants consistent without matching human surnames.
           SEP = r"[^\w;|\n]+"
           TOOL = (r"(?<!\w)(?:" + AI_NAME.pattern + r"|(?:github(?:['\u2019]s)?" + SEP + r")?" + VENDOR +
-                  r")(?!\w)(?:" + SEP + r"(?:code|agent|bot|assist|review|codex)(?!\w))*(?:\s+[0-9]+(?:\.[0-9]+)*)?")
+                  r")(?!\w)(?:" + SEP + r"(?:code|agent|bot|assist|review|codex)(?!\w))*(?:[- ]+[0-9]+(?:\.[0-9]+)*)?(?!\w)")
           DESCRIPTOR = (r"(?:(?:the|ai|assistant|agent|bot|and|by|with|via|using)" + SEP + r")*")
           title_credit = re.compile(
               r"(?<!\w)" + CREDIT_VERB + SEP + r"(?:by|with|via|using)" + SEP +
               DESCRIPTOR + TOOL, re.I)
           reverse_credit = re.compile(TOOL + SEP + CREDIT_VERB + r"(?!\w)", re.I)
           coauthors = re.compile(r"\bco[-_ ]?authored" + SEP + r"by" + SEP, re.I)
+          credit_relation = re.compile(r"(?<!\w)" + CREDIT_VERB + SEP + r"(?:by|with|via|using)" + SEP, re.I)
           technical = re.compile(
               r"\bimplemented" + SEP + r"(?:with|via|using)" + SEP + DESCRIPTOR +
-              r"(?:cursor[- ]+(?:based[- ]+)?pagination|cascade[- ]+deletion|" + TOOL + r"(?:['\u2019]s)?(?:\s+|-)API)\b|"
-              r"\berrors?" + SEP + r"generated" + SEP + r"by" + SEP + DESCRIPTOR + TOOL + r"(?:['\u2019]s)?(?:\s+|-)API\b", re.I)
+              r"(?:cursor[- ]+(?:based[- ]+)?pagination|cascade[- ]+deletion|" + TOOL + r"(?:['\u2019]s)?(?:\s+|-)(?:API|SDK|client|integration))\b|"
+              r"\berrors?" + SEP + r"generated" + SEP + r"by" + SEP + DESCRIPTOR + TOOL + r"(?:['\u2019]s)?(?:\s+|-)(?:API|SDK|client)\b", re.I)
           handling = re.compile(
               r"\b(?:add(?:s|ed|ing)?|updat(?:e|es|ed|ing)|fix(?:es|ed|ing)?|handl(?:e|es|ed|ing)|"
               r"pars(?:e|es|ed|ing)|validat(?:e|es|ed|ing)|reject(?:s|ed|ing)?|block(?:s|ed|ing)?|"
@@ -163,8 +164,11 @@ jobs:
           output_phrase = re.compile(
               TOOL + r"\s*[-:]\s*" + CREDIT_VERB + r"(?!\w)|" +
               TOOL + SEP + r"(?:code" + SEP + r")?review" + SEP + r"implemented", re.I)
-          name_end = (r"(?!(?:['\u2019]s)\s+(?:API|SDK|integration|client)\b)"
-                      r"(?=" + SEP + r"(?:and|as|for|to|on|who|which|that|assistance|help|alongside|together|with)\b|\s*(?:[^\w\s]|$))")
+          name_end = r"(?!(?:['\u2019]s)?(?:\s+|-)(?:API|SDK|clients?|integration|pagination|deletion|support)\b)"
+          qualifier = re.compile(
+              r"^(?:['\u2019]s)?[\W_]*(?:(?:as|is|was|who|the|a|an)\s+)*"
+              r"(?:co[- ]?author(?:ed)?|author(?:ed)?|assistance|help)\b", re.I)
+          product_words = re.compile(r"\b(?:integration|support|pars(?:e|es|ed|ing))\b", re.I)
           byline = re.compile(
               r"\b(?P<relation>by|with|via|using|and)" + SEP + DESCRIPTOR + TOOL +
               name_end, re.I)
@@ -178,34 +182,43 @@ jobs:
                   if any(obj.start() <= match.start() and match.end() <= obj.end() for obj in objects):
                       continue
                   bad.append("pull request title: authorship credit")
-              for match in coauthors.finditer(text):
+              for match in [*coauthors.finditer(text), *credit_relation.finditer(text)]:
+                  if any(obj.start() <= match.start() and match.end() <= obj.end() for obj in objects):
+                      continue
                   # Read names in place so punctuation inside a decoration cannot split one.
-                  if re.search(TOOL + name_end, text[match.end():], re.I):
+                  tail = text[match.end():]
+                  for name in re.finditer(TOOL + name_end, tail, re.I):
+                      local = re.split(r"\s+-\s+|[;|\n]", tail[:name.start()])[-1]
+                      if (handling.search(local) or product_words.search(local)) and not qualifier.match(tail[name.end():]):
+                          continue
                       bad.append("pull request title: co-author credit")
               for match in reverse_credit.finditer(text):
                   action = handling.search(text[:match.start()])
-                  policy_action = action and action[0].casefold().startswith(
+                  policy_action = (action and action[0].casefold().startswith(
                       ("reject", "block", "detect", "filter", "remov", "ignor", "test", "validat", "prevent"))
+                      and re.match(SEP + r"(?:commits?|PRs?|pull requests?|credits?|attributions?|authorship|trailers?|identities|contributors?)\b",
+                                   text[match.end():], re.I))
                   data_output = (re.search(r"\b(?:generated|created|produced)$", match[0], re.I)
-                                 and not re.match(r"\s+(?:code|documentation|tests?|changes?|patch|release|implementation|updates?)\b",
-                                                  text[match.end():], re.I))
+                                 and re.match(SEP + r"(?:API\s+)?(?:errors?|responses?|requests?|pagination|tokens?|records?|IDs?|JSON|XML|CSV|data)\b",
+                                              text[match.end():], re.I))
                   feature = re.search(r"\breview\s+implemented$", match[0], re.I)
-                  if (action and output_phrase.fullmatch(match[0]) and (policy_action or data_output or feature)
+                  if (action and (policy_action or (output_phrase.fullmatch(match[0]) and (data_output or feature)))
                           and not re.match(r"\s+(?:this|the|these|those|it|them|our|my)\b", text[match.end():], re.I)):
                       objects.append(match)
                       continue
                   bad.append("pull request title: authorship credit")
               for match in byline.finditer(text):
+                  if any(obj.start() <= match.start() and match.end() <= obj.end() for obj in objects):
+                      continue
                   earlier = [obj for obj in objects if obj.end() <= match.start()]
-                  if not earlier:
-                      continue
-                  prefix = text[max(obj.end() for obj in earlier):match.start()]
+                  start = max((obj.end() for obj in earlier), default=0)
+                  prefix = text[start:match.start()]
                   local = re.split(r"\.(?=\s|$)|[,;|\n]", prefix)[-1]
-                  # A later product task can use a tool without crediting its author.
-                  product = handling.search(local) or re.search(r"\b(?:integration|support)\b", local, re.I)
-                  if match["relation"].casefold() != "by" and product:
-                      continue
-                  bad.append("pull request title: trailing authorship credit")
+                  # Explicit author wording takes priority over a product task.
+                  explicit = match["relation"].casefold() == "by" or qualifier.match(text[match.end():])
+                  context = earlier or credit_relation.search(local) or handling.search(local)
+                  if explicit or (context and not product_words.search(local)):
+                      bad.append("pull request title: trailing authorship credit")
               # ponytail: explicit credit grammar; ambiguous prose still needs review.
               return bad + scan("pull request body", body or "")
 
@@ -383,6 +396,42 @@ jobs:
               ('Implemented with Cursor pagination by Claude alongside Alice', True),
               ('Implemented with Cursor pagination by Claude together with Alice', True),
               ('Implemented with Cursor pagination by Claude with Alice', True),
+              ('Add Claude-generated source code', True),
+              ('Fix Claude-generated bug', True),
+              ('Fix Claude-generated feature', True),
+              ('Fix Claude-generated commit', True),
+              ('Fix Claude-generated commits', True),
+              ('Fix Claude-generated pull request', True),
+              ('Fix Claude-generated PR', True),
+              ('Fix OpenAI-generated: code', True),
+              ('Fix OpenAI-generated: this code', True),
+              ('Implemented with Cursor pagination, update integration with Claude assistance', True),
+              ('Implemented with Cursor pagination; update docs with Claude as the author', True),
+              ('Implemented with Cursor pagination and integration - with Claude as co-author', True),
+              ('Implemented with Cursor pagination; add caching with Claude', True),
+              ('Implemented with Cursor pagination; Test parser with Claude as the author', True),
+              ('Implemented with Cursor pagination by Claude in tests', True),
+              ('Implemented with Cursor pagination by Claude during development', True),
+              ("Implemented with Cursor pagination with Claude's assistance", True),
+              ('Fix caching; by Claude', True),
+              ('Co-authored-by: Jane and Claude is a co-author', True),
+              ('Claude-4 authored this PR', True),
+              ('Reject Claude authored commits', False),
+              ('Implemented with OpenAI client', False),
+              ('Implemented with OpenAI SDK', False),
+              ('Implemented with OpenAI integration', False),
+              ('Co-authored by Alice; update OpenAI', False),
+              ('Co-authored-by: Alice - Add support for OpenAI', False),
+              ('Co-authored-by: Alice; add integration with Claude', False),
+              ('Implemented by Alice and Claude', True),
+              ('Written by Alice and Claude', True),
+              ('Co-authored-by: Claude reviewer', True),
+              ('Add Claude-generated API code', True),
+              ('Fix Claude-generated API implementation', True),
+              ('Test Claude-generated code', True),
+              ('Written by Alice & Claude', True),
+              ('Generated by Alice / Claude', True),
+              ('Implemented by Jane + Claude', True),
           ):
               if bool(scan_pr(title, "")) != blocked:
                   sys.exit("Attribution policy self-test failed")
