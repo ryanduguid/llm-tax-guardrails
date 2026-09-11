@@ -74,10 +74,7 @@ jobs:
               VENDOR + r"(?:[-_ ](?:agent|code|bot)(?:\[bot\])?|\[bot\])|"
               r"claude (?:opus|sonnet|haiku|fable)(?: [0-9.]+)?|"
               r"hermes review|review (?:bot|agent|fixes)|"
-              r"(?:openai[-_ ]codex|github[-_ ]copilot|qodo-code-review)(?:\[bot\])?", re.I)
-          AI_EMAIL = re.compile(
-              r"noreply@anthropic\.com|(?:[0-9]+\+)?" + VENDOR +
-              r"\[bot\]@users\.noreply\.github\.com", re.I)
+              r"(?:openai[-_ ]codex|github[-_ ]copilot|qodo-code-review|gemini-code-assist)(?:\[bot\])?", re.I)
 
           CREDIT_VERB = (r"(?:generated|addressed|authored|written|created|produced|"
                          r"reviewed|fixed|resolved|implemented|assisted|handled)")
@@ -134,7 +131,13 @@ jobs:
                           break
               return bad
 
-          failures = scan("pull request title", os.environ.get("PR_TITLE") or "")
+          # Titles are plain text. Check explicit by-lines, without interpreting
+          # fences or treating a product URL or cursor pagination as a footer.
+          title_credit = re.compile(
+              r"(?:co-?authored-by:\s*|" + CREDIT_VERB + r"[-_ ]by[: ]+).*?\b" + VENDOR + r"\b|" +
+              CREDIT_VERB + r"\s+with\s+\[?" + VENDOR +
+              r"(?:\s+(?:code|agent))?(?:\]\([^)]*\))?[\s.!]*$", re.I)
+          failures = ["pull request title: authorship credit"] if title_credit.search(os.environ.get("PR_TITLE") or "") else []
           failures += scan("pull request body", os.environ.get("PR_BODY") or "")
 
           base, head = os.environ["BASE_SHA"], os.environ["HEAD_SHA"]
@@ -167,7 +170,7 @@ jobs:
               # Read the commit structure directly: control bytes in names cannot
               # shift fields, and mailmap aliases cannot conceal raw identities.
               for role in ("author", "committer"):
-                  values = [line[len(role) + 1:] for line in headers.decode("utf-8", "replace").split("\n")
+                  values = [line[len(role) + 1:] for line in headers.decode("utf-8").split("\n")
                             if line.startswith(role + " ")]
                   if len(values) != 1:
                       sys.exit("Missing or duplicate commit identity")
@@ -175,7 +178,11 @@ jobs:
                   if identity is None:
                       sys.exit("Malformed commit identity")
                   name, email = identity.groups()
-                  if AI_NAME.fullmatch(name.strip()) or AI_EMAIL.fullmatch(email.strip()):
+                  if any(not char.isprintable() or char == "\ufffd" for char in name + email):
+                      sys.exit("Non-printable commit identity")
+                  account = re.fullmatch(r"(?:[0-9]+\+)?([^@]+)@users\.noreply\.github\.com", email, re.I)
+                  if (AI_NAME.fullmatch(name.strip()) or email.casefold() == "noreply@anthropic.com"
+                          or (account and AI_NAME.fullmatch(account[1]))):
                       failures.append("commit %s: AI %s identity" % (sha[:12], role))
               failures += scan("commit " + sha[:12], msg.decode("utf-8", "replace"))
 
@@ -189,7 +196,7 @@ jobs:
           PY
 
       - name: Publish the result on the head commit
-        if: always() && github.event_name != 'pull_request'
+        if: ${{ always() && !cancelled() && github.event_name != 'pull_request' }}
         env:
           GH_TOKEN: ${{ github.token }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
@@ -201,7 +208,7 @@ jobs:
             -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" --silent
 
   policy:
-    if: github.event_name != 'pull_request'
+    if: ${{ !cancelled() && github.event_name != 'pull_request' }}
     name: Attribution policy runner
     runs-on: ubuntu-latest
     permissions:
