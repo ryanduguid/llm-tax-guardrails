@@ -153,16 +153,19 @@ jobs:
           coauthors = re.compile(r"\bco[-_ ]?authored" + SEP + r"by" + SEP, re.I)
           technical = re.compile(
               r"\bimplemented" + SEP + r"(?:with|via|using)" + SEP + DESCRIPTOR +
-              r"(?:cursor[- ]+(?:based[- ]+)?pagination|cascade[- ]+deletion)\b|"
+              r"(?:cursor[- ]+(?:based[- ]+)?pagination|cascade[- ]+deletion|" + TOOL + SEP + r"API)\b|"
               r"\berrors?" + SEP + r"generated" + SEP + r"by" + SEP + DESCRIPTOR + TOOL + SEP + r"API\b", re.I)
           handling = re.compile(
               r"\b(?:add(?:s|ed|ing)?|updat(?:e|es|ed|ing)|fix(?:es|ed|ing)?|handl(?:e|es|ed|ing)|"
               r"pars(?:e|es|ed|ing)|validat(?:e|es|ed|ing)|reject(?:s|ed|ing)?|block(?:s|ed|ing)?|"
               r"detect(?:s|ed|ing)?|filter(?:s|ed|ing)?|remov(?:e|es|ed|ing)|ignor(?:e|es|ed|ing)|"
-              r"test(?:s|ed|ing)?|prevent(?:s|ed|ing)?|support(?:s|ed|ing)?|enabl(?:e|es|ed|ing))\b[^.!?;|\n]*$", re.I)
+              r"test(?:s|ed|ing)?|prevent(?:s|ed|ing)?|support(?:s|ed|ing)?|enabl(?:e|es|ed|ing))\b\s*[:\-]?\s*[^.!?,:;|\n]*$", re.I)
+          output_phrase = re.compile(
+              TOOL + r"\s*[-:]\s*" + CREDIT_VERB + r"(?!\w)|" +
+              TOOL + SEP + r"(?:code" + SEP + r")?review" + SEP + r"implemented", re.I)
           byline = re.compile(
               r"\b(?:by|with|via|using|and)" + SEP + DESCRIPTOR + TOOL +
-              r"(?=" + SEP + r"as" + SEP + r"(?:the" + SEP + r")?author\b|\s*(?:[,;|.]|$))", re.I)
+              r"(?=" + SEP + r"(?:as|for|to|on)\b|\s*(?:[^\w\s]|$))", re.I)
 
           def scan_pr(title, body):
               text = comparable(title or "").replace("_", " ")
@@ -174,20 +177,20 @@ jobs:
                       continue
                   bad.append("pull request title: authorship credit")
               for match in coauthors.finditer(text):
-                  # An explicit clause separator ends the list of credited names.
-                  names = re.split(r"\s+-\s+|[:;|\n]", text[match.end():])
-                  if re.search(TOOL, names[0], re.I) or any(re.fullmatch(r"\s*" + TOOL + r"\s*", part, re.I) for part in names[1:]):
+                  # Match complete list items, including decorated names and emails.
+                  names = re.split(r"\s+-\s+|[:;|,\n&]|\band\b", text[match.end():], flags=re.I)
+                  if any(re.fullmatch(r"[^\w]*" + TOOL + r"(?:\s*(?:<[^<>\n]+>|\([^()\n]+\)))*[^\w]*", part, re.I) for part in names):
                       bad.append("pull request title: co-author credit")
               for match in reverse_credit.finditer(text):
                   # A handling verb makes the tool's output the object of the task.
-                  if handling.search(text[:match.start()]) and not re.match(
-                          r"\s+(?:this|the)\s+(?:PR|pull request|change|bug|fix|patch)\b", text[match.end():], re.I):
+                  if (handling.search(text[:match.start()]) and output_phrase.fullmatch(match[0])
+                          and not re.match(r"\s+(?:this|the|these|those|it|them|our|my)\b", text[match.end():], re.I)):
                       objects.append(match)
                       continue
                   bad.append("pull request title: authorship credit")
               for obj in objects:
-                  tail = re.split(r"[;|\n]", text[obj.end():], maxsplit=1)[0]
-                  if byline.search(tail):
+                  tails = re.split(r"[.;|\n]", text[obj.end():])
+                  if byline.search(tails[0]) or any(byline.match(tail.strip()) for tail in tails[1:]):
                       bad.append("pull request title: trailing authorship credit")
               # ponytail: explicit credit grammar; ambiguous prose still needs review.
               return bad + scan("pull request body", body or "")
@@ -300,6 +303,41 @@ jobs:
               ('Fix issue, Claude authored this PR', True),
               ('Handle OpenAI-generated API errors via Claude', True),
               ('Handle OpenAI-generated API errors; parse with Cursor', False),
+              ('Add parser, Claude authored code', True),
+              ('Fix errors, Claude authored updates', True),
+              ('Fix errors, Claude authored this implementation', True),
+              ('Fix API errors, Claude authored changes', True),
+              ('Add parser: Claude authored code', True),
+              ('Co-authored-by: Jane - Claude and Alice', True),
+              ('Co-authored-by: Jane; Alice, Claude', True),
+              ('Co-authored-by: Jane | Alice & Claude', True),
+              ('Implemented with cursor pagination; by Claude', True),
+              ('Implemented with cursor pagination | with Claude', True),
+              ('Handle OpenAI-generated API errors; by Claude', True),
+              ('Handle: malformed OpenAI-generated responses', False),
+              ('Fix: Claude authored this implementation', True),
+              ('Implemented with Cursor pagination. Update integration with OpenAI.', False),
+              ('Implemented with OpenAI API', False),
+              ('Implemented with OpenAI API; by Claude', True),
+              ('Implemented with Cursor pagination; with Claude as the author', True),
+              ('Co-authored-by: Jane; Claude.', True),
+              ('Co-authored-by: Alice and OpenAI integration', False),
+              ('Implemented with Cursor pagination by Claude as co-author', True),
+              ('Fix: Claude authored documentation', True),
+              ('Co-authored-by: Jane - (Claude)', True),
+              ('Co-authored-by: Jane - @Claude', True),
+              ('Co-authored-by: Jane - Claude <noreply@anthropic.com>', True),
+              ('Fix tests and Claude authored the implementation', True),
+              ('Fix tests, Claude implemented it', True),
+              ('Add caching: Claude implemented it', True),
+              ('Fix docs: Claude authored tests', True),
+              ('Implemented with Cursor pagination by Claude: add caching', True),
+              ('Implemented with Cursor pagination by Claude - add caching', True),
+              ('Implemented with Cursor pagination by Claude!', True),
+              ('Implemented with Cursor pagination by (Claude)', True),
+              ('Implemented with Cursor pagination by Claude for this PR', True),
+              ('Implemented with Cursor pagination by Claude to add caching', True),
+              ('Co-authored-by: Jane - Claude (reviewer)', True),
           ):
               if bool(scan_pr(title, "")) != blocked:
                   sys.exit("Attribution policy self-test failed")
