@@ -140,30 +140,349 @@ jobs:
                           break
               return bad
 
-          # Titles are plain text. Check explicit by-lines, without interpreting
-          # fences or treating a product URL or cursor pagination as a footer.
+          # Titles are plain text. Whole-word names and one separator grammar
+          # keep punctuation variants consistent without matching human surnames.
+          SEP = r"[^\w;|\n]+"
+          TOOL = (r"(?<!\w)(?:" + AI_NAME.pattern + r"|(?:github(?:['\u2019]s)?" + SEP + r")?" + VENDOR +
+                  r")(?!\w)(?:" + SEP + r"(?:code|agent|bot|assist|review|codex)(?!\w))*(?:[- ]+[0-9]+(?:\.[0-9]+)*)?(?!\w)")
+          DESCRIPTOR = (r"(?:(?:the|ai|assistant|agent|bot|and|by|with|via|using)" + SEP + r")*")
           title_credit = re.compile(
-              r"\b(?:co[-_ ]?authored[-_ ]by[: ]+|" + CREDIT_VERB +
-              r"[-_ ]+(?:by|with|via|using)[: ]+)(?:[^\w]|_)*(?:the\s+)?(?:[^\w]|_)*" +
-              r"(?P<vendor>github[-_ ]copilot|" + VENDOR + r")(?![a-z0-9])", re.I)
+              r"(?<!\w)" + CREDIT_VERB + SEP + r"(?:by|with|via|using)" + SEP +
+              DESCRIPTOR + TOOL, re.I)
+          reverse_credit = re.compile(TOOL + SEP + CREDIT_VERB + r"(?!\w)", re.I)
+          coauthors = re.compile(r"\bco[-_ ]?authored" + SEP + r"by" + SEP, re.I)
+          credit_relation = re.compile(r"(?<!\w)" + CREDIT_VERB + SEP + r"(?:by|with|via|using)" + SEP, re.I)
+          PRODUCT = r"(?:API|SDK|clients?|integrations?|models?|parsers?|prompts?)"
+          DATA_NOUN = r"(?:errors?|responses?|requests?|pagination|tokens?|records?|IDs?|JSON|XML|CSV|data)"
+          technical = re.compile(
+              r"\bimplemented" + SEP + r"(?:with|via|using)" + SEP + DESCRIPTOR +
+              r"(?:cursor[- ]+(?:based[- ]+)?pagination|cascade[- ]+deletion|" + TOOL + r"(?:['\u2019]s)?(?:\s+|-)" + PRODUCT + r")\b|"
+              r"\b" + DATA_NOUN + SEP + r"generated" + SEP + r"by" + SEP + DESCRIPTOR + TOOL + r"(?:['\u2019]s)?(?:\s+|-)" + PRODUCT + r"\b", re.I)
+          handling = re.compile(
+              r"\b(?:add(?:s|ed|ing)?|updat(?:e|es|ed|ing)|fix(?:es|ed|ing)?|handl(?:e|es|ed|ing)|"
+              r"pars(?:e|es|ed|ing)|validat(?:e|es|ed|ing)|reject(?:s|ed|ing)?|block(?:s|ed|ing)?|"
+              r"detect(?:s|ed|ing)?|filter(?:s|ed|ing)?|remov(?:e|es|ed|ing)|ignor(?:e|es|ed|ing)|"
+              r"test(?:s|ed|ing)?|prevent(?:s|ed|ing)?|support(?:s|ed|ing)?|enabl(?:e|es|ed|ing))\b\s*[:\-]?\s*(?:(?!\s+-\s)[^.!?,:;|\n])*$", re.I)
+          handling_starts = re.compile(r"(?=(" + handling.pattern + r"))", re.I)
+          output_phrase = re.compile(
+              TOOL + r"\s*[-:]\s*" + CREDIT_VERB + r"(?!\w)|" +
+              TOOL + SEP + r"(?:code" + SEP + r")?review" + SEP + r"implemented", re.I)
+          name_end = r"(?!(?:['\u2019]s)?(?:\s+|-)(?:" + PRODUCT + r"|pagination|deletion|support)\b)"
+          AUTHOR_PREFIX = r"^(?:['\u2019]s)?[\W_]*(?:(?:as|is|was|are|were|who|the|a|an)\s+)*"
+          AUTHOR = r"(?:co[- ]?author(?:ed|s)?|author(?:ed|s)?|wrote)"
+          author_statement = re.compile(AUTHOR_PREFIX + AUTHOR + r"\b", re.I)
+          qualifier = re.compile(AUTHOR_PREFIX + r"(?:" + AUTHOR + r"|assistance|help)\b", re.I)
+          product_words = re.compile(r"\b(?:integration|support|pars(?:e|es|ed|ing))\b", re.I)
+          byline = re.compile(
+              r"\b(?P<relation>by|with|via|using|and)" + SEP + DESCRIPTOR + TOOL +
+              name_end, re.I)
+
           def scan_pr(title, body):
               text = comparable(title or "").replace("_", " ")
               bad = []
+              # Classify each match in the original text; removing words can join clauses.
+              objects = list(technical.finditer(text))
               for match in title_credit.finditer(text):
-                  suffix = text[match.end():]
-                  term = {"cursor": "pagination", "cascade": "deletion"}.get(match["vendor"].casefold())
-                  if (term and re.match(r"[ -]+" + term + r"\b", suffix, re.I)
-                          and re.match(r"implemented\s+with\s+", match[0], re.I)):
-                      continue
-                  if (re.search(r"\berrors?\s+$", text[:match.start()], re.I)
-                          and re.match(r"generated\s+by\s+", match[0], re.I)
-                          and re.match(r"\s+API\b", suffix, re.I)):
+                  if any(obj.start() <= match.start() and match.end() <= obj.end() for obj in objects):
                       continue
                   bad.append("pull request title: authorship credit")
-              if (re.search(VENDOR + r"[- ](?:authored|written|generated|assisted|reviewed|implemented)\b", text, re.I)
-                      or re.search(r"co-?authored[- ]by:\s*.*" + VENDOR, text, re.I)):
+              for match in [*coauthors.finditer(text), *credit_relation.finditer(text)]:
+                  if any(obj.start() <= match.start() and match.end() <= obj.end() for obj in objects):
+                      continue
+                  # Read names in place so punctuation inside a decoration cannot split one.
+                  tail = text[match.end():]
+                  for name in re.finditer(TOOL + name_end, tail, re.I):
+                      local = re.split(r"\s+-\s+|[;|,\n]|\band\b", tail[:name.start()], flags=re.I)[-1].lstrip()
+                      task = handling.match(local)
+                      credit_prefix = re.search(r"\b(?:support|assistance|help)\s+from\s*$", local, re.I)
+                      if task and not credit_prefix and not qualifier.match(tail[name.end():]):
+                          continue
+                      bad.append("pull request title: co-author credit")
+              for match in reverse_credit.finditer(text):
+                  actions = list(handling_starts.finditer(text[:match.start()]))
+                  action = actions[-1][1] if actions else None
+                  policy_action = (action and action.casefold().startswith(
+                      ("reject", "block", "detect", "filter", "remov", "ignor", "test", "validat", "prevent"))
+                      and re.match(SEP + r"(?:commits?|PRs?|pull requests?|credits?|attributions?|authorship|trailers?|identities|contributors?)\b",
+                                   text[match.end():], re.I))
+                  data_output = (re.search(r"\b(?:generated|created|produced)$", match[0], re.I)
+                                 and re.match(SEP + r"(?:API\s+)?" + DATA_NOUN + r"\b",
+                                              text[match.end():], re.I))
+                  feature = re.search(r"\breview\s+implemented$", match[0], re.I)
+                  if (action and (policy_action or (output_phrase.fullmatch(match[0]) and (data_output or feature)))
+                          and not re.match(r"\s+(?:this|the|these|those|it|them|our|my)\b", text[match.end():], re.I)):
+                      objects.append(match)
+                      continue
                   bad.append("pull request title: authorship credit")
+              for name in re.finditer(TOOL, text, re.I):
+                  if any(obj.re is reverse_credit and obj.start() <= name.start() and name.end() <= obj.end() for obj in objects):
+                      continue
+                  suffix = text[name.end():]
+                  product = re.match(r"(?:['\u2019]s)?(?:(?:\s+|-)(?:" + PRODUCT + r"|pagination|deletion)\b)+", suffix, re.I)
+                  if product:
+                      suffix = suffix[product.end():]
+                  if author_statement.match(suffix):
+                      bad.append("pull request title: explicit author statement")
+              for match in byline.finditer(text):
+                  if any(obj.start() <= match.start() and match.end() <= obj.end() for obj in objects):
+                      continue
+                  earlier = [obj for obj in objects if obj.end() <= match.start()]
+                  start = max((obj.end() for obj in earlier), default=0)
+                  prefix = text[start:match.start()]
+                  local = re.split(r"\.(?=\s|$)|[,;|\n]", prefix)[-1]
+                  # Explicit author wording takes priority over a product task.
+                  explicit = (match["relation"].casefold() == "by" or qualifier.match(text[match.end():])
+                              or re.search(r"\b(?:together|alongside)\s*$", local, re.I))
+                  same_clause = earlier and not re.search(r"\.(?=\s|$)|[,;|\n]", prefix)
+                  context = same_clause or credit_relation.search(local)
+                  if match["relation"].casefold() != "and":
+                      context = context or earlier or handling.search(local)
+                  if explicit or (context and not product_words.search(local)):
+                      bad.append("pull request title: trailing authorship credit")
+              # ponytail: explicit credit grammar; ambiguous prose still needs review.
               return bad + scan("pull request body", body or "")
+
+          # Keep the reviewed title regressions executable in every installed copy.
+          for title, blocked in (
+              ('Generated by Claude Code', True),
+              ('``` Generated by Claude', True),
+              ('Implemented with cursor pagination', False),
+              ('https://openai.com/docs documentation link', False),
+              ("Generated with ChatGPT's assistance", True),
+              ('Written with Claude help', True),
+              ('Implemented with Claude: add caching', True),
+              ('Generated with [Claude]', True),
+              ('Co-authored-by: Qodo Code Review', True),
+              ('Generated with GitHub Copilot', True),
+              ('Generated with OpenAI Codex', True),
+              ('Generated with Gemini Code Assist', True),
+              ('Implemented by Alice: OpenAI integration', False),
+              ('Fixed by updating OpenAI integration', False),
+              ('Reviewed by Alice: replace Cursor integration', False),
+              ('Handle errors generated by OpenAI API', False),
+              ('Co-authored-by: OpenA\u034fI', True),
+              ('Generated by Clau\u200bde', True),
+              ('Generated with Claude API', True),
+              ('Generated with claude_code', True),
+              ('PR authored by ChatGPT', True),
+              ('Fix generated by GitHub Copilot', True),
+              ('Add parser generated with Claude', True),
+              ('Update generated by Claude', True),
+              ('Coauthored by ChatGPT', True),
+              ('Authored with Cursor pagination', True),
+              ('Errors authored by OpenAI API', True),
+              ('Errors fixed by Claude API', True),
+              ('Authored by (Claude)', True),
+              ('Generated by @Claude', True),
+              ('Generated by the Claude Code agent', True),
+              ('Implemented with cascade deletion', False),
+              ('_Generated by Claude_', True),
+              ('Claude-authored changes', True),
+              ('Co-authored-by: Jane and Claude', True),
+              ('Written via ChatGPT', True),
+              ('AI-generated using Claude', True),
+              ('Implemented with Cursor pagination, with Cursor as the author', True),
+              ('Generated-by-Claude', True),
+              ("Implemented with GitHub's Copilot", True),
+              ('Implemented with GitHub\u2019s Copilot', True),
+              ('Implemented with Cursor pagination by Claude', True),
+              ('Fix errors generated by OpenAI API by Claude', True),
+              ('Implemented via Cursor pagination', False),
+              ('Implemented using Cascade deletion', False),
+              ('Handle OpenAI-generated API errors', False),
+              ('Co-authored-by: Alice \u2014 OpenAI integration', False),
+              ('Co-authored-by: Claudette', False),
+              ('Claude-created this PR', True),
+              ('Claude: authored this PR', True),
+              ('Claude fixed this bug', True),
+              ('Implemented with Cursor pagination and Claude', True),
+              ('Claude Code authored this change', True),
+              ('Implemented using AI assistant Claude', True),
+              ('Handle precursor-generated records', False),
+              ('Raider-authored documentation', False),
+              ('Handle OpenAI-generated request IDs', False),
+              ('Generated: by OpenAI', True),
+              ('Implemented using Cursor pagination', False),
+              ('Handle cursor-generated pagination tokens', False),
+              ('Reject OpenAI-authored commits', False),
+              ('Implemented with Cursor pagination by OpenAI Codex', True),
+              ('Implemented with cursor-based pagination', False),
+              ('Co-authored-by: Jane, Claude', True),
+              ('Co-authored-by: Claudette and Alice', False),
+              ('Implemented by Alice: OpenAI integration', False),
+              ('Integrate OpenAI and Claude clients', False),
+              ('Implemented with cursor-based pagination; OpenAI integration', False),
+              ('Fix Claude Code-generated API errors', False),
+              ('Fix OpenAI-generated API errors', False),
+              ('Handle: OpenAI-generated API errors', False),
+              ('Reject: OpenAI-authored commits', False),
+              ('Handles cursor-generated tokens', False),
+              ('Handle malformed OpenAI-generated responses', False),
+              ('Fix OpenAI: generated API errors', False),
+              ('Implemented with Cursor pagination and OpenAI API', False),
+              ('Generated by GitHub Copilot', True),
+              ('Reject GitHub Copilot-authored commits', False),
+              ('Implemented with Cursor pagination API by Claude', True),
+              ('Handle OpenAI-generated API errors by Claude', True),
+              ('Co-authored-by: Jane - Claude', True),
+              ('Generated by Review Bot', True),
+              ('Claude Opus authored this change', True),
+              ('Add OpenAI code review implemented with webhooks', False),
+              ('Fix errors generated by the OpenAI API', False),
+              ('Fix errors generated by the OpenAI API by Claude', True),
+              ('Fix errors; Claude authored this change', True),
+              ('Fix errors. Claude authored this change', True),
+              ('Handle OpenAI-generated errors; Written by Claude', True),
+              ('Implemented with Cursor pagination; generated with Claude', True),
+              ('Implemented with Cursor pagination API by Claude; OpenAI integration', True),
+              ('Fix errors generated by Review Bot API', False),
+              ('Co-authored-by: Jane - Claude Code', True),
+              ('Co-authored-by: Jane - Claude integration', False),
+              ('Fixed Claude Code-generated API errors', False),
+              ('Handled malformed OpenAI-generated responses', False),
+              ('Prevent OpenAI-authored commits', False),
+              ('Support OpenAI code review implemented with webhooks', False),
+              ('Enable OpenAI code review implemented with webhooks', False),
+              ('Review Bot authored this change', True),
+              ('Co-authored-by: Jane; Claude', True),
+              ('Co-authored-by: Jane | Claude', True),
+              ('Fix: Claude authored this change', True),
+              ('Fix issue, Claude authored this PR', True),
+              ('Handle OpenAI-generated API errors via Claude', True),
+              ('Handle OpenAI-generated API errors; parse with Cursor', False),
+              ('Add parser, Claude authored code', True),
+              ('Fix errors, Claude authored updates', True),
+              ('Fix errors, Claude authored this implementation', True),
+              ('Fix API errors, Claude authored changes', True),
+              ('Add parser: Claude authored code', True),
+              ('Co-authored-by: Jane - Claude and Alice', True),
+              ('Co-authored-by: Jane; Alice, Claude', True),
+              ('Co-authored-by: Jane | Alice & Claude', True),
+              ('Implemented with cursor pagination; by Claude', True),
+              ('Implemented with cursor pagination | with Claude', True),
+              ('Handle OpenAI-generated API errors; by Claude', True),
+              ('Handle: malformed OpenAI-generated responses', False),
+              ('Fix: Claude authored this implementation', True),
+              ('Implemented with Cursor pagination. Update integration with OpenAI.', False),
+              ('Implemented with OpenAI API', False),
+              ('Implemented with OpenAI API; by Claude', True),
+              ('Implemented with Cursor pagination; with Claude as the author', True),
+              ('Co-authored-by: Jane; Claude.', True),
+              ('Co-authored-by: Alice and OpenAI integration', False),
+              ('Implemented with Cursor pagination by Claude as co-author', True),
+              ('Fix: Claude authored documentation', True),
+              ('Co-authored-by: Jane - (Claude)', True),
+              ('Co-authored-by: Jane - @Claude', True),
+              ('Co-authored-by: Jane - Claude <noreply@anthropic.com>', True),
+              ('Fix tests and Claude authored the implementation', True),
+              ('Fix tests, Claude implemented it', True),
+              ('Add caching: Claude implemented it', True),
+              ('Fix docs: Claude authored tests', True),
+              ('Implemented with Cursor pagination by Claude: add caching', True),
+              ('Implemented with Cursor pagination by Claude - add caching', True),
+              ('Implemented with Cursor pagination by Claude!', True),
+              ('Implemented with Cursor pagination by (Claude)', True),
+              ('Implemented with Cursor pagination by Claude for this PR', True),
+              ('Implemented with Cursor pagination by Claude to add caching', True),
+              ('Co-authored-by: Jane - Claude (reviewer)', True),
+              ('Fix Claude-authored code', True),
+              ('Fix Claude-generated code', True),
+              ('Fix Claude: authored documentation', True),
+              ('Fix tests and Claude: authored documentation', True),
+              ('Co-authored-by: Alice, Claude (AI, bot)', True),
+              ('Co-authored-by: Jane - Claude (research and review)', True),
+              ('Co-authored-by: Jane - Claude [reviewer]', True),
+              ('Co-authored-by: Jane and [Claude](https://claude.ai)', True),
+              ('Co-authored-by: Jane / Claude', True),
+              ('Co-authored-by: Jane + Claude', True),
+              ('Co-authored-by: Jane\u2014Claude', True),
+              ('Coauthored by Claude (reviewer and maintainer)', True),
+              ("Implemented with Cursor pagination and OpenAI's API", False),
+              ("Implemented with OpenAI's API", False),
+              ('Implemented with OpenAI\u2019s API', False),
+              ('Implemented with OpenAI API with Claude assistance', True),
+              ('Implemented with Cursor pagination for API v2.0, by Claude', True),
+              ('Implemented with Cursor pagination; by Claude 4', True),
+              ('Implemented with Cursor pagination; Update: by Claude', True),
+              ('Implemented with Cursor pagination; update docs, by Claude', True),
+              ('Implemented with Cursor pagination by Claude who co-authored this PR', True),
+              ('Implemented with Claude: API cleanup', True),
+              ('Implemented with Claude - API migration', True),
+              ('Implemented with Claude API', False),
+              ('Implemented with Cursor pagination, update integration with OpenAI', False),
+              ('Implemented with Cursor pagination and integration with OpenAI', False),
+              ('Implemented with cursor pagination and support for OpenAI and Claude', False),
+              ("Co-authored-by: Alice and OpenAI's API", False),
+              ('Implemented with Cursor pagination by Claude alongside Alice', True),
+              ('Implemented with Cursor pagination by Claude together with Alice', True),
+              ('Implemented with Cursor pagination by Claude with Alice', True),
+              ('Add Claude-generated source code', True),
+              ('Fix Claude-generated bug', True),
+              ('Fix Claude-generated feature', True),
+              ('Fix Claude-generated commit', True),
+              ('Fix Claude-generated commits', True),
+              ('Fix Claude-generated pull request', True),
+              ('Fix Claude-generated PR', True),
+              ('Fix OpenAI-generated: code', True),
+              ('Fix OpenAI-generated: this code', True),
+              ('Implemented with Cursor pagination, update integration with Claude assistance', True),
+              ('Implemented with Cursor pagination; update docs with Claude as the author', True),
+              ('Implemented with Cursor pagination and integration - with Claude as co-author', True),
+              ('Implemented with Cursor pagination; add caching with Claude', True),
+              ('Implemented with Cursor pagination; Test parser with Claude as the author', True),
+              ('Implemented with Cursor pagination by Claude in tests', True),
+              ('Implemented with Cursor pagination by Claude during development', True),
+              ("Implemented with Cursor pagination with Claude's assistance", True),
+              ('Fix caching; by Claude', True),
+              ('Co-authored-by: Jane and Claude is a co-author', True),
+              ('Claude-4 authored this PR', True),
+              ('Reject Claude authored commits', False),
+              ('Implemented with OpenAI client', False),
+              ('Implemented with OpenAI SDK', False),
+              ('Implemented with OpenAI integration', False),
+              ('Co-authored by Alice; update OpenAI', False),
+              ('Co-authored-by: Alice - Add support for OpenAI', False),
+              ('Co-authored-by: Alice; add integration with Claude', False),
+              ('Implemented by Alice and Claude', True),
+              ('Written by Alice and Claude', True),
+              ('Co-authored-by: Claude reviewer', True),
+              ('Add Claude-generated API code', True),
+              ('Fix Claude-generated API implementation', True),
+              ('Test Claude-generated code', True),
+              ('Written by Alice & Claude', True),
+              ('Generated by Alice / Claude', True),
+              ('Implemented by Jane + Claude', True),
+              ('Implemented with Claude API as co-author', True),
+              ('Implemented with Claude API as the author', True),
+              ('Co-authored-by: API support team and Claude', True),
+              ('Co-authored-by: Alice, OpenAI integration, Claude', True),
+              ('Co-authored-by: Alice (integration) and Claude', True),
+              ('Co-authored-by: Alice (integration lead), and Claude', True),
+              ('Co-authored-by: Alice; support from Claude', True),
+              ('Co-authored-by: integration with Claude', True),
+              ('Implemented with OpenAI clients', False),
+              ('Errors generated by OpenAI clients', False),
+              ('Add tests and OpenAI documentation', False),
+              ('Add parser and Claude Code', False),
+              ('Add OpenAI and Claude models', False),
+              ('Implemented by Alice with OpenAI models', False),
+              ('Co-authored by Alice; migrate from Claude models', False),
+              ('Claude is a co-author', True),
+              ('Claude was the author of this PR', True),
+              ('Alice and Claude wrote this PR', True),
+              ('Reject failing check - Claude authored commits', True),
+              ('Fixed bug, together with Claude', True),
+              ('Handle responses generated by OpenAI API', False),
+              ('Add a check to reject Claude-authored commits', False),
+              ('Add OpenAI help command', False),
+              ('Implemented with Cursor pagination; Add tests and OpenAI documentation', False),
+              ('Claude and ChatGPT are co-authors', True),
+              ('Claude and ChatGPT were authors', True),
+              ('Implemented with Claude API integration as co-author', True),
+              ('Implemented with Claude API client as co-author', True),
+          ):
+              if bool(scan_pr(title, "")) != blocked:
+                  sys.exit("Attribution policy self-test failed")
 
           failures = scan_pr(os.environ.get("PR_TITLE"), os.environ.get("PR_BODY"))
 
