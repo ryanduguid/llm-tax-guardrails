@@ -1,48 +1,89 @@
 name: No AI attribution
 
 # Fails a pull request that carries AI authorship credit in its description or
-# in any commit message on the branch. Product copy that names a tool is not
-# attribution and passes: only trailer and footer shapes are matched.
+# in commit messages or author and committer identities on the branch.
+# Product references are allowed.
 #
 # The local commit-msg guard catches commits written on Ryan's machine; this
-# workflow is the server-side backstop and the only layer that can see a pull
-# request body.
+# workflow checks pull request metadata from the trusted base branch and audits
+# commits after a default-branch push. It never runs pull request code.
 
 on:
   pull_request:
-    types: [opened, edited, synchronize, reopened]
+    types: [opened, edited, synchronize, reopened, ready_for_review]
+  pull_request_target:
+    types: [opened, edited, synchronize, reopened, ready_for_review]
+  push:
+    branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
   pull-requests: read
 
+concurrency:
+  group: attribution-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  check:
+  legacy:
+    if: github.event_name == 'pull_request'
+    name: check
     runs-on: ubuntu-latest
-    steps:
+    steps: &policy_steps
+      - name: Mark the head commit as pending
+        if: github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          POLICY_CONTEXT: ${{ github.event_name == 'pull_request_target' && 'Attribution policy' || 'Attribution audit' }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/statuses/$HEAD_SHA" --method POST \
+            -f state=pending -f context="$POLICY_CONTEXT" \
+            -f description='Checking commit identities and authorship credits' \
+            -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" --silent
+
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          ref: ${{ github.event.pull_request.base.sha || github.sha }}
 
-      - name: Scan the pull request body and its commits
+      - name: Scan pull request metadata and commits
         env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
           PR_BODY: ${{ github.event.pull_request.body }}
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before || '0000000000000000000000000000000000000000' }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           python - <<'PY'
           import os
           import re
           import subprocess
           import sys
+          import unicodedata
 
           VENDOR = (r"(?:claude|anthropic|codex|openai|cursor|hermes|nousresearch|"
-                    r"copilot|chatgpt|gemini|devin|windsurf|antigravity|aider)")
+                    r"copilot|chatgpt|gemini|devin|codeium|windsurf|antigravity|aider|qodo|openhands|cascade)")
 
           # Domains for the bare-URL rule, kept in step with VENDOR.
           DOMAIN = (r"(?:claude\.ai|claude\.com|anthropic\.com|openai\.com|"
                     r"chatgpt\.com|cursor\.com|cursor\.sh|codeium\.com|"
-                    r"windsurf\.com|cognition\.ai|devin\.ai|nousresearch\.com)")
+                    r"windsurf\.com|cognition\.ai|devin\.ai|nousresearch\.com|qodo\.ai|openhands\.dev|all-hands\.dev)")
+
+          AI_NAME = re.compile(
+              r"(?:anthropic|codex|openai|cursor|nousresearch|copilot|chatgpt|"
+              r"codeium|windsurf|antigravity|aider|qodo|openhands)|" +
+              VENDOR + r"(?:[-_ ](?:agent|code|bot)(?:\[bot\])?|\[bot\])|"
+              + VENDOR + r"(?:[-_ ][a-z0-9]+)+\[bot\]|"
+              r"claude (?:opus|sonnet|haiku|fable)(?: [0-9.]+)?|"
+              r"hermes review|review (?:bot|agent|fixes)|"
+              r"(?:openai[-_ ]codex|github[-_ ]copilot|qodo[-_ ]code[-_ ]review|gemini[-_ ]code[-_ ]assist)(?:\[bot\])?", re.I)
+
+          def comparable(text):
+              # Compare visible letters without hidden characters or combining marks.
+              return "".join(" " if char.isspace() else "-" if unicodedata.category(char) == "Pd" else char
+                             for char in unicodedata.normalize("NFKD", text)
+                             if (char.isprintable() or char.isspace()) and not unicodedata.category(char).startswith("M"))
 
           CREDIT_VERB = (r"(?:generated|addressed|authored|written|created|produced|"
                          r"reviewed|fixed|resolved|implemented|assisted|handled)")
@@ -93,36 +134,114 @@ jobs:
                   if open_char is not None:
                       continue
                   for name, rx in RX:
-                      if rx.match(line):
+                      if rx.match(comparable(line)):
                           bad.append("%s line %d: %s (%s)"
                                      % (label, n, line.strip()[:120], name))
                           break
               return bad
 
-          failures = scan("pull request body", os.environ.get("PR_BODY") or "")
+          # Titles are plain text. Check explicit by-lines, without interpreting
+          # fences or treating a product URL or cursor pagination as a footer.
+          title_credit = re.compile(
+              r"\b(?:co[-_ ]?authored[-_ ]by[: ]+|" + CREDIT_VERB +
+              r"[-_ ]+(?:by|with|via|using)[: ]+)(?:[^\w]|_)*(?:the\s+)?(?:[^\w]|_)*" +
+              r"(?P<vendor>github[-_ ]copilot|" + VENDOR + r")(?![a-z0-9])", re.I)
+          def scan_pr(title, body):
+              text = comparable(title or "").replace("_", " ")
+              bad = []
+              for match in title_credit.finditer(text):
+                  suffix = text[match.end():]
+                  term = {"cursor": "pagination", "cascade": "deletion"}.get(match["vendor"].casefold())
+                  if (term and re.match(r"[ -]+" + term + r"\b", suffix, re.I)
+                          and re.match(r"implemented\s+with\s+", match[0], re.I)):
+                      continue
+                  if (re.search(r"\berrors?\s+$", text[:match.start()], re.I)
+                          and re.match(r"generated\s+by\s+", match[0], re.I)
+                          and re.match(r"\s+API\b", suffix, re.I)):
+                      continue
+                  bad.append("pull request title: authorship credit")
+              if (re.search(VENDOR + r"[- ](?:authored|written|generated|assisted|reviewed|implemented)\b", text, re.I)
+                      or re.search(r"co-?authored[- ]by:\s*.*" + VENDOR, text, re.I)):
+                  bad.append("pull request title: authorship credit")
+              return bad + scan("pull request body", body or "")
+
+          failures = scan_pr(os.environ.get("PR_TITLE"), os.environ.get("PR_BODY"))
 
           base, head = os.environ["BASE_SHA"], os.environ["HEAD_SHA"]
+          # The policy runs from the base branch. Fetch PR objects as data only.
+          for ref in (base, head):
+              if not re.fullmatch(r"[0-9a-f]{40}", ref):
+                  sys.exit("Invalid commit identifier")
+              if ref == "0" * 40:
+                  continue
+              present = subprocess.run(["git", "cat-file", "-e", ref + "^{commit}"],
+                                       capture_output=True)
+              if present.returncode:
+                  fetched = subprocess.run(["git", "fetch", "--no-tags", "origin", ref],
+                                           capture_output=True, text=True)
+                  if fetched.returncode:
+                      sys.exit("Could not read the commit range: commit fetch failed")
+          commit_range = head if base == "0" * 40 else base + ".." + head
           proc = subprocess.run(
-              ["git", "log", "--format=%H%x1f%B%x1e", base + ".." + head],
-              capture_output=True, text=True, errors="replace")
+              ["git", "rev-list", commit_range], capture_output=True, text=True)
           if proc.returncode != 0:
               # Fail closed: an unscannable range must not read as clean.
               print("Could not read the commit range %s..%s" % (base[:12], head[:12]))
               print(proc.stderr.strip()[:500])
               sys.exit(1)
 
-          for rec in proc.stdout.split("\x1e"):
-              if "\x1f" not in rec:
-                  continue
-              sha, msg = rec.split("\x1f", 1)
-              failures += scan("commit " + sha.strip()[:12], msg)
+          for sha in proc.stdout.splitlines():
+              raw = subprocess.run(["git", "cat-file", "commit", sha],
+                                   capture_output=True, check=True).stdout
+              headers, msg = raw.split(b"\n\n", 1)
+              # Read the commit structure directly: control bytes in names cannot
+              # shift fields, and mailmap aliases cannot conceal raw identities.
+              for role in ("author", "committer"):
+                  values = [line[len(role) + 1:] for line in headers.decode("utf-8").split("\n")
+                            if line.startswith(role + " ")]
+                  if len(values) != 1:
+                      sys.exit("Missing or duplicate commit identity")
+                  identity = re.fullmatch(r"([^<>\n]*) <([^<>\n]*)> -?[0-9]+ [+-][0-9]{4}", values[0])
+                  if identity is None:
+                      sys.exit("Malformed commit identity")
+                  name, email = identity.groups()
+                  if any(not char.isprintable() or char == "\ufffd" for char in name + email):
+                      sys.exit("Non-printable commit identity")
+                  name, email = comparable(name), comparable(email.strip())
+                  account = re.fullmatch(r"(?:[0-9]+\+)?([^@]+)@users\.noreply\.github\.com", email, re.I)
+                  if (AI_NAME.fullmatch(name.strip()) or email.casefold() in {"noreply@anthropic.com", "openhands@all-hands.dev", "cascade@windsurf.com"}
+                          or (account and AI_NAME.fullmatch(account[1]))):
+                      failures.append("commit %s: AI %s identity" % (sha[:12], role))
+              failures += scan("commit " + sha[:12], msg.decode("utf-8", "replace"))
 
           if failures:
               print("AI attribution found:\n")
               for f in failures:
                   print("  " + f)
-              print("\nRemove the credit line. Naming a tool in product copy is fine;")
-              print("crediting it as an author is not.")
+              print("\nRemove AI credits and correct AI author or committer identities before merging.")
               sys.exit(1)
           print("No AI attribution found.")
           PY
+
+      - name: Publish the result on the head commit
+        if: ${{ always() && !cancelled() && github.event_name != 'pull_request' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          POLICY_CONTEXT: ${{ github.event_name == 'pull_request_target' && 'Attribution policy' || 'Attribution audit' }}
+          STATE: ${{ job.status == 'success' && 'success' || 'failure' }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/statuses/$HEAD_SHA" --method POST \
+            -f state="$STATE" -f context="$POLICY_CONTEXT" \
+            -f description='Commit identity and authorship credit policy' \
+            -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" --silent
+
+  policy:
+    if: ${{ !cancelled() && github.event_name != 'pull_request' }}
+    name: Attribution policy runner
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+      statuses: write
+    steps: *policy_steps
