@@ -74,13 +74,15 @@ jobs:
               r"(?:anthropic|codex|openai|cursor|nousresearch|copilot|chatgpt|"
               r"codeium|windsurf|antigravity|aider|qodo|openhands)|" +
               VENDOR + r"(?:[-_ ](?:agent|code|bot)(?:\[bot\])?|\[bot\])|"
+              + VENDOR + r"(?:[-_ ][a-z0-9]+)+\[bot\]|"
               r"claude (?:opus|sonnet|haiku|fable)(?: [0-9.]+)?|"
               r"hermes review|review (?:bot|agent|fixes)|"
               r"(?:openai[-_ ]codex|github[-_ ]copilot|qodo[-_ ]code[-_ ]review|gemini[-_ ]code[-_ ]assist)(?:\[bot\])?", re.I)
 
           def comparable(text):
               # Compare visible letters without hidden characters or combining marks.
-              return "".join(char for char in unicodedata.normalize("NFKD", text)
+              return "".join("-" if unicodedata.category(char) == "Pd" else char
+                             for char in unicodedata.normalize("NFKD", text)
                              if char.isprintable() and not unicodedata.category(char).startswith("M"))
 
           CREDIT_VERB = (r"(?:generated|addressed|authored|written|created|produced|"
@@ -141,12 +143,21 @@ jobs:
           # Titles are plain text. Check explicit by-lines, without interpreting
           # fences or treating a product URL or cursor pagination as a footer.
           title_credit = re.compile(
-              r"(?:^|[|:;(\[]| - )[\s`~*_]*(?:co-?authored-by:\s*|" +
-              CREDIT_VERB + r"[-_ ]+(?:by|with)[: ]+)[\s\[*_`]*" +
-              r"(?:github[-_ ]copilot|" + VENDOR + r")\b"
-              r"(?![ -]+(?:pagination|api|integration)\b)", re.I)
+              r"\b(?:co-?authored-by:\s*|" + CREDIT_VERB +
+              r"[-_ ]+(?:by|with)[: ]+)[\s\[*_`]*" +
+              r"(?P<vendor>github[-_ ]copilot|" + VENDOR + r")(?![a-z0-9])", re.I)
           def scan_pr(title, body):
-              bad = ["pull request title: authorship credit"] if title_credit.search(comparable(title or "")) else []
+              text = comparable(title or "")
+              bad = []
+              for match in title_credit.finditer(text):
+                  suffix = text[match.end():]
+                  if (match["vendor"].casefold() == "cursor" and re.match(r"[ _-]+pagination\b", suffix, re.I)
+                          and re.search(r"\bwith\s+", match[0], re.I)):
+                      continue
+                  if (re.search(r"\berrors?\s+$", text[:match.start()], re.I)
+                          and re.match(r"\s+API\b", suffix, re.I)):
+                      continue
+                  bad.append("pull request title: authorship credit")
               return bad + scan("pull request body", body or "")
 
           failures = scan_pr(os.environ.get("PR_TITLE"), os.environ.get("PR_BODY"))
