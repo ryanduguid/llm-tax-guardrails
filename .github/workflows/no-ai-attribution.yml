@@ -144,20 +144,24 @@ jobs:
           # fences or treating a product URL or cursor pagination as a footer.
           title_credit = re.compile(
               r"\b(?:co[-_ ]?authored[-_ ]by[: ]+|" + CREDIT_VERB +
-              r"[-_ ]+(?:by|with)[: ]+)(?:[^\w]|_)*(?:the\s+)?(?:[^\w]|_)*" +
+              r"[-_ ]+(?:by|with|via|using)[: ]+)(?:[^\w]|_)*(?:the\s+)?(?:[^\w]|_)*" +
               r"(?P<vendor>github[-_ ]copilot|" + VENDOR + r")(?![a-z0-9])", re.I)
           def scan_pr(title, body):
-              text = comparable(title or "")
+              text = comparable(title or "").replace("_", " ")
               bad = []
               for match in title_credit.finditer(text):
                   suffix = text[match.end():]
-                  if (match["vendor"].casefold() == "cursor" and re.match(r"[ _-]+pagination\b", suffix, re.I)
+                  term = {"cursor": "pagination", "cascade": "deletion"}.get(match["vendor"].casefold())
+                  if (term and re.match(r"[ -]+" + term + r"\b", suffix, re.I)
                           and re.match(r"implemented\s+with\s+", match[0], re.I)):
                       continue
                   if (re.search(r"\berrors?\s+$", text[:match.start()], re.I)
                           and re.match(r"generated\s+by\s+", match[0], re.I)
                           and re.match(r"\s+API\b", suffix, re.I)):
                       continue
+                  bad.append("pull request title: authorship credit")
+              if (re.search(VENDOR + r"[- ](?:authored|written|generated|assisted|reviewed|implemented)\b", text, re.I)
+                      or re.search(r"co-?authored[- ]by:\s*.*" + VENDOR, text, re.I)):
                   bad.append("pull request title: authorship credit")
               return bad + scan("pull request body", body or "")
 
@@ -203,7 +207,7 @@ jobs:
                   name, email = identity.groups()
                   if any(not char.isprintable() or char == "\ufffd" for char in name + email):
                       sys.exit("Non-printable commit identity")
-                  name, email = comparable(name), comparable(email)
+                  name, email = comparable(name), comparable(email.strip())
                   account = re.fullmatch(r"(?:[0-9]+\+)?([^@]+)@users\.noreply\.github\.com", email, re.I)
                   if (AI_NAME.fullmatch(name.strip()) or email.casefold() in {"noreply@anthropic.com", "openhands@all-hands.dev", "cascade@windsurf.com"}
                           or (account and AI_NAME.fullmatch(account[1]))):
