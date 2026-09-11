@@ -63,7 +63,7 @@ jobs:
           import unicodedata
 
           VENDOR = (r"(?:claude|anthropic|codex|openai|cursor|hermes|nousresearch|"
-                    r"copilot|chatgpt|gemini|devin|codeium|windsurf|antigravity|aider|qodo|openhands)")
+                    r"copilot|chatgpt|gemini|devin|codeium|windsurf|antigravity|aider|qodo|openhands|cascade)")
 
           # Domains for the bare-URL rule, kept in step with VENDOR.
           DOMAIN = (r"(?:claude\.ai|claude\.com|anthropic\.com|openai\.com|"
@@ -81,9 +81,9 @@ jobs:
 
           def comparable(text):
               # Compare visible letters without hidden characters or combining marks.
-              return "".join("-" if unicodedata.category(char) == "Pd" else char
+              return "".join(" " if char.isspace() else "-" if unicodedata.category(char) == "Pd" else char
                              for char in unicodedata.normalize("NFKD", text)
-                             if char.isprintable() and not unicodedata.category(char).startswith("M"))
+                             if (char.isprintable() or char.isspace()) and not unicodedata.category(char).startswith("M"))
 
           CREDIT_VERB = (r"(?:generated|addressed|authored|written|created|produced|"
                          r"reviewed|fixed|resolved|implemented|assisted|handled)")
@@ -143,8 +143,8 @@ jobs:
           # Titles are plain text. Check explicit by-lines, without interpreting
           # fences or treating a product URL or cursor pagination as a footer.
           title_credit = re.compile(
-              r"\b(?:co-?authored-by:\s*|" + CREDIT_VERB +
-              r"[-_ ]+(?:by|with)[: ]+)[\s\[*_`]*" +
+              r"\b(?:co[-_ ]?authored[-_ ]by[: ]+|" + CREDIT_VERB +
+              r"[-_ ]+(?:by|with)[: ]+)(?:[^\w]|_)*(?:the\s+)?(?:[^\w]|_)*" +
               r"(?P<vendor>github[-_ ]copilot|" + VENDOR + r")(?![a-z0-9])", re.I)
           def scan_pr(title, body):
               text = comparable(title or "")
@@ -152,9 +152,10 @@ jobs:
               for match in title_credit.finditer(text):
                   suffix = text[match.end():]
                   if (match["vendor"].casefold() == "cursor" and re.match(r"[ _-]+pagination\b", suffix, re.I)
-                          and re.search(r"\bwith\s+", match[0], re.I)):
+                          and re.match(r"implemented\s+with\s+", match[0], re.I)):
                       continue
                   if (re.search(r"\berrors?\s+$", text[:match.start()], re.I)
+                          and re.match(r"generated\s+by\s+", match[0], re.I)
                           and re.match(r"\s+API\b", suffix, re.I)):
                       continue
                   bad.append("pull request title: authorship credit")
@@ -204,7 +205,7 @@ jobs:
                       sys.exit("Non-printable commit identity")
                   name, email = comparable(name), comparable(email)
                   account = re.fullmatch(r"(?:[0-9]+\+)?([^@]+)@users\.noreply\.github\.com", email, re.I)
-                  if (AI_NAME.fullmatch(name.strip()) or email.casefold() in {"noreply@anthropic.com", "openhands@all-hands.dev"}
+                  if (AI_NAME.fullmatch(name.strip()) or email.casefold() in {"noreply@anthropic.com", "openhands@all-hands.dev", "cascade@windsurf.com"}
                           or (account and AI_NAME.fullmatch(account[1]))):
                       failures.append("commit %s: AI %s identity" % (sha[:12], role))
               failures += scan("commit " + sha[:12], msg.decode("utf-8", "replace"))
