@@ -28,6 +28,16 @@ STAMP_RE = re.compile(
     rf"|(?<=\[DrDebits\]\(\./drdebits\.md\) `){_VERSION_TOKEN}(?=`)"
 )
 
+# Hand-written files the build stamps the guide version into, and that verify
+# then holds to metadata. llms.txt is the machine-readable index a retrieval
+# agent reads instead of README.md, so it has to carry the same version and
+# source-check date as the README rather than leaving a consumer to infer them.
+STAMPED_FILES = ("README.md", "MAINTENANCE.md", "llms.txt")
+
+# Of those, the files that also carry a hand-written copy of the source-check
+# date. MAINTENANCE.md does not, so it is not checked for one.
+SOURCE_CHECK_DATE_FILES = ("README.md", "llms.txt")
+
 CHANGELOG_HEADERS = ["Version", "Date", "Status", "Change"]
 
 

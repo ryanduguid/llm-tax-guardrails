@@ -6,7 +6,15 @@ from datetime import date
 from pathlib import Path
 
 from . import evals
-from .build import GENERATED, STAMP_RE, BuildError, build_sha256sums, load_sources
+from .build import (
+    GENERATED,
+    SOURCE_CHECK_DATE_FILES,
+    STAMP_RE,
+    STAMPED_FILES,
+    BuildError,
+    build_sha256sums,
+    load_sources,
+)
 from .model import ModelError
 
 # The two shapes the hand-written TPB statement count and GS range are written
@@ -88,7 +96,7 @@ def run_verify(root, today=None):
 
     # Stamped files must exist and carry at least one version token each;
     # zero matches would let a stripped stamp verify vacuously.
-    for rel in ("README.md", "MAINTENANCE.md"):
+    for rel in STAMPED_FILES:
         p = root / rel
         if not p.is_file():
             failures.append(f"{rel}: missing")
@@ -131,11 +139,11 @@ def run_verify(root, today=None):
             f"changelog: newest entry {newest_changelog_version} != {s.meta['guide_version']}")
 
     # (e) the source-check date is derived into the catalogue header and the
-    # guide frontmatter from metadata, but the guide's header line and README
-    # carry hand-written copies. A metadata bump that misses either would ship
-    # one release carrying two different check dates, so cross-check both.
-    # (src/guide/040-source-status.md carries two further prose copies that
-    # this check does not cover; MAINTENANCE step 8 owns those.)
+    # guide frontmatter from metadata, but the guide's header line, README and
+    # llms.txt carry hand-written copies. A metadata bump that misses one would
+    # ship a release carrying two different check dates, so cross-check them
+    # all. (src/guide/040-source-status.md carries two further prose copies
+    # that this check does not cover; MAINTENANCE step 8 owns those.)
     checked_date = s.meta.get("sources_checked_at", "")[:10]
     if checked_date:
         # Substring, not whole-line: the real header line carries a timezone
@@ -145,11 +153,14 @@ def run_verify(root, today=None):
             failures.append(
                 "drdebits.md: header source-check date line does not match "
                 f"sources_checked_at ({checked_date})")
-        readme = root / "README.md"
-        if readme.is_file():
-            if f"Sources last checked: {checked_date}" not in readme.read_text(encoding="utf-8"):
+        for rel in SOURCE_CHECK_DATE_FILES:
+            p = root / rel
+            if not p.is_file():
+                continue  # already reported missing above
+            if f"Sources last checked: {checked_date}" not in p.read_text(encoding="utf-8"):
                 failures.append(
-                    f"README.md: source-check date does not match sources_checked_at ({checked_date})")
+                    f"{rel}: source-check date does not match sources_checked_at "
+                    f"({checked_date})")
 
     # (f) CITATION.cff carries its own copies of the version and release date.
     # When the file exists, both must agree with the sources - version with

@@ -1,5 +1,8 @@
 # DrDebits - tax ethics and LLM guardrails
 
+Version: `0.3.3`
+Sources last checked: 2026-08-16
+
 ## Package overview
 - **Repository**: https://github.com/ryanduguid/llm-tax-guardrails
 - **Domain**: Versioned, primary-source-grounded ethical instructions and operational safety guardrails for LLM-assisted Australian accounting and taxation work.

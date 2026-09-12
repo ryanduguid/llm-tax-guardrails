@@ -24,6 +24,11 @@ def make_repo(tmp_path: Path) -> Path:
         encoding="utf-8", newline="\n")
     (tmp_path / "MAINTENANCE.md").write_text(
         "Part of [DrDebits](./drdebits.md) `0.9.9-test`.\n", encoding="utf-8", newline="\n")
+    # llms.txt carries the same stamped version and hand-written source-check
+    # date as README.md, so verify holds it to both.
+    (tmp_path / "llms.txt").write_text(
+        "# G\n\nVersion: `0.9.9-test`\nSources last checked: 2026-01-01\n",
+        encoding="utf-8", newline="\n")
     (tmp_path / "src" / "guide" / "000-header.md").write_text(
         "# G\n\n> Version: `0.9.9-test`\n>\n> Sources last checked: `2026-01-01`\n\nIntro.\n",
         encoding="utf-8", newline="\n")
