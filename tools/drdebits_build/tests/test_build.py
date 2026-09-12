@@ -44,6 +44,15 @@ def make_repo(tmp_path: Path) -> Path:
         "- reference/tpb-catalogue.md: complete live TPB Guidance Statement "
         "catalogue, GS01 to GS01\n",
         encoding="utf-8", newline="\n")
+    # The two fragments verify's cross-reference checks read: every status the
+    # behaviour tests use is defined here, and every APES 110 locator the
+    # control set cites is located by the fixture's apes-110-map.yaml.
+    (tmp_path / "src" / "guide" / "060-meaning-of-instruction-words.md").write_text(
+        "## Words\n\n- **HARD_STOP** means do not produce the requested outcome.\n",
+        encoding="utf-8", newline="\n")
+    (tmp_path / "src" / "guide" / "150-apes-110-control-set.md").write_text(
+        "## APES\n\nPart 1 applies to all members.\n",
+        encoding="utf-8", newline="\n")
     (tmp_path / "src" / "data" / "metadata.yaml").write_text(textwrap.dedent("""\
         fields:
           - key: guide_version
