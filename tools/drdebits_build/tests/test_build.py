@@ -5,7 +5,7 @@ import pytest
 from drdebits_build.build import (
     BuildError, find_root, load_sources, build_guide, build_catalogue_md,
     build_behaviour_md, build_apes_md, build_vendor_assurance_md, build_sha256sums,
-    write_outputs, stamp_version, GENERATED,
+    write_outputs, stamp_version, GENERATED, render_frontmatter, render_table,
 )
 from drdebits_build.model import ModelError
 
@@ -244,3 +244,19 @@ def test_stamp_version():
         "Install uv `0.12.0` before building."
     # Bare, non-backticked version-like tokens are prose, not a stamp: left alone.
     assert stamp_version("v1.2.3 and 9.9.9-x.1", "2.0.0") == "v1.2.3 and 9.9.9-x.1"
+
+
+def test_frontmatter_verbatim_values_in_order():
+    meta = {"title": "DrDebits", "apes_110_pdf_sha256": "B6937B93"}
+    assert render_frontmatter(meta) == "---\ntitle: DrDebits\napes_110_pdf_sha256: B6937B93\n---\n"
+
+
+def test_table_single_space_padding_and_alignment_tokens():
+    out = render_table(["ID", "Scenario"], ["---", "---"],
+                       [["AUTH-001", "says x"], ["INJ-001", "says y"]])
+    assert out == (
+        "| ID | Scenario |\n"
+        "|---|---|\n"
+        "| AUTH-001 | says x |\n"
+        "| INJ-001 | says y |\n"
+    )
