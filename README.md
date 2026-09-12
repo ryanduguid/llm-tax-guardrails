@@ -89,4 +89,4 @@ Copyright © 2026 Ryan Duguid. Original DrDebits material is licensed under [CC 
 
 ## Contributing and maintenance
 
-The guide, reference, test and evaluation files are generated. Edit the sources under `src/` and run `uv run --project tools/drdebits_build python -m drdebits_build build`; CI rejects hand edits to generated files. See `MAINTENANCE.md` for the release protocol.
+The guide, reference files, behaviour tests, `evals/cases.json` and `evals/RESULTS.md` are generated. Edit their sources under `src/` and run `uv run --project tools/drdebits_build python -m drdebits_build build`; CI rejects hand edits to generated files. People write and maintain the records in `evals/results/*.json`; keep historical result records unchanged. See `MAINTENANCE.md` for the release protocol.
