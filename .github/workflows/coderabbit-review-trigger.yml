@@ -1,0 +1,40 @@
+name: CodeRabbit review trigger
+
+# CodeRabbit does not review public repositories with fewer than 10 stars
+# automatically; it requires a manual "@coderabbitai review" comment, and it
+# ignores that command when github-actions[bot] posts it. This workflow posts
+# the comment with the CODERABBIT_TRIGGER_TOKEN secret (a fine-grained token
+# with pull request write access) so the comment comes from the repository
+# owner. It runs from the trusted base branch and never checks out or runs
+# pull request code. Without the secret it only prints a warning.
+
+on:
+  pull_request_target:
+    types: [opened, reopened, ready_for_review, synchronize]
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: Pull request number
+        required: true
+
+permissions: {}
+
+concurrency:
+  group: coderabbit-trigger-${{ github.event.pull_request.number || inputs.pr }}
+  cancel-in-progress: true
+
+jobs:
+  request-review:
+    if: github.event_name == 'workflow_dispatch' || !github.event.pull_request.draft
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ secrets.CODERABBIT_TRIGGER_TOKEN }}
+      PR: ${{ github.event.pull_request.number || inputs.pr }}
+    steps:
+      - name: Ask CodeRabbit for a review
+        if: env.GH_TOKEN != ''
+        run: gh pr comment "$PR" --repo "$GITHUB_REPOSITORY" --body "@coderabbitai review"
+      - name: Report the missing secret
+        if: ${{ !env.GH_TOKEN }}
+        run: echo "::warning::CODERABBIT_TRIGGER_TOKEN is not set, so no review was requested."
