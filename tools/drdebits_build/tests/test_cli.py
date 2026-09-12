@@ -2,10 +2,10 @@
 from datetime import date
 
 import pytest
-
 from drdebits_build import verify as verify_module
 from drdebits_build.__main__ import main
 from drdebits_build.verify import run_verify
+
 from tests.test_build import make_repo
 
 # The fixture repo's review date is fixed (due 2026-04-01), so the date the CLI
@@ -46,8 +46,11 @@ def test_missing_root_reports_cleanly_for_both_commands(tmp_path, capsys, monkey
         assert "Traceback" not in err
 
 
-def test_build_stamps_readme_and_maintenance_before_checksums(tmp_path):
+def test_build_stamps_every_hand_written_file_before_checksums(tmp_path):
     root = make_repo(tmp_path)
+    (root / "llms.txt").write_text(
+        "# G\n\nVersion: `0.0.1`\nSources last checked: 2026-01-01\n",
+        encoding="utf-8", newline="\n")
     (root / "README.md").write_text(
         "> Version: `0.0.1`\n\nSources last checked: 2026-01-01\n\n"
         "Install uv `0.12.0` before building.\n\n"
@@ -61,4 +64,14 @@ def test_build_stamps_readme_and_maintenance_before_checksums(tmp_path):
     # An unrelated backticked tool pin survives the stamp and does not fail verify.
     assert "`0.12.0`" in readme
     assert "0.9.9-test" in (root / "MAINTENANCE.md").read_text(encoding="utf-8")
+    assert "Version: `0.9.9-test`" in (root / "llms.txt").read_text(encoding="utf-8")
     assert run_verify(root) == []
+
+    # The source-check date is hand-written in llms.txt, not stamped, so a
+    # metadata bump that misses it has to fail verify rather than ship an index
+    # that dates the guide's sources differently from the README.
+    (root / "llms.txt").write_text(
+        "# G\n\nVersion: `0.9.9-test`\nSources last checked: 2025-12-31\n",
+        encoding="utf-8", newline="\n")
+    assert run_verify(root) == [
+        "llms.txt: source-check date does not match sources_checked_at (2026-01-01)"]

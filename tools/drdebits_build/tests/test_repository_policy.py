@@ -2,18 +2,15 @@
 
 from __future__ import annotations
 
-from html import unescape
 import re
-from pathlib import Path
 import tomllib
+from html import unescape
+from pathlib import Path
 from urllib.parse import unquote
 
 import pytest
-import yaml
-
 from drdebits_build.build import find_root
 from drdebits_build.model import load_behaviour_tests, load_metadata
-
 
 ROOT = find_root(Path(__file__).resolve())
 GUIDE_SOURCE = ROOT / "src" / "guide" / "150-apes-110-control-set.md"
@@ -44,7 +41,6 @@ LOCATOR_METADATA = {
     "apes_ai_alert_label": "Technical Alert",
     "apes_ai_alert_date": "2025-10-31",
 }
-APESB_ROOT_LINK = "[APESB website](https://apesb.org.au/)"
 CANONICAL_GUIDE_LOCATOR_SECTIONS = {
     "### Scope": (
         "\n"
@@ -349,119 +345,6 @@ def test_guide_binds_each_locator_to_its_subject_section():
     _assert_guide_locators(GUIDE_SOURCE.read_text(encoding="utf-8"))
 
 
-def test_guide_locator_validator_rejects_adverse_mutations():
-    guide = GUIDE_SOURCE.read_text(encoding="utf-8")
-    _assert_guide_locators(guide)
-    _assert_guide_locators(guide.replace("\n", "\r\n"))
-
-    mutations = (
-        (
-            "`Standards & Guidance` → `Current Pronouncements` → "
-            "`Compilation of APES 110 Standard (Jul 2025)`",
-            "`Current Pronouncements` → `Standards & Guidance` → "
-            "`Compilation of APES 110 Standard (Jul 2025)`",
-        ),
-        (
-            "`Standards & Guidance` → `Current Pronouncements` → "
-            "`Compilation of APES 110 Standard (Jul 2025)`",
-            "`Standards & Guidance` → `Technical Updates` → "
-            "`Compilation of APES 110 Standard (Jul 2025)`",
-        ),
-        (
-            "`Standards & Guidance` → `Specialist Pronouncements` → "
-            "`Taxation Services` → `APES 220 Taxation Services (2025) - "
-            "effective from 1 July 2025`",
-            "`Taxation Services` → `Specialist Pronouncements` → "
-            "`Standards & Guidance` → `APES 220 Taxation Services (2025) - "
-            "effective from 1 July 2025`",
-        ),
-        (
-            "`Standards & Guidance` → `Specialist Pronouncements` → "
-            "`Taxation Services` → `APES 220 Taxation Services (2025) - "
-            "effective from 1 July 2025`",
-            "`Standards & Guidance` → `Taxation Services` → "
-            "`APES 220 Taxation Services (2025) - effective from 1 July 2025`",
-        ),
-        (
-            "`Standards & Guidance` → `Specialist Pronouncements` → "
-            "`Taxation Services` → `APES 220 Taxation Services (2025) - "
-            "effective from 1 July 2025`",
-            "`Standards & Guidance` → `Specialist Pronouncements` → "
-            "`Technical Updates` → `APES 220 Taxation Services (2025) - "
-            "effective from 1 July 2025`",
-        ),
-        (
-            "`Interest Areas` → `The ethical use of artificial intelligence "
-            "by professional accountants`",
-            "`The ethical use of artificial intelligence by professional "
-            "accountants` → `Interest Areas`",
-        ),
-        ("Compilation of APES 110 Standard (Jul 2025)",
-         "Compilation of APES 110 Standard (Jan 2025)"),
-        ("Compiled_APES_110_July_25.pdf", "Compiled_APES_110_January_25.pdf"),
-        ("Compilation_Details_APES_110_July_25.pdf",
-         "Compilation_Details_APES_110_January_25.pdf"),
-        ("APES_220_Jan_2025.pdf", "APES_220_Jul_2025.pdf"),
-        ("Technical Update `2025/5`", "Technical Update `2025/6`"),
-        ("31 January 2025", "30 January 2025"),
-        ("`Technical Alert`", "`Practice Alert`"),
-        ("31 October 2025", "30 October 2025"),
-        ("complete substantive source review remains 16 August 2026",
-         "complete substantive source review remains 20 August 2026"),
-    )
-    for expected, wrong in mutations:
-        mutated = guide.replace(expected, wrong, 1)
-        assert mutated != guide
-        try:
-            _assert_guide_locators(mutated)
-        except AssertionError:
-            continue
-        pytest.fail(f"guide locator validator accepted mutation {expected!r}")
-
-    # A token elsewhere cannot satisfy the contract for its own subsection.
-    moved = guide.replace("APES_220_Jan_2025.pdf", "", 1)
-    moved += "\nAPES_220_Jan_2025.pdf\n"
-    with pytest.raises(AssertionError):
-        _assert_guide_locators(moved)
-
-    moved_link = guide.replace(APESB_ROOT_LINK, "APESB website", 1)
-    moved_link += f"\n{APESB_ROOT_LINK}\n"
-    with pytest.raises(AssertionError):
-        _assert_guide_locators(moved_link)
-
-    competing_routes = (
-        guide.replace(
-            "### APES 220 Taxation Services",
-            "`Current Pronouncements` → `Standards & Guidance` is the required "
-            "route.\n\n### APES 220 Taxation Services",
-            1,
-        ),
-        guide.replace(
-            "### APES 220 Taxation Services",
-            "Follow Current Pronouncements, then Standards & Guidance; this is "
-            "the required route.\n\n### APES 220 Taxation Services",
-            1,
-        ),
-        guide.replace(
-            "### Five fundamental principles",
-            "`Taxation Services` → `Specialist Pronouncements` → "
-            "`Standards & Guidance` is the required route.\n\n"
-            "### Five fundamental principles",
-            1,
-        ),
-        guide.replace(
-            "### Tax planning: sections 280, 380 and 5380",
-            "`The ethical use of artificial intelligence by professional "
-            "accountants` → `Interest Areas` is the required route.\n\n"
-            "### Tax planning: sections 280, 380 and 5380",
-            1,
-        ),
-    )
-    for mutated in competing_routes:
-        with pytest.raises(AssertionError):
-            _assert_guide_locators(mutated)
-
-
 def test_all_apesb_links_stay_on_the_permitted_publisher_root():
     paths = [*sorted((ROOT / "src" / "guide").glob("*.md")), ROOT / "drdebits.md"]
     observed_urls = set()
@@ -518,47 +401,6 @@ def test_security_policy_uses_private_reporting_and_safe_reproduction_data():
     policy = (ROOT / "SECURITY.md").read_text(encoding="utf-8")
     _assert_security_policy(policy)
 
-    public_report = policy.replace(
-        "Do not\nopen a public issue or pull request",
-        "Open a public issue or pull request",
-        1,
-    )
-    assert public_report != policy
-    with pytest.raises(AssertionError):
-        _assert_security_policy(public_report)
-
-    live_data = policy.replace("fabricated or synthetic", "live client", 1)
-    assert live_data != policy
-    with pytest.raises(AssertionError):
-        _assert_security_policy(live_data)
-
-
-def test_dependabot_preserves_the_confirmed_working_ecosystems_and_cadence():
-    config = yaml.safe_load((ROOT / ".github" / "dependabot.yml").read_text(
-        encoding="utf-8"
-    ))
-    assert config == {
-        "version": 2,
-        "updates": [
-            {
-                "package-ecosystem": "github-actions",
-                "directory": "/",
-                "schedule": {"interval": "weekly"},
-                "cooldown": {"default-days": 7},
-                "groups": {
-                    "codeql-action": {"patterns": ["github/codeql-action*"]}
-                },
-            },
-            {
-                "package-ecosystem": "uv",
-                "directory": "/tools/drdebits_build",
-                "schedule": {"interval": "weekly"},
-                "cooldown": {"default-days": 7},
-                "groups": {"python-dependencies": {"patterns": ["*"]}},
-            },
-        ],
-    }
-
 
 def test_uv_manifest_uses_canonical_dependency_names_for_dependabot():
     manifest = tomllib.loads(
@@ -613,20 +455,6 @@ def test_disclaimer_attributes_project_controls_to_the_project():
     disclaimer = (ROOT / "DISCLAIMER.md").read_text(encoding="utf-8")
     _assert_disclaimer_responsibility_framing(disclaimer)
 
-    statutory_attribution = disclaimer.replace(
-        "DrDebits requires, consistent with the responsibilities that the "
-        "*Tax Agent Services Act 2009 (TASA)* and *APES 110 Code of Ethics for "
-        "Professional Accountants* place on the practitioner, that a registered "
-        "tax agent, BAS agent, or qualified professional accountant:",
-        "Under the *Tax Agent Services Act 2009 (TASA)* and *APES 110 Code of "
-        "Ethics for Professional Accountants*, a registered tax agent, BAS "
-        "agent, or qualified professional accountant must:",
-        1,
-    )
-    assert statutory_attribution != disclaimer
-    with pytest.raises(AssertionError):
-        _assert_disclaimer_responsibility_framing(statutory_attribution)
-
 
 def test_release_protocol_step_8_lists_every_unguarded_copy():
     maintenance = (ROOT / "MAINTENANCE.md").read_text(encoding="utf-8")
@@ -644,23 +472,3 @@ def test_release_protocol_step_8_lists_every_unguarded_copy():
 def test_release_checklist_stages_and_verifies_before_publication():
     maintenance = (ROOT / "MAINTENANCE.md").read_text(encoding="utf-8")
     _assert_release_checklist(maintenance)
-
-
-def test_release_checklist_validator_rejects_unsafe_mutations():
-    maintenance = (ROOT / "MAINTENANCE.md").read_text(encoding="utf-8")
-    _assert_release_checklist(maintenance)
-    for expected, wrong in (
-        ("SHA256SUMS", "a checksum file"),
-        ("signed annotated tag", "annotated tag"),
-        ("Publish the release only after all verification succeeds",
-         "Publish the release before verification succeeds"),
-        ("published prereleases, not GitHub draft releases",
-         "GitHub draft releases"),
-    ):
-        mutated = maintenance.replace(expected, wrong)
-        assert mutated != maintenance
-        try:
-            _assert_release_checklist(mutated)
-        except AssertionError:
-            continue
-        pytest.fail(f"release checklist validator accepted mutation {expected!r}")

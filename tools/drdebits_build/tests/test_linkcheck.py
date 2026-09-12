@@ -5,9 +5,10 @@ import threading
 import urllib.error
 import urllib.request
 
-from drdebits_build.build import write_outputs
 from drdebits_build import linkcheck
+from drdebits_build.build import write_outputs
 from drdebits_build.linkcheck import collect_urls
+
 from tests.test_build import make_repo
 
 

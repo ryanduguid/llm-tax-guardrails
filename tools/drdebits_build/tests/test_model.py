@@ -1,10 +1,18 @@
 """Tests for YAML source loading and validation."""
 import textwrap
+
 import pytest
 from drdebits_build.model import (
-    ModelError, ALLOWED_STATUSES, load_metadata, load_catalogue,
-    load_behaviour_tests, load_changelog, load_apes_map, load_vendor_assurance,
-    validate_counts, validate_required_metadata,
+    ALLOWED_STATUSES,
+    ModelError,
+    load_apes_map,
+    load_behaviour_tests,
+    load_catalogue,
+    load_changelog,
+    load_metadata,
+    load_vendor_assurance,
+    validate_counts,
+    validate_required_metadata,
 )
 
 

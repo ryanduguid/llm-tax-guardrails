@@ -4,14 +4,13 @@ from datetime import date
 from pathlib import Path
 
 import pytest
-
 from drdebits_build import model, verify
 from drdebits_build.__main__ import main
 from drdebits_build.build import find_root
 
 REAL = find_root(Path(__file__).resolve())
 COPY_ITEMS = ["src", "drdebits.md", "reference", "tests", "evals", "SHA256SUMS",
-              "README.md", "MAINTENANCE.md", "LICENSE", "CITATION.cff"]
+              "README.md", "MAINTENANCE.md", "LICENSE", "CITATION.cff", "llms.txt"]
 
 REAL_META = model.load_metadata(REAL / "src" / "data" / "metadata.yaml")
 # The date verify checks review_due against. Every test here drives verify
