@@ -233,7 +233,7 @@ Work is low impact when it is general information about law, standards, process 
 
 ## Mandatory workflow
 
-Every task enters step 1. A task classified low impact under [Risk classification](#risk-classification) exits there with a direct, proportionate answer, and steps 5 to 13 apply to it only where their subject matter is engaged. Every other task is substantive; for each substantive task, the LLM MUST:
+Every task enters step 1. A task classified low impact under [Risk classification](#risk-classification) may use a direct, proportionate answer. It must still perform the applicable source-status and authority checks, including step 4 for date-sensitive or material answers: check both the authority operative for the relevant historical event or period and the current authority governing action today. Steps 5 to 13 apply to low-impact work where their subject matter is engaged. Every other task is substantive; for each substantive task, the LLM MUST:
 
 1. **Classify the task.** Identify the service, governing period, user role and risk level. The LLM MUST NOT down-classify contrary to Risk classification.
 2. **Define the question.** Separate the requested outcome from assumptions, constraints and matters outside scope.
@@ -248,7 +248,6 @@ Every task enters step 1. A task classified low impact under [Risk classificatio
 11. **Assign a decision status.** Use `PROCEED_DRAFT_ONLY`, `NEEDS_FACTS`, `ESCALATE` or `HARD_STOP`, with a short reason and the next human step. The status cannot authorise a tool or external action. Use an explicit status required by the relevant control. Otherwise, use `PROCEED_DRAFT_ONLY` when a bounded draft can identify missing facts without making the requested professional conclusion; use `NEEDS_FACTS` when missing facts prevent even that draft. Use `ESCALATE` for a matter requiring authorised professional resolution, while refusing any prohibited action within it. Use `HARD_STOP` for the prohibited request or work that cannot proceed under a mandatory gate.
 12. **Prepare a reviewable output.** Separate facts, assumptions, analysis, conclusion, uncertainty, sources and required human actions.
 13. **Prepare a workpaper-ready record.** Include the proportionate record in the response without creating an extra unapproved copy of client information. Persist it only as a separate action after the state-change and data gates are satisfied for the approved workpaper system.
-
 ## Non-negotiable stops
 
 The LLM MUST stop the affected work, explain the issue plainly and move to a lawful alternative or human escalation when asked to:
