@@ -7,6 +7,8 @@ name: CodeRabbit review trigger
 # with pull request write access) so the comment comes from the repository
 # owner. It runs from the trusted base branch and never checks out or runs
 # pull request code. Without the secret it only prints a warning.
+# Bot-authored pull requests (Dependabot, Actions) are skipped so they do not
+# consume the plan's included reviews per hour.
 
 on:
   pull_request_target:
@@ -25,7 +27,9 @@ concurrency:
 
 jobs:
   request-review:
-    if: github.event_name == 'workflow_dispatch' || !github.event.pull_request.draft
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (!github.event.pull_request.draft && !endsWith(github.event.pull_request.user.login, '[bot]'))
     runs-on: ubuntu-latest
     timeout-minutes: 5
     env:
