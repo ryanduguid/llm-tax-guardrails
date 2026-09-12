@@ -24,7 +24,7 @@ entries:
     section: "Authority and accountability"
     question: "Which outputs does the product describe as reviewed, checked, approved or compliant, and what does a person actually do before that label appears?"
     evidence: "Product copy, in-product labels and report footers read against the workflow that produces them."
-    obligation: "TASA Code item 1 (honesty and integrity); APES 110 integrity `R111.1 to R111.3`; APESB Technical Alert 31 October 2025 (do not present a tool as reviewer or approver)."
+    obligation: "TASA Code item 1 (honesty and integrity); APES 110 integrity `R111.1 to R111.3`; APESB Technical Alert 31 October 2025 (members retain responsibility, must assess and verify information, and should disclose, supervise and review AI use); DrDebits project control: do not present a tool as reviewer or approver."
     if_absent: "Unreviewed output may be reaching clients under a reviewed label. Change the label before the next file goes out."
   - id: "VA-04"
     section: "Authority and accountability"
