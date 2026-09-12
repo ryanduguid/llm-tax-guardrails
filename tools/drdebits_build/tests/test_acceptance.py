@@ -4,7 +4,6 @@ from datetime import date
 from pathlib import Path
 
 import pytest
-
 from drdebits_build import model, verify
 from drdebits_build.__main__ import main
 from drdebits_build.build import find_root

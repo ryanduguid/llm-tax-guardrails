@@ -3,6 +3,7 @@ from datetime import date
 
 from drdebits_build.build import write_outputs
 from drdebits_build.verify import run_verify
+
 from tests.test_build import make_repo
 
 # The fixture repo's dates are fixed (checked 2026-01-01, review due

@@ -2,17 +2,15 @@
 
 from __future__ import annotations
 
-from html import unescape
 import re
-from pathlib import Path
 import tomllib
+from html import unescape
+from pathlib import Path
 from urllib.parse import unquote
 
 import pytest
-
 from drdebits_build.build import find_root
 from drdebits_build.model import load_behaviour_tests, load_metadata
-
 
 ROOT = find_root(Path(__file__).resolve())
 GUIDE_SOURCE = ROOT / "src" / "guide" / "150-apes-110-control-set.md"

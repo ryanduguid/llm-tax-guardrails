@@ -1,11 +1,23 @@
 """Tests for output assembly against a synthetic source tree."""
 import textwrap
 from pathlib import Path
+
 import pytest
 from drdebits_build.build import (
-    BuildError, find_root, load_sources, build_guide, build_catalogue_md,
-    build_behaviour_md, build_apes_md, build_vendor_assurance_md, build_sha256sums,
-    write_outputs, stamp_version, GENERATED, render_frontmatter, render_table,
+    GENERATED,
+    BuildError,
+    build_apes_md,
+    build_behaviour_md,
+    build_catalogue_md,
+    build_guide,
+    build_sha256sums,
+    build_vendor_assurance_md,
+    find_root,
+    load_sources,
+    render_frontmatter,
+    render_table,
+    stamp_version,
+    write_outputs,
 )
 from drdebits_build.model import ModelError
 

@@ -2,11 +2,11 @@
 import json
 
 import pytest
-
 from drdebits_build import evals
 from drdebits_build.build import load_sources, write_outputs
 from drdebits_build.model import ModelError
 from drdebits_build.verify import run_verify
+
 from tests.test_build import make_repo
 from tests.test_cli import TODAY
 

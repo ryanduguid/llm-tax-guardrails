@@ -2,10 +2,10 @@
 from datetime import date
 
 import pytest
-
 from drdebits_build import verify as verify_module
 from drdebits_build.__main__ import main
 from drdebits_build.verify import run_verify
+
 from tests.test_build import make_repo
 
 # The fixture repo's review date is fixed (due 2026-04-01), so the date the CLI
