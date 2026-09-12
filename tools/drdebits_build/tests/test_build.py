@@ -1,11 +1,23 @@
 """Tests for output assembly against a synthetic source tree."""
 import textwrap
 from pathlib import Path
+
 import pytest
 from drdebits_build.build import (
-    BuildError, find_root, load_sources, build_guide, build_catalogue_md,
-    build_behaviour_md, build_apes_md, build_vendor_assurance_md, build_sha256sums,
-    write_outputs, stamp_version, GENERATED,
+    GENERATED,
+    BuildError,
+    build_apes_md,
+    build_behaviour_md,
+    build_catalogue_md,
+    build_guide,
+    build_sha256sums,
+    build_vendor_assurance_md,
+    find_root,
+    load_sources,
+    render_frontmatter,
+    render_table,
+    stamp_version,
+    write_outputs,
 )
 from drdebits_build.model import ModelError
 
@@ -24,6 +36,11 @@ def make_repo(tmp_path: Path) -> Path:
         encoding="utf-8", newline="\n")
     (tmp_path / "MAINTENANCE.md").write_text(
         "Part of [DrDebits](./drdebits.md) `0.9.9-test`.\n", encoding="utf-8", newline="\n")
+    # llms.txt carries the same stamped version and hand-written source-check
+    # date as README.md, so verify holds it to both.
+    (tmp_path / "llms.txt").write_text(
+        "# G\n\nVersion: `0.9.9-test`\nSources last checked: 2026-01-01\n",
+        encoding="utf-8", newline="\n")
     (tmp_path / "src" / "guide" / "000-header.md").write_text(
         "# G\n\n> Version: `0.9.9-test`\n>\n> Sources last checked: `2026-01-01`\n\nIntro.\n",
         encoding="utf-8", newline="\n")
@@ -38,6 +55,15 @@ def make_repo(tmp_path: Path) -> Path:
         "Guidance Statements, GS01 to GS01, across one result page.\n\n"
         "- reference/tpb-catalogue.md: complete live TPB Guidance Statement "
         "catalogue, GS01 to GS01\n",
+        encoding="utf-8", newline="\n")
+    # The two fragments verify's cross-reference checks read: every status the
+    # behaviour tests use is defined here, and every APES 110 locator the
+    # control set cites is located by the fixture's apes-110-map.yaml.
+    (tmp_path / "src" / "guide" / "060-meaning-of-instruction-words.md").write_text(
+        "## Words\n\n- **HARD_STOP** means do not produce the requested outcome.\n",
+        encoding="utf-8", newline="\n")
+    (tmp_path / "src" / "guide" / "150-apes-110-control-set.md").write_text(
+        "## APES\n\nPart 1 applies to all members.\n",
         encoding="utf-8", newline="\n")
     (tmp_path / "src" / "data" / "metadata.yaml").write_text(textwrap.dedent("""\
         fields:
@@ -239,3 +265,19 @@ def test_stamp_version():
         "Install uv `0.12.0` before building."
     # Bare, non-backticked version-like tokens are prose, not a stamp: left alone.
     assert stamp_version("v1.2.3 and 9.9.9-x.1", "2.0.0") == "v1.2.3 and 9.9.9-x.1"
+
+
+def test_frontmatter_verbatim_values_in_order():
+    meta = {"title": "DrDebits", "apes_110_pdf_sha256": "B6937B93"}
+    assert render_frontmatter(meta) == "---\ntitle: DrDebits\napes_110_pdf_sha256: B6937B93\n---\n"
+
+
+def test_table_single_space_padding_and_alignment_tokens():
+    out = render_table(["ID", "Scenario"], ["---", "---"],
+                       [["AUTH-001", "says x"], ["INJ-001", "says y"]])
+    assert out == (
+        "| ID | Scenario |\n"
+        "|---|---|\n"
+        "| AUTH-001 | says x |\n"
+        "| INJ-001 | says y |\n"
+    )

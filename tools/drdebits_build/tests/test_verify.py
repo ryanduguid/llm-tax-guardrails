@@ -3,6 +3,7 @@ from datetime import date
 
 from drdebits_build.build import write_outputs
 from drdebits_build.verify import run_verify
+
 from tests.test_build import make_repo
 
 # The fixture repo's dates are fixed (checked 2026-01-01, review due
@@ -372,3 +373,71 @@ def test_changelog_newest_entry_mismatch_detected(tmp_path):
     sync(root)
     failures = verify(root)
     assert any("changelog: newest entry 0.9.8-test != 0.9.9-test" in f for f in failures)
+
+
+def test_apes_locator_cited_by_the_control_set_but_absent_from_the_map(tmp_path):
+    """Check (i): the control set routes a reader to the generated APES 110
+    reference map for the provisions it names. Both files are sources, so a
+    control set that cites a Part or section the map never locates rebuilds,
+    hashes and byte-compares clean; only a cross-reference catches it."""
+    root = make_repo(tmp_path)
+    sync(root)
+    assert verify(root) == []
+
+    control_set = root / "src" / "guide" / "150-apes-110-control-set.md"
+    control_set.write_text(
+        control_set.read_text(encoding="utf-8")
+        + "\nApply sections 260 and 360 and Part 4A to the engagement.\n",
+        encoding="utf-8", newline="\n")
+    sync(root)  # rebuild, so only the cross-reference can fail
+    failures = verify(root)
+    assert any("cites APES 110 section 260, which" in f for f in failures), failures
+    assert any("cites APES 110 section 360, which" in f for f in failures), failures
+    assert any("cites APES 110 Part 4A, which" in f for f in failures), failures
+
+    # The locator the map does carry is not reported, and a paragraph
+    # reference is not a Part or section citation.
+    assert not any("Part 1," in f for f in failures), failures
+    assert not any("R1.2" in f for f in failures), failures
+
+
+def test_missing_apes_control_set_fragment_is_a_failure_not_a_silent_pass(tmp_path):
+    """A cross-reference check with nothing to read must not pass. Renaming
+    the fragment would otherwise retire check (i) without a word."""
+    root = make_repo(tmp_path)
+    sync(root)
+    (root / "src" / "guide" / "150-apes-110-control-set.md").rename(
+        root / "src" / "guide" / "150-apes.md")
+    sync(root)
+    failures = verify(root)
+    assert any("150-apes-110-control-set.md: missing" in f for f in failures), failures
+
+
+def test_behaviour_test_status_the_guide_does_not_define(tmp_path):
+    """Check (j): the guide's Meaning of instruction words fragment defines
+    every decision status and outcome label. A behaviour test written against
+    one the guide never defines cannot be run against an implementation of the
+    guide, and the generated behaviour-tests.md would publish it anyway."""
+    root = make_repo(tmp_path)
+    sync(root)
+    assert verify(root) == []
+
+    words = root / "src" / "guide" / "060-meaning-of-instruction-words.md"
+    words.write_text("## Words\n\n- **ESCALATE** means refer the matter.\n",
+                     encoding="utf-8", newline="\n")
+    sync(root)  # rebuild, so only the cross-reference can fail
+    failures = verify(root)
+    assert failures == [
+        "behaviour test A-001: expected status 'HARD_STOP' is not defined in "
+        "src/guide/060-meaning-of-instruction-words.md"]
+
+
+def test_missing_instruction_words_fragment_is_a_failure_not_a_silent_pass(tmp_path):
+    root = make_repo(tmp_path)
+    sync(root)
+    (root / "src" / "guide" / "060-meaning-of-instruction-words.md").rename(
+        root / "src" / "guide" / "060-words.md")
+    sync(root)
+    failures = verify(root)
+    assert any("060-meaning-of-instruction-words.md: missing" in f
+               for f in failures), failures

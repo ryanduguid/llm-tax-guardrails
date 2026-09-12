@@ -14,7 +14,6 @@ import re
 from datetime import date
 from pathlib import Path
 
-from . import render
 from .model import ModelError
 
 CASES_FILE = "evals/cases.json"
@@ -133,6 +132,12 @@ def load_results(root, s):
 
 def build_results_md(root, s):
     """Render the results table: one row per case, one column per run."""
+    # Imported here, not at module scope: build.py imports this module for
+    # GENERATED and dereferences CASES_FILE while it executes, so a top-level
+    # import back into build would leave one of the two modules half-built
+    # whichever way the cycle is entered.
+    from .build import render_table
+
     runs = load_results(root, s)
     headers = ["ID", "Expected status"] + [
         f"{r['model']}, {r['guide_version']} ({r['run_date']})" for r in runs]
@@ -143,7 +148,7 @@ def build_results_md(root, s):
         f"{sum(v == 'pass' for k, v in r['results'].items() if k in ids)}"
         f"/{sum(1 for k in r['results'] if k in ids)}"
         for r in runs])
-    body = render.render_table(headers, ["---"] * len(headers), rows)
+    body = render_table(headers, ["---"] * len(headers), rows)
     if not runs:
         body = f"No runs recorded yet. Add a file under `{RESULTS_DIR}/` and rebuild.\n\n" + body
     return RESULTS_HEADER_TEMPLATE.format(version=s.meta["guide_version"], not_run=NOT_RUN) + body

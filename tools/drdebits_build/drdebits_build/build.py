@@ -7,11 +7,27 @@ from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
 
-from . import evals, model, render
+from . import evals, model
 
 
 class BuildError(Exception):
     pass
+
+
+# Markdown rendering primitives. Explicit line construction only.
+
+
+def render_frontmatter(meta):
+    lines = ["---"]
+    lines += [f"{k}: {v}" for k, v in meta.items()]
+    lines.append("---")
+    return "\n".join(lines) + "\n"
+
+
+def render_table(headers, aligns, rows):
+    out = ["| " + " | ".join(headers) + " |", "|" + "|".join(aligns) + "|"]
+    out += ["| " + " | ".join(r) + " |" for r in rows]
+    return "\n".join(out) + "\n"
 
 
 # Matches only the guide-version token in its two sanctioned stamp contexts:
@@ -27,6 +43,16 @@ STAMP_RE = re.compile(
     rf"(?<=Version: `){_VERSION_TOKEN}(?=`)"
     rf"|(?<=\[DrDebits\]\(\./drdebits\.md\) `){_VERSION_TOKEN}(?=`)"
 )
+
+# Hand-written files the build stamps the guide version into, and that verify
+# then holds to metadata. llms.txt is the machine-readable index a retrieval
+# agent reads instead of README.md, so it has to carry the same version and
+# source-check date as the README rather than leaving a consumer to infer them.
+STAMPED_FILES = ("README.md", "MAINTENANCE.md", "llms.txt")
+
+# Of those, the files that also carry a hand-written copy of the source-check
+# date. MAINTENANCE.md does not, so it is not checked for one.
+SOURCE_CHECK_DATE_FILES = ("README.md", "llms.txt")
 
 CHANGELOG_HEADERS = ["Version", "Date", "Status", "Change"]
 
@@ -78,12 +104,12 @@ def load_sources(root):
 
 def build_changelog_section(s):
     rows = [[r["version"], r["date"], r["status"], r["change"]] for r in s.changelog]
-    return "## Change log\n\n" + render.render_table(
+    return "## Change log\n\n" + render_table(
         CHANGELOG_HEADERS, ["---", "---", "---", "---"], rows)
 
 
 def build_guide(s):
-    parts = [render.render_frontmatter({k: v for k, v in s.meta.items() if k != "checksum_files"})]
+    parts = [render_frontmatter({k: v for k, v in s.meta.items() if k != "checksum_files"})]
     parts += [text for _, text in s.fragments]
     parts.append(build_changelog_section(s))
     parts.append("\n" + s.meta["guide_end_marker"] + "\n")
@@ -115,7 +141,7 @@ def build_catalogue_md(s):
         first=s.catalogue[0]["id"],
         last=s.catalogue[-1]["id"],
     )
-    return header + render.render_table(
+    return header + render_table(
         ["Statement (concise title and official link)", "LLM trigger"], ["---", "---"], rows)
 
 
@@ -126,7 +152,7 @@ def build_behaviour_md(s):
     rows = [[r["id"], r["scenario"], r["expected_status"], r["required_behaviour"], r["side_effect_check"]]
             for r in s.behaviour]
     header = BEHAVIOUR_HEADER_TEMPLATE.format(version=s.meta["guide_version"])
-    return header + render.render_table(
+    return header + render_table(
         ["ID", "Scenario", "Expected status", "Required behaviour and human step", "Side-effect check"],
         ["---", "---", "---", "---", "---"], rows)
 
@@ -137,9 +163,9 @@ APES_BETWEEN_TABLES = '\nKey paragraph-level retrieval points are:\n\n'
 
 def build_apes_md(s):
     header = APES_HEADER_TEMPLATE.format(version=s.meta["guide_version"])
-    a = render.render_table(["Context", "APES 110 starting points"], ["---", "---"],
+    a = render_table(["Context", "APES 110 starting points"], ["---", "---"],
                             [[r["label"], r["value"]] for r in s.apes["contexts"]])
-    b = render.render_table(["Control", "APES 110 retrieval points"], ["---", "---"],
+    b = render_table(["Control", "APES 110 retrieval points"], ["---", "---"],
                             [[r["label"], r["value"]] for r in s.apes["retrieval_points"]])
     return header + a + APES_BETWEEN_TABLES + b
 
@@ -155,7 +181,7 @@ def build_vendor_assurance_md(s):
         rows = [[r["id"], r["question"], r["evidence"], r["obligation"], r["if_absent"]]
                 for r in s.vendor["entries"] if r["section"] == title]
         parts.append(f"## {title}\n\n")
-        parts.append(render.render_table(VENDOR_HEADERS, ["---"] * len(VENDOR_HEADERS), rows))
+        parts.append(render_table(VENDOR_HEADERS, ["---"] * len(VENDOR_HEADERS), rows))
         parts.append("\n")
     # Every section contributed a trailing blank line; the file ends with one
     # newline, as the other generated files do.

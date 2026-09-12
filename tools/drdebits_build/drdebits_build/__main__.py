@@ -5,7 +5,14 @@ import argparse
 import sys
 from pathlib import Path
 
-from .build import BuildError, find_root, load_sources, stamp_version, write_outputs
+from .build import (
+    STAMPED_FILES,
+    BuildError,
+    find_root,
+    load_sources,
+    stamp_version,
+    write_outputs,
+)
 from .model import ModelError
 from .verify import run_verify
 
@@ -26,7 +33,7 @@ def main(argv=None):
     if args.command == "build":
         try:
             s = load_sources(root)
-            for rel in ("README.md", "MAINTENANCE.md"):
+            for rel in STAMPED_FILES:
                 p = root / rel
                 if p.is_file():
                     p.write_bytes(stamp_version(p.read_text(encoding="utf-8"), s.meta["guide_version"]).encode("utf-8"))
