@@ -204,7 +204,7 @@ def test_malformed_sources_checked_at_becomes_message_not_traceback(tmp_path):
 
 def test_source_check_date_drift_detected(tmp_path):
     """Check (e): a metadata date bump that misses the guide header line and
-    README must fail verify instead of shipping two different check dates."""
+    README must fail verify instead of shipping 2 different check dates."""
     root = make_repo(tmp_path)
     meta = root / "src" / "data" / "metadata.yaml"
     meta.write_text(
@@ -255,7 +255,7 @@ def test_review_due_already_passed_at_verification_detected(tmp_path):
     arrived when verify runs must fail too. src/guide/040-source-status.md
     tells the model to label the affected material SOURCE CURRENCY NOT
     CONFIRMED once review_due has passed, and MAINTENANCE step 6 runs verify
-    before the release goes out, so comparing the two metadata dates with each
+    before the release goes out, so comparing the 2 metadata dates with each
     other and nothing else blesses exactly the expired release this gate
     exists to stop."""
     root = make_repo(tmp_path)

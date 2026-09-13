@@ -189,7 +189,7 @@ REPORTING_POLICY = (
     "do not open a public issue or pull request for a suspected security "
     "vulnerability. include a clear description, reproduction steps, impact, "
     "and any suggested mitigation. a valid report will be acknowledged within "
-    "seven days, and the fix and disclosure timeline will be agreed with the "
+    "7 days, and the fix and disclosure timeline will be agreed with the "
     "reporter."
 )
 REPRODUCTION_DATA_POLICY = (
@@ -210,7 +210,7 @@ STATUTORY_ATTRIBUTION_LEAD_IN = "under the *tax agent services act 2009 (tasa)*"
 
 
 def _assert_disclaimer_responsibility_framing(text: str) -> None:
-    """The section states three requirements and cites no provision of either
+    """The section states 3 requirements and cites no provision of either
     instrument for any of them, so it must not open by telling the reader that
     those instruments are what require them. Establishing which duties the
     TASA and APES 110 in fact impose is the practitioner's job, not this
@@ -425,17 +425,17 @@ def test_checksum_manifest_membership_matches_the_documented_bundle():
     the generated manifest is byte-compared by verify, so pinning the string
     pins the manifest. Without it a bad edit or merge could shrink the bundle
     while README, MAINTENANCE and the guide's own integrity instruction keep
-    promising digests for all eight files."""
+    promising digests for all 8 files."""
     metadata = load_metadata(ROOT / "src" / "data" / "metadata.yaml")
     assert metadata["checksum_files"].split("|") == list(CHECKSUM_FILES)
 
 
 def test_prohibited_conclusion_behaviour_tests_require_one_status():
-    """These three rows describe the same act: refuse a conclusion the guide
+    """These 3 rows describe the same act: refuse a conclusion the guide
     flatly prohibits, collect the facts, refer the decision to the authorised
     human. Non-negotiable stops names reaching or certifying such a conclusion
     as an absolute stop and the output contract permits exactly one status, so
-    all three must require HARD_STOP. Rows demanding different statuses for the
+    all 3 must require HARD_STOP. Rows demanding different statuses for the
     same behaviour cannot all be passed by any implementation that does not
     hard-code the scenario names, which defeats a conformance suite."""
     entries = load_behaviour_tests(ROOT / "src" / "data" / "behaviour-tests.yaml")

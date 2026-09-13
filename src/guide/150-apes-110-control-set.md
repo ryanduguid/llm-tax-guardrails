@@ -58,7 +58,7 @@ Publisher navigation and document identifiers were rechecked on 20 August 2026; 
 For tax-planning activities in business, tax-planning services in public practice and relevant Part 5 work:
 
 - Establish the client or employing organisation, purpose, relevant people, facts, economic substance, assumptions and current law.
-- Do not recommend or advise on an arrangement unless the responsible Member, Member in Public Practice or Sustainability Assurance Practitioner, as applicable, has determined (after considering any necessary specialist advice) that the arrangement has a credible basis in laws and regulations. For a tax-planning arrangement requiring advice or recommendations about Australian tax laws and regulations, the Australian application material links this to a reasonably arguable position under s 284-15 of Schedule 1 to the Taxation Administration Act 1953.
+- Do not recommend or advise on an arrangement unless the responsible Member, Member in Public Practice or Sustainability Assurance Practitioner, as applicable, has determined (after considering any necessary specialist advice) that the arrangement has a credible basis in laws and regulations. For a tax-planning arrangement requiring advice or recommendations about Australian tax laws and regulations, the Australian application material links this to a reasonably arguable position under s 284-15 of Schedule 1 to the *Taxation Administration Act 1953*.
 - Reassess the basis when facts, law, rulings or other circumstances change.
 - Consider anti-avoidance rules, legislative intent, economic purpose, ultimate beneficiaries, transparency, and reputational, commercial and wider economic consequences.
 - Explain uncertainty, the basis of advice, realistic alternatives and material consequences. Do not convert uncertainty into false precision.
@@ -70,13 +70,13 @@ For tax-planning activities in business, tax-planning services in public practic
 
 When actual or suspected non-compliance arises, use `ESCALATE` for the matter and refuse any request to warn, accuse or report a person. The LLM MUST NOT make the legal or disclosure decision. It must:
 
-1. preserve the relevant information securely and avoid unsupported accusations;
-2. identify the possible law, affected parties, urgency, material harm and any reporting or anti-tipping-off rule;
-3. alert the appropriate authorised professional promptly;
-4. support clarification with management or those charged with governance where appropriate and lawful;
-5. recommend confidential consultation with the firm’s ethics/risk function, professional body or legal counsel where needed;
-6. assess whether the response appears timely and directed to rectification, remediation, mitigation, deterrence and prevention of recurrence;
-7. flag possible further action, disclosure or withdrawal for human determination in the public interest; and
+1. preserve the relevant information securely and avoid unsupported accusations
+2. identify the possible law, affected parties, urgency, material harm and any reporting or anti-tipping-off rule
+3. alert the appropriate authorised professional promptly
+4. support clarification with management or those charged with governance where appropriate and lawful
+5. recommend confidential consultation with the firm’s ethics/risk function, professional body or legal counsel where needed
+6. assess whether the response appears timely and directed to rectification, remediation, mitigation, deterrence and prevention of recurrence
+7. flag possible further action, disclosure or withdrawal for human determination in the public interest
 8. prepare a workpaper-ready record of the issue, consultations, response and decision; persist it only through the approved system after satisfying the action and data gates.
 
 Confidentiality continues to apply. Do not assume that confidentiality always prohibits disclosure or that public-interest concerns always permit it. For relevant Part 5 work, retrieve section 5360 rather than substituting sections 260 or 360; consider its sustainability-specific group communication, assurance-standard and reporting implications.
@@ -87,12 +87,12 @@ Apply each independence part only within its stated engagement scope. Part 5 eth
 
 For audit, review, other assurance or sustainability-assurance work, the LLM must instead collect and flag facts concerning:
 
-- financial interests, loans, guarantees, business, family and personal relationships;
-- recent or prospective employment, director/officer roles and temporary staff assignments;
-- long association and rotation;
-- fees, overdue fees, compensation, gifts, hospitality and litigation;
-- prior or proposed non-assurance services, including accounting, bookkeeping, valuation, tax, internal audit, IT systems, litigation support, legal, recruitment and corporate-finance services;
-- management responsibilities, self-review, advocacy and use of work produced by the firm or model; and
+- financial interests, loans, guarantees, business, family and personal relationships
+- recent or prospective employment, director/officer roles and temporary staff assignments
+- long association and rotation
+- fees, overdue fees, compensation, gifts, hospitality and litigation
+- prior or proposed non-assurance services, including accounting, bookkeeping, valuation, tax, internal audit, IT systems, litigation support, legal, recruitment and corporate-finance services
+- management responsibilities, self-review, advocacy and use of work produced by the firm or model
 - public-interest-entity, group, network, component and sustainability value-chain status.
 
 Refer every identified trigger to the engagement partner or independence/ethics function before work proceeds. Apply the correct operative date and any transitional provision. Do not use early-adoption or transitional relief without an authorised, documented decision and any required disclosure.

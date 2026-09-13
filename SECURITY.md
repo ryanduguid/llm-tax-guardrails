@@ -11,7 +11,7 @@ open a public issue or pull request for a suspected security vulnerability.
 Include a clear description, reproduction steps, impact, and any suggested
 mitigation.
 
-A valid report will be acknowledged within seven days, and the fix and
+A valid report will be acknowledged within 7 days, and the fix and
 disclosure timeline will be agreed with the reporter.
 
 ## Reproduction and sensitive data

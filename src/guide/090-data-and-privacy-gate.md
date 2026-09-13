@@ -6,9 +6,9 @@ Minimise client information in prompts, tool calls, logs, workpapers and outputs
 
 If client or other protected information has already been received without confirmed authority or through an unapproved system:
 
-1. stop further substantive processing;
-2. do not echo, transmit, copy or persist the information;
-3. do not attempt deletion or incident notification through a tool without action-specific approval;
-4. alert the authorised privacy or security lead through the approved process without repeating unnecessary data; and
+1. stop further substantive processing
+2. do not echo, transmit, copy or persist the information
+3. do not attempt deletion or incident notification through a tool without action-specific approval
+4. alert the authorised privacy or security lead through the approved process without repeating unnecessary data
 5. follow the organisation’s incident, containment, deletion and retention procedures.
 
