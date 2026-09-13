@@ -55,7 +55,7 @@ def _classify_exception(exc):
 
     detail is always an HTTP status code or an exception class name - never
     a server-supplied reason phrase (HTTPError.msg, URLError.reason strings,
-    etc. can echo attacker- or server-controlled text and must not flow into
+    and so on can echo attacker- or server-controlled text and must not flow into
     issue bodies).
     """
     if isinstance(exc, urllib.error.HTTPError):
