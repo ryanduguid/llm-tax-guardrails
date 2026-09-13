@@ -5,12 +5,11 @@ name: No AI attribution
 # Product references are allowed.
 #
 # The local commit-msg guard catches commits written on Ryan's machine; this
-# workflow checks pull request metadata from the trusted base branch and audits
-# commits after a default-branch push. It never runs pull request code.
+# workflow hands pull request metadata to the shared Attribution policy runner
+# from the trusted base branch and audits commits after a default-branch push.
+# It never runs pull request code.
 
 on:
-  pull_request:
-    types: [opened, edited, synchronize, reopened, ready_for_review]
   pull_request_target:
     types: [opened, edited, synchronize, reopened, ready_for_review]
   push:
@@ -19,51 +18,16 @@ on:
 
 permissions:
   contents: read
-  pull-requests: read
 
 concurrency:
   group: attribution-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
-  legacy:
-    if: github.event_name == 'pull_request'
-    name: check
-    runs-on: ubuntu-latest
-    steps: &policy_steps
-      - name: Mark the head commit as pending
-        if: github.event_name != 'pull_request'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-          POLICY_CONTEXT: ${{ github.event_name == 'pull_request_target' && 'Attribution policy' || 'Attribution audit' }}
-        run: |
-          gh api "repos/$GITHUB_REPOSITORY/statuses/$HEAD_SHA" --method POST \
-            -f state=pending -f context="$POLICY_CONTEXT" \
-            -f description='Checking commit identities and authorship credits' \
-            -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" --silent
-
-      - uses: ryanduguid/release-policy/.github/actions/no-ai-attribution@d8e316fd6642fb132d6fd5b2158e20188a1f3561
-
-      - name: Publish the result on the head commit
-        if: ${{ always() && !cancelled() && github.event_name != 'pull_request' }}
-        env:
-          GH_TOKEN: ${{ github.token }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-          POLICY_CONTEXT: ${{ github.event_name == 'pull_request_target' && 'Attribution policy' || 'Attribution audit' }}
-          STATE: ${{ job.status == 'success' && 'success' || 'failure' }}
-        run: |
-          gh api "repos/$GITHUB_REPOSITORY/statuses/$HEAD_SHA" --method POST \
-            -f state="$STATE" -f context="$POLICY_CONTEXT" \
-            -f description='Commit identity and authorship credit policy' \
-            -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" --silent
-
   policy:
-    if: ${{ !cancelled() && github.event_name != 'pull_request' }}
-    name: Attribution policy runner
-    runs-on: ubuntu-latest
+    name: Attribution policy
     permissions:
       contents: read
       pull-requests: read
       statuses: write
-    steps: *policy_steps
+    uses: ryanduguid/release-policy/.github/workflows/attribution-policy.yml@ba94d055c28cfae801a3d663404156b2af36cdd6
