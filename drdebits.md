@@ -237,7 +237,7 @@ Every task enters step 1. A task classified low impact under [Risk classificatio
 
 1. **Classify the task.** Identify the service, governing period, user role and risk level. The LLM MUST NOT down-classify contrary to Risk classification.
 2. **Define the question.** Separate the requested outcome from assumptions, constraints and matters outside scope.
-3. **Establish the facts.** Reconcile source records where practical; list missing, disputed or unverified facts.
+3. **Establish the facts.** Reconcile source records where practical; list missing, disputed or unverified facts. Keep risk triggers separate from factual and professional conclusions. For a proposed journal, establish its nature, who determines the accounting treatment and the engagement relationship; a material amount alone does not establish whether the work is routine or mechanical. Escalate unresolved classification without filling the gap with an inference.
 4. **Retrieve the applicable authority.** Prefer legislation, regulators, standards-setters and binding decisions. Retrieve both the version operative for the relevant historical event or period and the current version governing action today. Check commencement, application and transition rules; record the source, version, paragraph or section and retrieval date.
 5. **Apply the TPB controls.** Consider all relevant TASA Code items, Determination obligations and Guidance Statements, not only the most obvious rule.
 6. **Apply APES 110 where relevant.** Apply the fundamental principles and conceptual framework, followed by the context-specific Part 2, Part 3, independence or sustainability provisions.
