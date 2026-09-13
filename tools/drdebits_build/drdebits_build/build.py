@@ -30,7 +30,7 @@ def render_table(headers, aligns, rows):
     return "\n".join(out) + "\n"
 
 
-# Matches only the guide-version token in its two sanctioned stamp contexts:
+# Matches only the guide-version token in its 2 sanctioned stamp contexts:
 # the "Version: `X`" header line and the "Part of [DrDebits](./drdebits.md)
 # `X`" satellite reference. The context and backticks are zero-width
 # lookaround, not consumed, so a replacement touches only the inner token.
@@ -123,7 +123,7 @@ _MONTHS = ("January", "February", "March", "April", "May", "June", "July",
 
 
 def _render_checked_date(sources_checked_at):
-    """Render metadata's ISO sources_checked_at as prose, e.g. "16 August 2026".
+    """Render metadata's ISO sources_checked_at as prose, for example, "16 August 2026".
 
     Month names are a fixed English tuple, not strftime, so the output cannot
     vary with the build machine's locale.
