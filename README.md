@@ -20,11 +20,11 @@ DrDebits is an independent, source-linked operating guide for large language mod
 
 DrDebits does not reproduce APES 110, certify compliance, replace the source documents or replace a registered tax practitioner's or professional accountant's judgement. It is not legal, tax or financial advice. A competent, appropriately authorised human remains responsible for every professional service, judgement and consequential action.
 
-"Dr" is part of the project name only. It does not claim a qualification, professional designation, registration, regulatory status or endorsement.
+'Dr' is part of the project name only. It does not claim a qualification, professional designation, registration, regulatory status or endorsement.
 
 ## Quick start for AI agents
 
-Supply `drdebits.md` as persistent project context at the highest configurable instruction tier beneath immutable platform controls, then instruct the model per the "How to use this file" section of the guide. Retrieve the reference files when a routing decision needs them.
+Supply `drdebits.md` as persistent project context at the highest configurable instruction tier beneath immutable platform controls, then instruct the model per the 'How to use this file' section of the guide. Retrieve the reference files when a routing decision needs them.
 
 ### Load into Claude Code / Antigravity
 ```bash

@@ -17,7 +17,7 @@ from .build import (
 )
 from .model import ModelError
 
-# The two shapes the hand-written TPB statement count and GS range are written
+# The 2 shapes the hand-written TPB statement count and GS range are written
 # in outside the generated catalogue header: a bare id range, and a count
 # introducing one. Check (h) compares every match against the sources.
 GS_RANGE_RE = re.compile(r"GS\d+ to GS\d+")
@@ -39,7 +39,7 @@ GS_COPY_COUNTS = {
     "README.md": {"range": 1, "count": 0},
 }
 
-# The two guide fragments checks (i) and (j) cross-reference the data files
+# The 2 guide fragments checks (i) and (j) cross-reference the data files
 # against. Named, not discovered: a renamed or deleted fragment must surface as
 # a finding, because a cross-reference check that quietly has nothing to read
 # passes on every tree including a broken one.
@@ -52,7 +52,7 @@ INSTRUCTION_WORDS_FRAGMENT = "060-meaning-of-instruction-words.md"
 # "Sub" then matches on its own so a subsection citation still counts as one.
 # Paragraph references (`1.5`, `R220.8`, `5400.3a`) and the TAA's "s 284-15"
 # deliberately do not match: the reference map locates Parts and sections, and
-# those are what the two hand-written files have to agree about.
+# those are what the 2 hand-written files have to agree about.
 APES_LOCATOR_RE = re.compile(
     r"\b(?:(?P<part>[Pp]arts?)|(?:[Ss]ub)?[Ss]ections?)\s+"
     r"(?P<numbers>\d+[A-Za-z]?(?:\s*(?:,|and|to|or)\s*\d+[A-Za-z]?)*)")
@@ -174,8 +174,8 @@ def run_verify(root, today=None):
     # (e) the source-check date is derived into the catalogue header and the
     # guide frontmatter from metadata, but the guide's header line, README and
     # llms.txt carry hand-written copies. A metadata bump that misses one would
-    # ship a release carrying two different check dates, so cross-check them
-    # all. (src/guide/040-source-status.md carries two further prose copies
+    # ship a release carrying 2 different check dates, so cross-check them
+    # all. (src/guide/040-source-status.md carries 2 further prose copies
     # that this check does not cover; MAINTENANCE step 8 owns those.)
     checked_date = s.meta.get("sources_checked_at", "")[:10]
     if checked_date:
@@ -222,7 +222,7 @@ def run_verify(root, today=None):
     # release that disables itself on the day it ships, so review_due must be a
     # real date strictly after the source-check date - and, because MAINTENANCE
     # runs verify on the day of release, strictly after that day too. Checking
-    # only the two metadata dates against each other would bless a release
+    # only the 2 metadata dates against each other would bless a release
     # whose review fell due months before anyone ran the gate.
     review_due = s.meta["review_due"]
     try:
@@ -246,7 +246,7 @@ def run_verify(root, today=None):
     # metadata and the catalogue rows, but the guide and README carry
     # hand-written copies of both. Adding or withdrawing a statement would
     # otherwise ship one release whose guide says one count and whose bundled
-    # catalogue says another, so every copy must agree with the same two
+    # catalogue says another, so every copy must agree with the same 2
     # sources the header is built from. Every occurrence is checked, not just
     # the first, so a stale leftover beside a corrected copy is still caught -
     # and the number of occurrences is checked too, so a copy that is deleted
@@ -278,10 +278,10 @@ def run_verify(root, today=None):
                     f"{expected[shape]}; a hand-written copy has been removed or "
                     "reworded past this check (MAINTENANCE step 8 lists them)")
 
-    # Twenty guide fragments and six data files are written by hand against
+    # Twenty guide fragments and 6 data files are written by hand against
     # each other, and the rebuild-and-compare check above cannot see a
     # disagreement between them: both sides are sources, so a contradiction
-    # builds, hashes and verifies clean. Checks (i) and (j) make the two
+    # builds, hashes and verifies clean. Checks (i) and (j) make the 2
     # cross-references the guide actually depends on into findings.
     fragments = dict(s.fragments)
 
@@ -294,7 +294,7 @@ def run_verify(root, today=None):
     # than by number (section 220 preparing and presenting information, section
     # 350 client assets, Part 4A audit and review independence, and so on), so
     # requiring every row to be cited by number would be a claim about the
-    # guide's drafting, not about the two files agreeing.
+    # guide's drafting, not about the 2 files agreeing.
     control_set = fragments.get(APES_CONTROL_SET_FRAGMENT)
     if control_set is None:
         failures.append(

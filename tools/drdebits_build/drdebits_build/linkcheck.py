@@ -55,7 +55,7 @@ def _classify_exception(exc):
 
     detail is always an HTTP status code or an exception class name - never
     a server-supplied reason phrase (HTTPError.msg, URLError.reason strings,
-    etc. can echo attacker- or server-controlled text and must not flow into
+    and so on can echo attacker- or server-controlled text and must not flow into
     issue bodies).
     """
     if isinstance(exc, urllib.error.HTTPError):
@@ -89,7 +89,7 @@ def _attempt(url, timeout):
     try:
         with urllib.request.urlopen(req, timeout=timeout) as resp:
             status = resp.status
-            final = resp.geturl() if hasattr(resp, "geturl") else url
+            final = resp.geturl()
         if not str(final).startswith("https://"):
             return "unreachable", "non-https-redirect"
     except Exception as exc:  # any failure is a finding, described not raised

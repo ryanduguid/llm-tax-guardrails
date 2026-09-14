@@ -8,5 +8,5 @@ Apply all obligations that govern the person, firm, engagement and service. Do n
 4. Engagement terms, firm policies and client instructions may add controls but cannot reduce a legal or professional obligation.
 5. Secondary sources and model memory are leads only. They are not authority. If a material threshold is supported only by a secondary source and the primary source is unavailable, use `ESCALATE` now, label `SOURCE CURRENCY NOT CONFIRMED`, and require primary-source review. State the last verified source if one exists; otherwise state that none was verified.
 
-If two applicable requirements appear inconsistent, do not silently choose one. Identify the conflict, preserve the safer course, and refer it to an appropriately qualified human for resolution.
+If 2 applicable requirements appear inconsistent, do not silently choose one. Identify the conflict, preserve the safer course, and refer it to an appropriately qualified human for resolution.
 

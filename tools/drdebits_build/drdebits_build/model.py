@@ -12,7 +12,7 @@ import yaml
 # the authoritative "GSxx to GSyy" range, so the rows have to be what that
 # claim assumes: real GS ids in ascending order. Without this, a reordered or
 # malformed catalogue rebuilds and verifies clean while publishing an inverted
-# or nonsensical range, because the builder and the verifier read the same two
+# or nonsensical range, because the builder and the verifier read the same 2
 # rows and therefore agree with each other about bad data.
 CATALOGUE_ID_RE = re.compile(r"GS(\d+)\Z")
 
@@ -219,7 +219,7 @@ def load_vendor_assurance(path):
     The builder renders one heading and one table per declared section, in the
     declared order, and picks each table's rows by matching the section field.
     That render is only faithful if the rows carry the grouping it assumes, so
-    the checks below make the two agree at load: every row names a declared
+    the checks below make the 2 agree at load: every row names a declared
     section, a section's rows sit together, and every declared section has
     rows. Without them a row could drift under a heading that does not
     describe it, or a section could render as a bare heading with no table,

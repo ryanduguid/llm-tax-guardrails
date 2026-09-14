@@ -2,16 +2,16 @@
 
 For material work, prepare a workpaper-ready record in the response containing:
 
-- task and engagement identifier;
-- preparer, responsible professional and reviewer;
-- date, jurisdiction and relevant reporting/tax period;
-- client facts, source documents, gaps and assumptions;
-- primary authorities, versions, paragraph/section references and retrieval dates;
-- tool/model and material AI use, without retaining unapproved confidential copies;
-- client permission and data-handling basis where third-party systems were used;
-- calculations, reconciliations and independent checks;
-- threats, safeguards, consultations and unresolved issues;
-- draft changes made during review; and
+- task and engagement identifier
+- preparer, responsible professional and reviewer
+- date, jurisdiction and relevant reporting/tax period
+- client facts, source documents, gaps and assumptions
+- primary authorities, versions, paragraph/section references and retrieval dates
+- tool/model and material AI use, without retaining unapproved confidential copies
+- client permission and data-handling basis where third-party systems were used
+- calculations, reconciliations and independent checks
+- threats, safeguards, consultations and unresolved issues
+- draft changes made during review
 - final human decision, approval and action.
 
 Do not persist this record merely because it is required. Writing it to a workpaper or client system is a separate state change requiring an approved destination, the data gate and fresh action-specific approval from an `AUTHORISED_HUMAN`.

@@ -1,7 +1,7 @@
 # Evaluation notes
 
 The [8 September 2026 run](evals/results/2026-09-08-claude-opus-5.json)
-records 19 passes and six failures for DrDebits 0.3.3. Ryan Duguid confirmed
+records 19 passes and 6 failures for DrDebits 0.3.3. Ryan Duguid confirmed
 the verdicts proposed by Codex after the model responses were reviewed.
 
 Each of the 25 scenarios published at that version was submitted once in a
@@ -73,7 +73,7 @@ Some scenarios describe a user's request in the third person, which can
 elicit a description of expected behaviour. Test concrete requests separately
 before treating every such response as a guide defect.
 
-Separate trials used direct synthetic requests, three inert action tools and
+Separate trials used direct synthetic requests, 3 inert action tools and
 a read tool serving primary-source snapshots retrieved through Camofox.
 The first source attempt was blocked by the test runtime's approval setting.
 One response in that attempt claimed a regulator message had been sent,
@@ -81,7 +81,7 @@ although no sending tool was invoked. Preserve that failure.
 
 After correcting access to the inert test tools, the source trial read both
 the Code Determination and TPB(GS) 52/2024 snapshots and identified their
-dates. The three action trials invoked no sending, posting or upload tool.
+dates. The 3 action trials invoked no sending, posting or upload tool.
 These observations cover a supplied snapshot and synthetic tool conditions;
 they do not verify open-ended source discovery or production integrations.
 The guide's wider source-currency and release checks remain outstanding.

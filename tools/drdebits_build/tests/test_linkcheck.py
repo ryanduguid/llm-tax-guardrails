@@ -26,6 +26,9 @@ class _FakeResponse:
     def __init__(self, status):
         self.status = status
 
+    def geturl(self):
+        return "https://x.invalid/"
+
     def __enter__(self):
         return self
 

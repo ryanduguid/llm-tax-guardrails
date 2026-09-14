@@ -13,7 +13,7 @@ The content, guidance rules, and catalogues contained within DrDebits:
 DrDebits requires, consistent with the responsibilities that the *Tax Agent Services Act 2009 (TASA)* and *APES 110 Code of Ethics for Professional Accountants* place on the practitioner, that a registered tax agent, BAS agent, or qualified professional accountant:
 1. Exercise independent professional judgement over all generated outputs.
 2. Verify all underlying calculations and legislative references against primary sources.
-3. Retain complete legal and ethical responsibility for all consequential advice, documentation, and statutory lodgments.
+3. Retain complete legal and ethical responsibility for all consequential advice, documentation, and statutory lodgements.
 
 ## 4. Name and endorsement
-"Dr" is part of the project name only and does not represent academic, medical, or statutory qualifications. DrDebits is not affiliated with or endorsed by the TPB, APESB, AUSTRAC, CA ANZ, CPA Australia, or the IPA.
+'Dr' is part of the project name only and does not represent academic, medical, or statutory qualifications. DrDebits is not affiliated with or endorsed by the TPB, APESB, AUSTRAC, CA ANZ, CPA Australia, or the IPA.

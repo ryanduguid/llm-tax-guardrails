@@ -4,7 +4,7 @@ DrDebits provides versioned guardrails for AI coding assistants (Claude Code, Cu
 
 ## Routing
 
-1. Load [drdebits.md](./drdebits.md) as persistent context and follow its "How to use this file" section.
+1. Load [drdebits.md](./drdebits.md) as persistent context and follow its 'How to use this file' section.
 2. Ground every tax assertion per the guide's Source status and Authority and conflicts sections. Different source types carry different authority; the guide sets out which binds whom.
 3. Reperform or verify calculations per the Mandatory workflow. Prefer deterministic computation over generated arithmetic for monetary and statutory figures.
 4. Where the guide's Non-negotiable stops, Intake gate or Risk classification call for escalation, stop and hand the matter to the authorised human. Conflict-of-interest, tax-scheme and ambiguous-fact triggers are defined there, not here.
