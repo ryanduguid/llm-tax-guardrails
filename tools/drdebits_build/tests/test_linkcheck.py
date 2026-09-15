@@ -210,7 +210,11 @@ def test_main_probes_urls_concurrently(tmp_path, monkeypatch, capsys):
 
     def fake_check(url, timeout):
         try:
-            rendezvous.wait(timeout=0.25)
+            # A concurrent run clears the barrier the moment the second thread
+            # arrives, so a generous timeout costs nothing here and only the true
+            # serial path waits it out. At 0.25s a loaded runner could exceed it
+            # while probing concurrently, failing the test for a timing reason.
+            rendezvous.wait(timeout=30)
         except threading.BrokenBarrierError:
             return "unreachable", "serial"
         return "ok", "200"
