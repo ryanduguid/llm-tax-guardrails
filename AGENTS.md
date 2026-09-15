@@ -19,6 +19,20 @@ test and evaluation sources under `src/`; regenerate their outputs with the
 documented builder. Historical human-recorded evaluation results stay unchanged.
 
 Before handoff, run the builder tests and generated-output verification defined
-in [verify.yml](.github/workflows/verify.yml). Report source-currency checks,
-live links and model evaluations separately from structural tests. A passing
-build does not establish professional correctness or authorise a release.
+in [verify.yml](.github/workflows/verify.yml). `pre-commit install` runs the
+same commands through the same locked toolchain before a commit lands, and adds
+a gitleaks scan against [.gitleaks.toml](.gitleaks.toml), which carries
+client-identifier rules on top of the default credential rules.
+
+For source currency, run
+`uv run --project tools/drdebits_build --locked python -m drdebits_build.sources --root .`.
+It asks the Federal Register whether each compilation the guide pins is still
+the current one, which a link check cannot tell you: a superseded compilation
+keeps resolving. [source-currency.yml](.github/workflows/source-currency.yml)
+runs it weekly and reports by issue. A changed compilation number is the
+trigger for a human to read the replacement, never grounds to advance
+`sources_checked_at`.
+
+Report source-currency checks, live links and model evaluations separately from
+structural tests. A passing build does not establish professional correctness
+or authorise a release.

@@ -1,0 +1,68 @@
+# Secret and client-identifier scanning.
+#
+# The default gitleaks rules cover credentials. The client-identifier rules
+# below are shared with ryanduguid/australian-accounting-skills: this guide
+# forbids real client data in its own DISCLAIMER, and an example carrying a TFN
+# would breach that without tripping a credential scanner. Keep the two copies
+# in step; a third repository needing them is the point to extract a shared
+# config rather than copy it again.
+#
+# Each rule anchors on the label rather than the digits. An unanchored
+# 11-digit pattern would match compilation numbers, section references and
+# dates throughout the guide and the gate would be turned off within a week.
+
+title = "llm-tax-guardrails"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "au-tax-file-number"
+description = "Tax file number beside its label"
+# 8 or 9 digits, commonly grouped 3-3-3. AGENTS.md excludes TFNs from this
+# repository outright, including from fabricated fixtures.
+regex = '''(?i)\btfns?\b[^0-9\n]{0,20}(\d{3}[ -]?\d{3}[ -]?\d{2,3})\b'''
+tags = ["client-data", "australia"]
+
+[[rules]]
+id = "au-business-number"
+description = "ABN beside its label"
+# 11 digits, commonly grouped 2-3-3-3. A fabricated ABN is still forbidden
+# here: the validation pack bans realistic identifiers, not just real ones.
+regex = '''(?i)\bab\.?n\.?\b[^0-9\n]{0,20}(\d{2}[ -]?\d{3}[ -]?\d{3}[ -]?\d{3})\b'''
+tags = ["client-data", "australia"]
+
+[[rules]]
+id = "au-bank-account"
+description = "BSB or account number beside its label"
+regex = '''(?i)\b(?:bsb|account\s*(?:number|no\.?))\b[^0-9\n]{0,20}(\d{3}[ -]?\d{3}\b|\d{6,10}\b)'''
+tags = ["client-data", "australia"]
+
+[[rules]]
+id = "au-medicare-number"
+description = "Medicare number beside its label"
+regex = '''(?i)\bmedicare\s*(?:number|no\.?|card)\b[^0-9\n]{0,20}(\d{4}[ -]?\d{5}[ -]?\d{1,2})\b'''
+tags = ["client-data", "australia"]
+
+[allowlist]
+description = "Provenance digests and placeholder identifiers"
+paths = [
+  # The scanner's own rules quote the patterns they match.
+  '''\.gitleaks\.toml$''',
+]
+# src/data/metadata.yaml is a list of `key:`/`value:` pairs, and the default
+# generic-api-key rule reads every `key: <something>` line as an assignment.
+# The two shapes that appear on those lines are allowed here and nothing else:
+#
+#   * a field name such as `apes_110_compilation`, which is lowercase words
+#     joined by underscores and could not be a credential
+#   * the 64-character lowercase hex digest in `apes_110_pdf_sha256`, which is
+#     the SHA-256 of the official compiled APES 110 PDF, recorded so a
+#     replacement document can be detected
+#
+# Anything mixed-case, punctuated or of another length still fires.
+regexes = [
+  '''^[a-z][a-z0-9]*(?:_[a-z0-9]+)+$''',
+  '''^[0-9a-f]{64}$''',
+  '''(?i)^<(?:tfn|abn|bsb|account[ -]?number|medicare[ -]?number)>$''',
+]
