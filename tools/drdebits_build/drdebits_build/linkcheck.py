@@ -2,9 +2,11 @@
 from __future__ import annotations
 
 import argparse
+import ipaddress
 import re
 import socket
 import urllib.error
+import urllib.parse
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
@@ -58,6 +60,8 @@ def _classify_exception(exc):
     and so on can echo attacker- or server-controlled text and must not flow into
     issue bodies).
     """
+    if isinstance(exc, _BlockedDestination):
+        return "unreachable", exc.detail
     if isinstance(exc, urllib.error.HTTPError):
         detail = str(exc.code)
         if exc.code in DEAD_HTTP_STATUSES:
@@ -79,15 +83,75 @@ def _classify_exception(exc):
     return "unreachable", type(exc).__name__
 
 
+class _BlockedDestination(urllib.error.URLError):
+    """A redirect target this checker refused to request."""
+
+    def __init__(self, detail: str) -> None:
+        super().__init__(detail)
+        self.detail = detail
+
+
+def _destination_problem(url: str) -> str | None:
+    """Why `url` must not be requested, or None when it may be.
+
+    Only public https destinations are allowed. Anything resolving to a
+    loopback, private, link-local, shared or otherwise reserved address is
+    refused, so a linked site cannot point this checker at a service on the
+    runner or inside its network. A name that does not resolve is left to the
+    request itself, because _classify_exception distinguishes definitive name
+    rot from a transient resolver failure and this must not pre-empt that.
+    """
+    parts = urllib.parse.urlsplit(url)
+    if parts.scheme != "https":
+        return "non-https"
+    try:
+        host = parts.hostname
+        port = parts.port or 443
+    except ValueError:
+        return "unparsable-url"
+    if not host:
+        return "no-host"
+    try:
+        infos = socket.getaddrinfo(host, port, type=socket.SOCK_STREAM)
+    except (socket.gaierror, UnicodeError):
+        return None
+    if any(not ipaddress.ip_address(info[4][0]).is_global for info in infos):
+        return "non-public-address"
+    return None
+
+
+class _ValidatingRedirectHandler(urllib.request.HTTPRedirectHandler):
+    """Check a redirect target before the request that would follow it.
+
+    urlopen follows redirects itself, so checking resp.geturl() afterwards
+    checks a request that has already gone out. This runs first instead.
+    """
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):  # noqa: ANN001, ANN201
+        problem = _destination_problem(newurl)
+        if problem is not None:
+            raise _BlockedDestination(problem)
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
+_OPENER = urllib.request.build_opener(_ValidatingRedirectHandler)
+
+
+def _open(req, timeout):
+    """The only place this module issues a request. The offline tests stub it."""
+    return _OPENER.open(req, timeout=timeout)
+
+
 def _attempt(url, timeout):
-    # collect_urls only yields https:// URLs, but keep urlopen pinned to that
-    # scheme here too so a future collector change cannot make this fetch
-    # file:// or other local schemes.
-    if not url.startswith("https://"):
-        return "unreachable", "non-https"
+    # collect_urls only yields https:// URLs, but keep the fetch pinned to a
+    # public https destination here too, so a future collector change cannot
+    # make this reach file://, a local service or a private address.
+    problem = _destination_problem(url)
+    if problem is not None:
+        return "unreachable", problem
     req = urllib.request.Request(url, headers={"User-Agent": UA}, method="GET")
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
+        with _open(req, timeout) as resp:
             status = resp.status
             final = resp.geturl()
         if not str(final).startswith("https://"):

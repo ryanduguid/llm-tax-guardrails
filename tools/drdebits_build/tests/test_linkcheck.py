@@ -5,11 +5,28 @@ import threading
 import urllib.error
 import urllib.request
 
+import pytest
 from drdebits_build import linkcheck
 from drdebits_build.build import write_outputs
 from drdebits_build.linkcheck import collect_urls
 
 from tests.test_build import make_repo
+
+PUBLIC_ADDRESS = "93.184.216.34"
+
+
+def _addrinfo(address):
+    return lambda host, port, *args, **kwargs: [
+        (socket.AF_INET, socket.SOCK_STREAM, 6, "", (address, port)),
+    ]
+
+
+@pytest.fixture(autouse=True)
+def _offline_dns(monkeypatch):
+    """Resolve every host to one public address, so the destination guard runs
+    on every test without a live lookup. A test that wants a private target
+    overrides this with its own getaddrinfo."""
+    monkeypatch.setattr(linkcheck.socket, "getaddrinfo", _addrinfo(PUBLIC_ADDRESS))
 
 
 def test_collect_urls_unique_ordered(tmp_path):
@@ -43,7 +60,7 @@ def test_check_404_is_dead_and_not_retried(monkeypatch):
         calls.append(1)
         raise urllib.error.HTTPError(req.full_url, 404, "Not Found", None, None)
 
-    monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+    monkeypatch.setattr(linkcheck, "_open", fake_urlopen)
     kind, detail = linkcheck.check("https://x.invalid/gone", 5)
     assert (kind, detail) == ("dead", "404")
     assert len(calls) == 1  # definitive death: no retry
@@ -56,7 +73,7 @@ def test_check_403_is_unreachable_after_one_retry(monkeypatch):
         calls.append(1)
         raise urllib.error.HTTPError(req.full_url, 403, "Forbidden", None, None)
 
-    monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+    monkeypatch.setattr(linkcheck, "_open", fake_urlopen)
     kind, detail = linkcheck.check("https://x.invalid/blocked", 5)
     assert (kind, detail) == ("unreachable", "403")
     assert len(calls) == 2  # one retry attempted before classification stuck
@@ -71,7 +88,7 @@ def test_check_timeout_then_success_is_ok(monkeypatch):
             raise TimeoutError("read operation timed out")
         return _FakeResponse(200)
 
-    monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+    monkeypatch.setattr(linkcheck, "_open", fake_urlopen)
     kind, detail = linkcheck.check("https://x.invalid/flaky", 5)
     assert (kind, detail) == ("ok", "200")
     assert len(calls) == 2  # retry succeeded
@@ -85,7 +102,7 @@ def test_check_dns_failure_is_dead(monkeypatch):
         raise urllib.error.URLError(
             socket.gaierror(socket.EAI_NONAME, "Name or service not known"))
 
-    monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+    monkeypatch.setattr(linkcheck, "_open", fake_urlopen)
     kind, detail = linkcheck.check("https://x.invalid/nxdomain", 5)
     assert (kind, detail) == ("dead", "gaierror")
     assert len(calls) == 1  # definitive death: no retry
@@ -101,7 +118,7 @@ def test_check_transient_dns_failure_is_unreachable_and_retried(monkeypatch):
         raise urllib.error.URLError(
             socket.gaierror(socket.EAI_AGAIN, "Temporary failure in name resolution"))
 
-    monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+    monkeypatch.setattr(linkcheck, "_open", fake_urlopen)
     kind, detail = linkcheck.check("https://x.invalid/flaky-dns", 5)
     assert (kind, detail) == ("unreachable", "gaierror")
     assert len(calls) == 2  # one retry attempted before classification stuck
@@ -113,7 +130,7 @@ def test_non_https_url_is_never_fetched(monkeypatch):
     def fake_urlopen(req, timeout):
         raise AssertionError("urlopen must not be called for non-https URLs")
 
-    monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+    monkeypatch.setattr(linkcheck, "_open", fake_urlopen)
     kind, detail = linkcheck.check("file:///C:/Windows/win.ini", 5)
     assert (kind, detail) == ("unreachable", "non-https")
 
@@ -122,7 +139,7 @@ def test_check_url_error_timeout_reason_is_unreachable(monkeypatch):
     def fake_urlopen(req, timeout):
         raise urllib.error.URLError(TimeoutError("timed out"))
 
-    monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+    monkeypatch.setattr(linkcheck, "_open", fake_urlopen)
     kind, detail = linkcheck.check("https://x.invalid/slow", 5)
     assert (kind, detail) == ("unreachable", "timeout")
 
@@ -131,7 +148,7 @@ def test_check_connection_reset_is_unreachable_by_class_name(monkeypatch):
     def fake_urlopen(req, timeout):
         raise ConnectionResetError("connection reset by peer")
 
-    monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+    monkeypatch.setattr(linkcheck, "_open", fake_urlopen)
     kind, detail = linkcheck.check("https://x.invalid/reset", 5)
     assert (kind, detail) == ("unreachable", "ConnectionResetError")
 
@@ -140,7 +157,7 @@ def test_check_500_is_unreachable(monkeypatch):
     def fake_urlopen(req, timeout):
         raise urllib.error.HTTPError(req.full_url, 503, "Service Unavailable", None, None)
 
-    monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+    monkeypatch.setattr(linkcheck, "_open", fake_urlopen)
     kind, detail = linkcheck.check("https://x.invalid/down", 5)
     assert (kind, detail) == ("unreachable", "503")
 
@@ -153,7 +170,7 @@ def test_check_detail_never_carries_server_reason_text(monkeypatch):
         raise urllib.error.HTTPError(
             req.full_url, 404, "<script>evil server text</script>", None, None)
 
-    monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+    monkeypatch.setattr(linkcheck, "_open", fake_urlopen)
     _, detail = linkcheck.check("https://x.invalid/gone", 5)
     assert detail == "404"
     assert "script" not in detail
@@ -229,3 +246,51 @@ def test_main_probes_urls_concurrently(tmp_path, monkeypatch, capsys):
 
     assert rc == 0
     assert out == "checked 2: ok 2, dead 0, unreachable 0\n"
+
+
+@pytest.mark.parametrize("address", ["127.0.0.1", "10.0.0.5", "169.254.169.254", "192.168.1.1", "100.64.0.1"])
+def test_non_public_destination_is_never_requested(monkeypatch, address):
+    """A URL resolving off the public internet must classify without a request,
+    so a link cannot point this checker at a service on the runner or beside it."""
+    monkeypatch.setattr(linkcheck.socket, "getaddrinfo", _addrinfo(address))
+
+    def fake_open(req, timeout):
+        raise AssertionError("no request may be issued to a non-public address")
+
+    monkeypatch.setattr(linkcheck, "_open", fake_open)
+    assert linkcheck.check("https://metadata.example/latest", 5) == ("unreachable", "non-public-address")
+
+
+def test_redirect_to_a_blocked_destination_is_refused_before_it_is_followed(monkeypatch):
+    """redirect_request runs before the request that would follow the redirect."""
+    handler = linkcheck._ValidatingRedirectHandler()
+    monkeypatch.setattr(linkcheck.socket, "getaddrinfo", _addrinfo("127.0.0.1"))
+
+    with pytest.raises(linkcheck._BlockedDestination) as caught:
+        handler.redirect_request(None, None, 302, "Found", {}, "https://internal.example/admin")
+    assert caught.value.detail == "non-public-address"
+
+    monkeypatch.setattr(linkcheck.socket, "getaddrinfo", _addrinfo(PUBLIC_ADDRESS))
+    with pytest.raises(linkcheck._BlockedDestination) as caught:
+        handler.redirect_request(None, None, 302, "Found", {}, "http://plain.example/x")
+    assert caught.value.detail == "non-https"
+
+
+def test_blocked_redirect_classifies_without_echoing_server_text(monkeypatch):
+    def fake_open(req, timeout):
+        raise linkcheck._BlockedDestination("non-public-address")
+
+    monkeypatch.setattr(linkcheck, "_open", fake_open)
+    assert linkcheck.check("https://x.invalid/redirector", 5) == ("unreachable", "non-public-address")
+
+
+def test_a_public_https_destination_is_still_requested(monkeypatch):
+    calls = []
+
+    def fake_open(req, timeout):
+        calls.append(req.full_url)
+        return _FakeResponse(200)
+
+    monkeypatch.setattr(linkcheck, "_open", fake_open)
+    assert linkcheck.check("https://www.ato.gov.au/", 5) == ("ok", "200")
+    assert calls == ["https://www.ato.gov.au/"]
