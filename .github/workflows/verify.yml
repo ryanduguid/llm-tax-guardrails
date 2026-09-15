@@ -45,3 +45,22 @@ jobs:
 
       - name: Verify committed outputs against sources
         run: uv run --project tools/drdebits_build --locked python -m drdebits_build verify --root .
+
+  secrets:
+    name: secret and client-identifier scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out full history
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # gitleaks scans commits, so a shallow checkout would leave every
+          # earlier commit unscanned.
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Gitleaks
+        uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2.3.9
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_CONFIG: .gitleaks.toml
