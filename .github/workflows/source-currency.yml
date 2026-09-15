@@ -1,0 +1,75 @@
+name: Source currency
+
+# Asks the Federal Register whether the compilations this guide pins are still
+# the current ones. Link check answers a different question: a superseded
+# compilation keeps resolving, so a green link check says nothing about
+# currency.
+#
+# Report-only, like link check. A newer compilation is never grounds for this
+# workflow to advance `sources_checked_at`: that date means a competent human
+# read the material, and a changed compilation number is the trigger for that
+# reading, not a substitute for it.
+
+on:
+  schedule:
+    # Wednesday, away from the Sunday link check, so two reports do not land
+    # together and get read as one.
+    - cron: "0 21 * * 3"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  compilations:
+    timeout-minutes: 15
+    name: pinned compilation currency, report only
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Install the locked toolchain
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        with:
+          version: "0.12.0"
+          enable-cache: true
+
+      - name: Check pinned compilations
+        id: compilations
+        shell: bash
+        run: |
+          set -euo pipefail
+          uv run --project tools/drdebits_build --locked python -m drdebits_build.sources --root . | tee compilations.txt || echo "superseded=true" >> "$GITHUB_OUTPUT"
+
+      - name: Open or update the report issue
+        if: steps.compilations.outputs.superseded == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          title="Source currency: a pinned compilation has been superseded"
+          body="A compilation this guide reads is no longer the current one on the Federal Register. Treat the affected material as SOURCE CURRENCY NOT CONFIRMED until a competent human has reviewed the replacement. This workflow only reports; it changes nothing, and it does not advance sources_checked_at.
+
+          Sources listed UNREACHABLE could not be checked from GitHub's network and say nothing about currency; verify those from a local machine.
+
+          $(cat compilations.txt)"
+          existing="$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --search "$title in:title" --json number --jq '.[0].number // empty')"
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --repo "$GITHUB_REPOSITORY" --body "$body"
+          else
+            gh issue create --repo "$GITHUB_REPOSITORY" --title "$title" --body "$body"
+          fi
