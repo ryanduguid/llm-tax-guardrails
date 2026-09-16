@@ -1,0 +1,125 @@
+#!/bin/sh
+# Refuse AI authorship credit before a commit is written.
+#
+# Enable once per clone:
+#
+#     git config core.hooksPath .githooks
+#
+# This mirrors the "No AI attribution" CI guard so a commit fails here rather
+# than after a push. It checks the two things that guard checks: authorship
+# credit in the message, and AI identities in the commit's own author and
+# committer fields. An agent session that inherits a vendor git identity is the
+# usual source of the latter, and no message edit hides it.
+#
+# Product references stay allowed: "publish the skills as a Claude Code plugin"
+# is a subject line, not a credit. Only credit grammar and vendor identities
+# are refused.
+#
+# The message vendor list is deliberately the same list the CI guard uses, so a
+# commit that passes here passes there. The identity rules are narrower than a
+# bare vendor match, so a contributor whose own name happens to contain a
+# vendor word is not blocked.
+
+set -eu
+
+msg_file=$1
+hook=$(basename "$0")
+
+VENDOR='claude|anthropic|codex|openai|cursor|copilot|chatgpt|gemini|devin|codeium|windsurf|antigravity|aider|qodo|openhands|cascade|hermes|nousresearch'
+DOMAIN='claude\.ai|claude\.com|anthropic\.com|openai\.com|chatgpt\.com|cursor\.(com|sh)|codeium\.com|windsurf\.com|cognition\.ai|devin\.ai|nousresearch\.com|qodo\.ai|openhands\.dev|all-hands\.dev'
+
+# Vendor words that are not plausible human names, so they can be matched alone.
+SOLE='claude|anthropic|openai|chatgpt|copilot|codex|cursor|codeium|windsurf|antigravity|qodo|openhands|nousresearch'
+
+status=0
+
+# --- commit identity -------------------------------------------------------
+# git var resolves the identity the commit will actually carry, including one
+# set globally by an agent runtime.
+ai_name() {
+	printf '%s' "$1" | grep -Eqi \
+		"^($SOLE)\$|^claude (opus|sonnet|haiku|fable)( [0-9.]+)?|\
+^($VENDOR)[-_ ](code|agent|bot|assist|review)|\
+^($VENDOR)([-_ ][a-z0-9]+)*\[bot\]|\
+^(openai[-_ ]codex|github[-_ ]copilot|qodo[-_ ]code[-_ ]review|gemini[-_ ]code[-_ ]assist)"
+}
+
+check_identity() {
+	role=$1
+	ident=$2
+	name=${ident%% <*}
+	rest=${ident#*<}
+	email=${rest%%>*}
+
+	hit=''
+	if printf '%s' "$email" | grep -Eqi "^($DOMAIN)\$|@($DOMAIN)\$"; then
+		hit="vendor email domain"
+	elif ai_name "$name"; then
+		hit="vendor name"
+	else
+		# GitHub noreply addresses carry the account name: 123+claude[bot]@...
+		account=$(printf '%s' "$email" |
+			sed -n 's/^\([0-9]*+\)\{0,1\}\([^@]*\)@users\.noreply\.github\.com$/\2/ip')
+		if [ -n "$account" ] && ai_name "$account"; then
+			hit="vendor GitHub account"
+		fi
+	fi
+
+	if [ -n "$hit" ]; then
+		printf '%s: AI %s identity (%s): %s\n' "$hook" "$role" "$hit" "$ident" >&2
+		status=1
+	fi
+}
+
+check_identity author "$(git var GIT_AUTHOR_IDENT)"
+check_identity committer "$(git var GIT_COMMITTER_IDENT)"
+
+# --- message ---------------------------------------------------------------
+# Comment lines are stripped by git after this hook, so drop them here too, and
+# skip fenced code blocks so a quoted example is not read as a credit.
+awk -v vendor="$VENDOR" -v domain="$DOMAIN" -v hook="$hook" '
+	function flag(why) {
+		printf "%s: %s line %d: %s\n", hook, why, NR, $0 > "/dev/stderr"
+		bad = 1
+	}
+	/^#/ { next }
+	{
+		line = tolower($0)
+		if (line ~ /^[ \t]*(```|~~~)/) { fence = !fence; next }
+		if (fence) next
+
+		if (line ~ ("^[ \t]*co-?authored-by:.*(" vendor ")"))
+			flag("co-author trailer")
+		else if (line ~ ("^[ \t]*(generated|addressed|authored|written|created|produced|reviewed|fixed|resolved|implemented|assisted|handled)[-_ ]by:.*(" vendor ")"))
+			flag("agent by-line trailer")
+		else if (line ~ ("^[ \t]*(" vendor ")[-_ ]?(session|run|thread|trace|id):"))
+			flag("session trailer")
+		else if (line ~ ("^[ \t]*_?[^a-z0-9]*\xf0\x9f\xa4\x96.*(" vendor ")"))
+			flag("robot emoji credit")
+		else if (line ~ ("^[ \t]*_?(generated|written|created|produced|assisted) (with|by) .*(" vendor ")"))
+			flag("generated-with footer")
+		else if (line ~ ("^[ \t]*[_<(]*https?://([a-z0-9.-]+\\.)?(" domain ")"))
+			flag("bare vendor url")
+	}
+	END { exit bad ? 1 : 0 }
+' "$msg_file" || status=1
+
+if [ "$status" -ne 0 ]; then
+	cat >&2 <<'EOF'
+
+Commit refused: this repository does not carry AI authorship credit.
+
+Remove the reported trailer or footer from the message. If the report names an
+author or committer identity, set a human identity for this repository:
+
+    git config user.name  "Your Name"
+    git config user.email "you@example.com"
+
+For a commit that already exists, retry with:
+
+    git commit --amend --reset-author
+
+EOF
+fi
+
+exit "$status"

@@ -6,14 +6,14 @@ name: No AI attribution
 #
 # The local commit-msg guard catches commits written on Ryan's machine; this
 # workflow hands pull request metadata to the shared Attribution policy runner
-# from the trusted base branch and audits commits after a default-branch push.
+# from the trusted base branch and audits commits on every branch push.
 # It never runs pull request code.
 
 on:
   pull_request_target:
     types: [opened, edited, synchronize, reopened, ready_for_review]
   push:
-    branches: [main]
+    branches: ['**']
   workflow_dispatch:
 
 permissions:
