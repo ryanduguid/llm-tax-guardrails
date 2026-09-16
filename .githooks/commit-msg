@@ -1,9 +1,9 @@
 #!/bin/sh
 # Refuse AI authorship credit before a commit is written.
 #
-# Enable once per clone:
+# Enable once per clone (installs both configured hook stages):
 #
-#     git config core.hooksPath .githooks
+#     pip install pre-commit && pre-commit install
 #
 # This mirrors the "No AI attribution" CI guard so a commit fails here rather
 # than after a push. It checks the two things that guard checks: authorship
@@ -29,7 +29,7 @@ VENDOR='claude|anthropic|codex|openai|cursor|copilot|chatgpt|gemini|devin|codeiu
 DOMAIN='claude\.ai|claude\.com|anthropic\.com|openai\.com|chatgpt\.com|cursor\.(com|sh)|codeium\.com|windsurf\.com|cognition\.ai|devin\.ai|nousresearch\.com|qodo\.ai|openhands\.dev|all-hands\.dev'
 
 # Vendor words that are not plausible human names, so they can be matched alone.
-SOLE='claude|anthropic|openai|chatgpt|copilot|codex|cursor|codeium|windsurf|antigravity|qodo|openhands|nousresearch'
+SOLE='aider|claude|anthropic|openai|chatgpt|copilot|codex|cursor|codeium|windsurf|antigravity|qodo|openhands|nousresearch'
 
 status=0
 
@@ -52,8 +52,10 @@ check_identity() {
 	email=${rest%%>*}
 
 	hit=''
-	if printf '%s' "$email" | grep -Eqi "^($DOMAIN)\$|@($DOMAIN)\$"; then
-		hit="vendor email domain"
+	# Match release-policy's exact blocked addresses, not every employee at a
+	# vendor domain. Name and GitHub-account checks remain independent.
+	if printf '%s' "$email" | grep -Eqi '^(claude@anthropic\.com|noreply@anthropic\.com|ai@openai\.com)$'; then
+		hit="vendor email"
 	elif ai_name "$name"; then
 		hit="vendor name"
 	else
@@ -82,11 +84,10 @@ awk -v vendor="$VENDOR" -v domain="$DOMAIN" -v hook="$hook" '
 		printf "%s: %s line %d: %s\n", hook, why, NR, $0 > "/dev/stderr"
 		bad = 1
 	}
-	/^#/ { next }
 	{
 		line = tolower($0)
-		if (line ~ /^[ \t]*(```|~~~)/) { fence = !fence; next }
-		if (fence) next
+		# Keep matching consistent with release-policy's comparable text.
+		gsub(/\342\200\213|\342\200\214|\357\273\277/, "", line)
 
 		if (line ~ ("^[ \t]*co-?authored-by:.*(" vendor ")"))
 			flag("co-author trailer")
@@ -96,7 +97,7 @@ awk -v vendor="$VENDOR" -v domain="$DOMAIN" -v hook="$hook" '
 			flag("session trailer")
 		else if (line ~ ("^[ \t]*_?[^a-z0-9]*\xf0\x9f\xa4\x96.*(" vendor ")"))
 			flag("robot emoji credit")
-		else if (line ~ ("^[ \t]*_?(generated|written|created|produced|assisted) (with|by) .*(" vendor ")"))
+		else if (line ~ ("^[ \t]*_?(generated|written|created|produced|reviewed|fixed|resolved|implemented|assisted|handled) (with|by) .*(" vendor ")"))
 			flag("generated-with footer")
 		else if (line ~ ("^[ \t]*[_<(]*https?://([a-z0-9.-]+\\.)?(" domain ")"))
 			flag("bare vendor url")
