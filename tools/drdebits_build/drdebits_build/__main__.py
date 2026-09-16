@@ -49,7 +49,7 @@ def main(argv=None):
         root = Path(args.root) if args.root else find_root(Path.cwd())
     except BuildError as exc:
         print(f"{args.command}: {exc}", file=sys.stderr)
-        return 1
+        return EXIT_COULD_NOT_RUN if args.command == "verify" else EXIT_CHECKS_FAILED
     if args.command == "build":
         try:
             s = load_sources(root)

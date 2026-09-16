@@ -37,10 +37,10 @@ def test_verify_failure_exit_code(tmp_path):
 
 def test_missing_root_reports_cleanly_for_both_commands(tmp_path, capsys, monkeypatch):
     """Regression: running outside a DrDebits tree is the likeliest error path,
-    so it must print the module's clean message and exit 1, not a traceback."""
+    so it must print the module's clean message and not a traceback."""
     monkeypatch.chdir(tmp_path)
-    for command in ("verify", "build"):
-        assert main([command]) == 1
+    for command, expected_code in (("verify", 2), ("build", 1)):
+        assert main([command]) == expected_code
         err = capsys.readouterr().err
         assert err.startswith(f"{command}: no DrDebits root found above ")
         assert "Traceback" not in err
