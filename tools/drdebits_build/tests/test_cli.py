@@ -36,11 +36,18 @@ def test_verify_failure_exit_code(tmp_path):
 
 
 def test_missing_root_reports_cleanly_for_both_commands(tmp_path, capsys, monkeypatch):
-    """Regression: running outside a DrDebits tree is the likeliest error path,
-    so it must print the module's clean message and exit 1, not a traceback."""
+    """Running outside a DrDebits tree is the likeliest error path, so it must
+    print the module's clean message rather than a traceback.
+
+    The statuses differ on purpose. For verify, no root means the checks never
+    started, which belongs in the 2 band with every other way of not checking:
+    a caller that reads 1 as "the outputs are wrong" would be told a falsehood
+    about outputs nobody looked at. Build is not a gate, so a build that
+    cannot start is a build that failed, and stays 1.
+    """
     monkeypatch.chdir(tmp_path)
-    for command in ("verify", "build"):
-        assert main([command]) == 1
+    for command, expected in (("verify", 2), ("build", 1)):
+        assert main([command]) == expected
         err = capsys.readouterr().err
         assert err.startswith(f"{command}: no DrDebits root found above ")
         assert "Traceback" not in err

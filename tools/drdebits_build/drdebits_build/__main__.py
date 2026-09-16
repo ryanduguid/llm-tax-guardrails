@@ -44,12 +44,15 @@ def main(argv=None):
     args = parser.parse_args(argv)
     # Root discovery is the first thing a user hits from outside a DrDebits
     # tree, so it must produce the same clean message as every other error
-    # path rather than a traceback.
+    # path rather than a traceback. For verify it also lands in the 2 band:
+    # no root means the checks never started, which is not the same answer as
+    # a check that ran and failed. For build it stays 1, because build is not
+    # a gate and a build that cannot start is simply a build that failed.
     try:
         root = Path(args.root) if args.root else find_root(Path.cwd())
     except BuildError as exc:
         print(f"{args.command}: {exc}", file=sys.stderr)
-        return 1
+        return EXIT_COULD_NOT_RUN if args.command == "verify" else 1
     if args.command == "build":
         try:
             s = load_sources(root)
