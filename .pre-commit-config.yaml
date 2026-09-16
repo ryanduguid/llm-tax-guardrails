@@ -10,6 +10,8 @@
 #   pip install pre-commit && pre-commit install
 #   pre-commit run --all-files
 
+default_install_hook_types: [pre-commit, commit-msg]
+
 repos:
   - repo: https://github.com/gitleaks/gitleaks
     rev: v8.30.1

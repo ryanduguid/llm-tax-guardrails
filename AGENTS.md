@@ -19,9 +19,9 @@ test and evaluation sources under `src/`; regenerate their outputs with the
 documented builder. Historical human-recorded evaluation results stay unchanged.
 
 Before handoff, run the builder tests and generated-output verification defined
-in [verify.yml](.github/workflows/verify.yml). `pre-commit install` runs the
-same commands through the same locked toolchain before a commit lands, and adds
-a gitleaks scan against [.gitleaks.toml](.gitleaks.toml), which carries
+in [verify.yml](.github/workflows/verify.yml). `pre-commit install` installs both
+hook stages and runs the same commands through the same locked toolchain before
+a commit lands, including the attribution guard and a gitleaks scan against [.gitleaks.toml](.gitleaks.toml), which carries
 client-identifier rules on top of the default credential rules.
 
 For source currency, run
