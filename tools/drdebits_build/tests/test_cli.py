@@ -75,3 +75,43 @@ def test_build_stamps_every_hand_written_file_before_checksums(tmp_path):
         encoding="utf-8", newline="\n")
     assert run_verify(root) == [
         "llms.txt: source-check date does not match sources_checked_at (2026-01-01)"]
+
+
+def test_verify_reports_a_broken_checker_as_2_not_1(tmp_path, capsys, monkeypatch):
+    """A checker that falls over must not read as a checker that found a fault.
+
+    Both exit 1 by default, because an escaping exception takes Python's own
+    traceback path, and the caller reading "non-zero" cannot tell the two
+    apart. Inputs that cannot be read stay findings; this band is for the
+    checks themselves failing to run.
+    """
+    root = make_repo(tmp_path)
+    main(["build", "--root", str(root)])
+
+    def explode(*_args, **_kwargs):
+        raise RuntimeError("the checker itself broke")
+
+    monkeypatch.setattr("drdebits_build.__main__.run_verify", explode)
+    assert main(["verify", "--root", str(root)]) == 2
+    err = capsys.readouterr().err
+    assert "VERIFIER ERROR" in err
+    assert "unverified, not verified" in err
+
+
+def test_the_three_verify_statuses_are_distinct():
+    from drdebits_build.__main__ import (
+        EXIT_CHECKS_FAILED,
+        EXIT_COULD_NOT_RUN,
+        EXIT_OK,
+    )
+
+    assert sorted({EXIT_OK, EXIT_CHECKS_FAILED, EXIT_COULD_NOT_RUN}) == [0, 1, 2]
+
+
+def test_unreadable_sources_stay_a_finding(tmp_path):
+    # The deliberate existing choice, pinned so the band above does not creep
+    # into it: run_verify turns an unreadable sources file into a finding.
+    root = make_repo(tmp_path)
+    main(["build", "--root", str(root)])
+    (root / "src" / "data" / "metadata.yaml").write_text("{ not: [valid", encoding="utf-8")
+    assert main(["verify", "--root", str(root)]) == 1

@@ -1,8 +1,23 @@
-"""CLI: build regenerates committed outputs in place; verify checks them."""
+"""CLI: build regenerates committed outputs in place; verify checks them.
+
+`verify` answers in three states, not two:
+
+    0   every check passed
+    1   a check failed: the committed outputs do not match their sources
+    2   the checks did not run, so nothing was checked
+
+Without the third state an unexpected failure inside the checks exits 1
+through Python's own traceback path, which is the status a real finding uses.
+A reader of CI, human or not, then treats a checker that fell over as a
+checker that found something. Inputs that cannot be read stay findings, as
+`run_verify` already decides deliberately; the 2 band is for the checks
+themselves failing to run.
+"""
 from __future__ import annotations
 
 import argparse
 import sys
+import traceback
 from pathlib import Path
 
 from .build import (
@@ -15,6 +30,11 @@ from .build import (
 )
 from .model import ModelError
 from .verify import run_verify
+
+#: See the module docstring: 2 is "not checked", never "checked and clean".
+EXIT_OK = 0
+EXIT_CHECKS_FAILED = 1
+EXIT_COULD_NOT_RUN = 2
 
 
 def main(argv=None):
@@ -44,13 +64,22 @@ def main(argv=None):
             print(f"build: {exc}", file=sys.stderr)
             return 1
         return 0
-    failures = run_verify(root)
+    try:
+        failures = run_verify(root)
+    except Exception:
+        # Deliberately broad: anything that stopped the checks running is
+        # reported as "not checked" rather than as a finding. KeyboardInterrupt
+        # and SystemExit are not Exception and still propagate.
+        traceback.print_exc()
+        print("verify: VERIFIER ERROR: the checks did not run, so these outputs "
+              "are unverified, not verified", file=sys.stderr)
+        return EXIT_COULD_NOT_RUN
     for f in failures:
         print(f, file=sys.stderr)
     if failures:
-        return 1
+        return EXIT_CHECKS_FAILED
     print("verify: OK")
-    return 0
+    return EXIT_OK
 
 
 if __name__ == "__main__":
