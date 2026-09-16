@@ -1,8 +1,23 @@
-"""CLI: build regenerates committed outputs in place; verify checks them."""
+"""CLI: build regenerates committed outputs in place; verify checks them.
+
+`verify` answers in three states, not two:
+
+    0   every check passed
+    1   a check failed: the committed outputs do not match their sources
+    2   the checks did not run, so nothing was checked
+
+Without the third state an unexpected failure inside the checks exits 1
+through Python's own traceback path, which is the status a real finding uses.
+A reader of CI, human or not, then treats a checker that fell over as a
+checker that found something. Inputs that cannot be read stay findings, as
+`run_verify` already decides deliberately; the 2 band is for the checks
+themselves failing to run.
+"""
 from __future__ import annotations
 
 import argparse
 import sys
+import traceback
 from pathlib import Path
 
 from .build import (
@@ -16,6 +31,11 @@ from .build import (
 from .model import ModelError
 from .verify import run_verify
 
+#: See the module docstring: 2 is "not checked", never "checked and clean".
+EXIT_OK = 0
+EXIT_CHECKS_FAILED = 1
+EXIT_COULD_NOT_RUN = 2
+
 
 def main(argv=None):
     parser = argparse.ArgumentParser(prog="drdebits_build")
@@ -24,12 +44,15 @@ def main(argv=None):
     args = parser.parse_args(argv)
     # Root discovery is the first thing a user hits from outside a DrDebits
     # tree, so it must produce the same clean message as every other error
-    # path rather than a traceback.
+    # path rather than a traceback. For verify it also lands in the 2 band:
+    # no root means the checks never started, which is not the same answer as
+    # a check that ran and failed. For build it stays 1, because build is not
+    # a gate and a build that cannot start is simply a build that failed.
     try:
         root = Path(args.root) if args.root else find_root(Path.cwd())
     except BuildError as exc:
         print(f"{args.command}: {exc}", file=sys.stderr)
-        return 1
+        return EXIT_COULD_NOT_RUN if args.command == "verify" else 1
     if args.command == "build":
         try:
             s = load_sources(root)
@@ -44,13 +67,22 @@ def main(argv=None):
             print(f"build: {exc}", file=sys.stderr)
             return 1
         return 0
-    failures = run_verify(root)
+    try:
+        failures = run_verify(root)
+    except Exception:
+        # Deliberately broad: anything that stopped the checks running is
+        # reported as "not checked" rather than as a finding. KeyboardInterrupt
+        # and SystemExit are not Exception and still propagate.
+        traceback.print_exc()
+        print("verify: VERIFIER ERROR: the checks did not run, so these outputs "
+              "are unverified, not verified", file=sys.stderr)
+        return EXIT_COULD_NOT_RUN
     for f in failures:
         print(f, file=sys.stderr)
     if failures:
-        return 1
+        return EXIT_CHECKS_FAILED
     print("verify: OK")
-    return 0
+    return EXIT_OK
 
 
 if __name__ == "__main__":
