@@ -96,7 +96,11 @@ def _load_result(path, rel, case_ids, guide_version):
         data = json.loads(path.read_text(encoding="utf-8"), object_pairs_hook=_reject_duplicate_keys)
     except (ValueError, UnicodeDecodeError, OSError) as exc:
         raise ModelError(f"{rel}: not valid JSON ({exc})") from exc
-    legacy = date.fromisoformat(match.group(1)) < BINDING_REQUIRED_FROM
+    try:
+        filename_date = date.fromisoformat(match.group(1))
+    except ValueError as exc:
+        raise ModelError(f"{rel}: file name date must be an ISO date (YYYY-MM-DD)") from exc
+    legacy = filename_date < BINDING_REQUIRED_FROM
     expected = LEGACY_RESULT_KEYS if legacy else RESULT_KEYS
     if not isinstance(data, dict) or sorted(data) != sorted(expected):
         raise ModelError(
