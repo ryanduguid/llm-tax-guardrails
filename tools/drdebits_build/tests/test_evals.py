@@ -12,6 +12,10 @@ from tests.test_cli import TODAY
 
 GOOD = {"model": "example-model", "run_date": "2026-02-01", "guide_version": "0.9.9-test",
         "runner": "A Person", "results": {"A-001": "pass"}}
+COMMIT = "0123456789abcdef0123456789abcdef01234567"
+BOUND = {**GOOD, "run_date": "2026-09-18", "guide_commit": COMMIT,
+         "runtime": "Example CLI 1.0", "tools": "3 inert action tools; read-only source snapshots",
+         "conditions": "fresh session per case; whole response judged against the guide"}
 
 
 def write_result(root, name="2026-02-01-example-model.json", **overrides):
@@ -71,7 +75,7 @@ def test_a_partial_or_older_run_is_shown_without_editing_history(tmp_path):
      "one line of at most 120"),
     ("2026-02-01-example-model.json", {"model": "a | b"}, "no pipe"),
     ("2026-02-01-example-model.json", {"guide_version": 1}, "guide_version must be a non-empty"),
-    ("2026-02-01-example-model.json", {"results": {"A-001": "PASS"}}, "must be pass or fail"),
+    ("2026-02-01-example-model.json", {"results": {"A-001": "PASS"}}, "must be pass, fail or violation"),
     ("2026-02-01-example-model.json", {"model": " "}, "model must be a non-empty string"),
     ("2026-02-01-example-model.json", {"run_date": "1 Feb 2026"}, "ISO date"),
     ("2026-02-02-example-model.json", {}, "file name date 2026-02-02 != run_date"),
@@ -104,6 +108,48 @@ def test_invalid_json_duplicate_keys_and_stray_entries_are_rejected(tmp_path):
     (directory / "2026-02-01-transcript.md").write_text("a transcript\n", encoding="utf-8")
     with pytest.raises(ModelError, match="only YYYY-MM-DD-<slug>.json result files"):
         evals.load_results(root, s)
+
+
+def test_a_run_from_18_september_2026_must_bind_commit_runtime_tools_and_conditions(tmp_path):
+    root = make_repo(tmp_path)
+    write_result(root, name="2026-09-18-example-model.json", **BOUND)
+    (run,) = evals.load_results(root, load_sources(root))
+    assert run["guide_commit"] == COMMIT
+    write_result(root, name="2026-09-18-example-model.json", **{**GOOD, "run_date": "2026-09-18"})
+    with pytest.raises(ModelError, match="keys must be exactly .*guide_commit, runtime, tools, conditions"):
+        evals.load_results(root, load_sources(root))
+
+
+@pytest.mark.parametrize("overrides, message", [
+    ({"guide_commit": "abc123"}, "full 40-hex commit"),
+    ({"guide_commit": COMMIT.upper()}, "full 40-hex commit"),
+    ({"runtime": ""}, "runtime must be a non-empty string"),
+    ({"tools": "disabled\ntranscript follows"}, "one line of at most 120"),
+    ({"conditions": 7}, "conditions must be a non-empty string"),
+])
+def test_a_bound_run_rejects_a_missing_or_malformed_binding(tmp_path, overrides, message):
+    root = make_repo(tmp_path)
+    write_result(root, name="2026-09-18-example-model.json", **{**BOUND, **overrides})
+    with pytest.raises(ModelError, match=message):
+        evals.load_results(root, load_sources(root))
+
+
+def test_the_legacy_record_keeps_its_shape_and_cannot_grow_binding_keys(tmp_path):
+    root = make_repo(tmp_path)
+    write_result(root, guide_commit=COMMIT)
+    with pytest.raises(ModelError, match="keys must be exactly model, run_date"):
+        evals.load_results(root, load_sources(root))
+
+
+def test_a_violation_is_shown_and_never_counted_as_passed(tmp_path):
+    """MIS-001 met its rubric and still breached a guide control; that is not a pass."""
+    root = make_repo(tmp_path)
+    write_result(root, name="2026-09-18-example-model.json", **{**BOUND, "results": {"A-001": "violation"}})
+    out = evals.build_results_md(root, load_sources(root))
+    assert "| example-model, 0.9.9-test@0123456 (2026-09-18) |" in out
+    assert "| A-001 | HARD_STOP | violation |" in out
+    assert "| Passed | of cases run | 0/1 |" in out
+    assert "`violation` where the case rubric was met" in out
 
 
 def test_verify_reports_an_unreadable_result_instead_of_crashing(tmp_path, monkeypatch):
