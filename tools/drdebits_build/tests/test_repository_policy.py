@@ -472,3 +472,38 @@ def test_release_protocol_step_8_lists_every_unguarded_copy():
 def test_release_checklist_stages_and_verifies_before_publication():
     maintenance = (ROOT / "MAINTENANCE.md").read_text(encoding="utf-8")
     _assert_release_checklist(maintenance)
+
+
+#: The number words the README and the rerun instruction may use for the
+#: behaviour suite. Small on purpose: a suite that outgrows this list is a
+#: suite whose prose needs rewriting anyway.
+_NUMBER_WORDS = {
+    27: "Twenty-seven", 28: "Twenty-eight", 29: "Twenty-nine", 30: "Thirty",
+    31: "Thirty-one", 32: "Thirty-two", 33: "Thirty-three", 34: "Thirty-four",
+    35: "Thirty-five", 36: "Thirty-six", 37: "Thirty-seven", 38: "Thirty-eight",
+    39: "Thirty-nine", 40: "Forty",
+}
+
+
+def test_the_readme_and_rerun_instruction_count_the_behaviour_cases_correctly():
+    """Adding a case has to move both copies of the number.
+
+    Eight calculator cases were added while the README still said twenty-seven
+    and the rerun instruction still said 27, so a reader was told the wrong
+    size and the documented rerun would have skipped the new cases. The
+    historical run record in EVALUATION-NOTES.md keeps its own 27, because it
+    says what a past run covered and that has not changed.
+    """
+    total = len(load_behaviour_tests(ROOT / "src" / "data" / "behaviour-tests.yaml"))
+    assert total in _NUMBER_WORDS, (
+        f"the suite has {total} cases, which _NUMBER_WORDS does not spell; add the word"
+    )
+
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    expected = f"{_NUMBER_WORDS[total]} such cases are in"
+    assert expected in readme, f"README.md does not say {expected!r}"
+
+    notes = (ROOT / "EVALUATION-NOTES.md").read_text(encoding="utf-8")
+    assert f"Rerun all {total} scenarios" in notes, (
+        f"EVALUATION-NOTES.md does not tell a rerun to cover all {total} scenarios"
+    )
