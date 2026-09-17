@@ -51,3 +51,12 @@ repos:
         entry: git diff --check
         language: system
         pass_filenames: false
+
+  - repo: local
+    hooks:
+      - id: no-ai-attribution
+        name: refuse AI authorship credit
+        # Install the commit-msg stage too: `pre-commit install --hook-type commit-msg`.
+        entry: .githooks/commit-msg
+        language: script
+        stages: [commit-msg]
