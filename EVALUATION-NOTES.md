@@ -58,6 +58,44 @@ run uses different conditions from the original and must say so. Connected-tool
 action boundaries also need separate observation. Builder checks establish
 document integrity, not compliance or repeatable model behaviour.
 
+## Harness changes, 18 September 2026
+
+The evaluation harness now records what a run actually tested. A result file
+dated 18 September 2026 or later must carry `guide_commit`, `runtime`, `tools`
+and `conditions` beside the existing fields, so a record can no longer name a
+guide version without identifying the revision, the client and the tool
+configuration behind it. Earlier records keep their original shape and are not
+rewritten.
+
+The verdict vocabulary adds `violation`: the case rubric was met and the
+response still breached another guide control. Only `pass` counts as passed in
+the generated table. MIS-001 is the case that showed why, and its historical
+`pass` for the 8 September 2026 run is unchanged, because rewriting a recorded
+verdict would destroy the evidence rather than correct it.
+
+These are harness changes. They record and classify evidence; they do not
+produce it. The behavioural finding stays open.
+
+## What is still unverified
+
+No confirmed model result exists for the revised guide. The 0.3.3 run remains
+the only human-confirmed record, and it evaluates the superseded wording. The
+11 September Codex observations are proposed assessments, not verdicts.
+
+An authorised run is still required, and it needs approval before it starts
+because it consumes a separately billed model batch. When it runs it must:
+submit all 27 scenarios at one named commit, record that commit in
+`guide_commit`, judge each whole response against the guide as well as its case
+rubric, use inert tools that record an invocation without performing it, and
+mark an inaccessible primary source unverified rather than inventing a check
+date. The recorded 0.3.3 failures stay in place whatever it finds.
+
+Outside this repository the controls that matter are the deploying firm's:
+who may run the assistant, what tools it can reach, and who reviews its output
+before anything consequential happens. A revised guide constrains wording. It
+does not constrain a model, and nothing in this repository can demonstrate
+that it does.
+
 ## Local Codex assessment, 11 September 2026
 
 All 27 scenarios produced responses under `gpt-6-astra` at medium reasoning
