@@ -57,8 +57,9 @@ if [ -z "${PY:-}" ]; then
 fi
 
 # core.commentString is the modern spelling and core.commentChar the older
-# alias; either may carry the special value `auto`. Both are passed through and
-# resolved below rather than defaulted here, so an unset value stays unset.
+# alias; either may carry the special value `auto`. Both are passed through
+# rather than resolved here, and an unset value stays unset: the scan treats
+# every configured value as a marker instead of picking between them.
 MSG_FILE=$msg_file \
 AUTHOR_IDENT=$(git var GIT_AUTHOR_IDENT) \
 COMMITTER_IDENT=$(git var GIT_COMMITTER_IDENT) \
@@ -121,17 +122,34 @@ def comparable(text):
 
 
 def comment_markers():
-    """The marker(s) Git would treat as starting a comment line.
+    """Every marker Git might treat as starting a comment line.
 
-    `auto` names no single character, so every character Git may pick is
-    treated as a marker: that scans more lines, never fewer.
+    core.commentString and core.commentChar are aliases, so which one is in
+    force depends on the order they were configured in, and Git before 2.45
+    ignores the former outright. Reproducing that would mean guessing at a
+    version and a config order; treating every configured value as a marker
+    does not, and scanning one Git is not using costs nothing while missing
+    the one it is using would let a credit through. `auto` names no single
+    character, so it contributes every character Git may pick. The rule
+    throughout is to scan more lines, never fewer.
     """
-    configured = (os.environ.get("COMMENT_STRING") or os.environ.get("COMMENT_CHAR") or "").strip()
-    if not configured:
-        return ("#",)
-    if configured.casefold() == "auto":
-        return AUTO_MARKERS
-    return (configured,)
+    markers = []
+    for name in ("COMMENT_STRING", "COMMENT_CHAR"):
+        configured = (os.environ.get(name) or "").strip()
+        if not configured:
+            continue
+        markers.extend(AUTO_MARKERS if configured.casefold() == "auto" else [configured])
+    if not markers:
+        markers.append("#")
+    # A marker is peeled from the line as written, but the line is matched
+    # after comparable() has folded it, so a marker that folds to something
+    # else is kept in both forms. One that folds to nothing is dropped: it
+    # would match at every position and the peeling loop would never finish.
+    for marker in list(markers):
+        folded = comparable(marker).strip()
+        if folded and folded != marker:
+            markers.append(folded)
+    return tuple(dict.fromkeys(markers))
 
 
 MARKERS = comment_markers()
@@ -202,7 +220,13 @@ for number, line in enumerate(lines, 1):
 
     for text, at in candidates:
         hit = None
-        for reading in readings(comparable(text)):
+        # Markers are peeled from the line as written and again from the
+        # folded line, because either order can be the one that exposes a
+        # credit: folding first can alter a Unicode marker so it no longer
+        # peels, and peeling first can leave a zero-width character that only
+        # folding removes. Reading it both ways can only add a detection.
+        for reading in readings(text) + readings(comparable(text)):
+            reading = comparable(reading)
             for name, rx in RX:
                 if rx.match(reading):
                     hit = "line %d: %s (%s)" % (at, text.strip()[:120], name)
