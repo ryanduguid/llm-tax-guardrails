@@ -25,12 +25,15 @@
 # The two deliberate differences, both fail-closed:
 #
 #   * Comment lines are scanned. `git commit -m` and `-F` use `whitespace`
-#     cleanup, which keeps `#` commentary in the stored message, so a credit
-#     hidden behind a comment marker reaches history. The workflow never sees
-#     those lines because it reads the finished commit. Patterns are anchored,
-#     so an editor template ("# On branch claude/...") still does not match.
-#   * Folded trailer continuations are joined before matching, because Git lets
-#     a trailer value continue on a whitespace-indented line.
+#     cleanup, which keeps commentary in the stored message, so a credit hidden
+#     behind a comment marker reaches history. The workflow never sees those
+#     lines because it reads the finished commit. Patterns are anchored, so an
+#     editor template ("# On branch claude/...") still does not match.
+#   * Folded trailer continuations are scanned twice: as the physical line they
+#     are, and again joined onto the trailer they continue. Git lets a trailer
+#     value continue on a whitespace-indented line, so the join is what catches
+#     a credit split across two lines; scanning the physical line as well is
+#     what stops the join from hiding a credit that starts the indented line.
 #
 # Product references stay allowed: "publish the skills as a Claude Code plugin"
 # is a subject line, not a credit. Only credit grammar and vendor identities
@@ -53,10 +56,15 @@ if [ -z "${PY:-}" ]; then
 	exit 1
 fi
 
+# core.commentString is the modern spelling and core.commentChar the older
+# alias; either may carry the special value `auto`. Both are passed through
+# rather than resolved here, and an unset value stays unset: the scan treats
+# every configured value as a marker instead of picking between them.
 MSG_FILE=$msg_file \
 AUTHOR_IDENT=$(git var GIT_AUTHOR_IDENT) \
 COMMITTER_IDENT=$(git var GIT_COMMITTER_IDENT) \
-COMMENT_CHAR=$(git config --get core.commentChar || echo '#') \
+COMMENT_STRING=$(git config --get core.commentString 2>/dev/null || true) \
+COMMENT_CHAR=$(git config --get core.commentChar 2>/dev/null || true) \
 	"$PY" - <<'PY'
 import os
 import re
@@ -97,6 +105,14 @@ RX = [(name, re.compile(p, re.I)) for name, p in PATTERNS]
 
 FENCE = re.compile(r"^(?P<indent> {0,3})(?P<fence>`{3,}|~{3,})(?P<info>.*)$")
 
+# A trailer key, so an indented line following one can be read as its
+# continuation. The name avoids the suffix "_key" because some repositories
+# scan public files for that suffix followed by an assignment.
+TRAILER_START = re.compile(r"^\s*[A-Za-z][A-Za-z0-9-]*:")
+
+# The characters Git chooses between for `core.commentChar = auto`.
+AUTO_MARKERS = tuple("#;@!$%^&|:")
+
 
 def comparable(text):
     """Compare visible letters without hidden characters or combining marks."""
@@ -105,59 +121,137 @@ def comparable(text):
                    if (char.isprintable() or char.isspace()) and not unicodedata.category(char).startswith("M"))
 
 
-comment_char = (os.environ.get("COMMENT_CHAR") or "#").strip() or "#"
+def comment_markers():
+    """Every marker Git might treat as starting a comment line.
+
+    core.commentString and core.commentChar are aliases, so which one is in
+    force depends on the order they were configured in, and Git before 2.45
+    ignores the former outright. Reproducing that would mean guessing at a
+    version and a config order; treating every configured value as a marker
+    does not, and scanning one Git is not using costs nothing while missing
+    the one it is using would let a credit through. `auto` names no single
+    character, so it contributes every character Git may pick. The rule
+    throughout is to scan more lines, never fewer.
+    """
+    markers = []
+    for name in ("COMMENT_STRING", "COMMENT_CHAR"):
+        configured = (os.environ.get(name) or "").strip()
+        if not configured:
+            continue
+        markers.extend(AUTO_MARKERS if configured.casefold() == "auto" else [configured])
+    if not markers:
+        markers.append("#")
+    # A marker is peeled from the line as written, but the line is matched
+    # after comparable() has folded it, so a marker that folds to something
+    # else is kept in both forms. One that folds to nothing is dropped: it
+    # would match at every position and the peeling loop would never finish.
+    for marker in list(markers):
+        folded = comparable(marker).strip()
+        if folded and folded != marker:
+            markers.append(folded)
+    return tuple(dict.fromkeys(markers))
+
+
+MARKERS = comment_markers()
+
+
+def readings(text):
+    """The line as written, then again with each comment marker peeled off.
+
+    Repeated markers are peeled in turn, so "## Co-authored-by: ..." is read
+    down to the bare trailer rather than only to "# Co-authored-by: ...".
+    """
+    found = [text]
+    rest = text.lstrip()
+    while True:
+        for marker in MARKERS:
+            if rest.startswith(marker):
+                rest = rest[len(marker):].lstrip()
+                found.append(rest)
+                break
+        else:
+            return found
+
+
 raw = open(os.environ["MSG_FILE"], encoding="utf-8", errors="replace").read()
+lines = raw.split("\n")
 
-# Join folded trailer continuations: Git allows a trailer value to continue on a
-# following whitespace-indented line, which a line-at-a-time scan would miss.
-TRAILER_KEY = re.compile(r"^\s*[A-Za-z][A-Za-z0-9-]*:")
-logical = []
-for line in raw.split("\n"):
-    if (logical and line[:1] in (" ", "\t")
-            and TRAILER_KEY.match(logical[-1][0])):
-        logical[-1] = (logical[-1][0] + " " + line.strip(), logical[-1][1])
-    else:
-        logical.append((line, len(logical) + 1))
-
-failures = []
+# Fence state is resolved over the physical lines, before any trailer folding,
+# so an indented closing fence still closes its block instead of being folded
+# into the trailer above it. A fence delimiter is itself skipped, as is every
+# line inside an open block.
+skip = [False] * len(lines)
 open_char, open_len = None, 0
-for line, number in logical:
+for index, line in enumerate(lines):
     match = FENCE.match(line)
+    if match and open_char is None and match.group("fence")[0] == "`" and "`" in match.group("info"):
+        # CommonMark: a backtick fence's info string may not contain a backtick,
+        # so this line is ordinary text and opens nothing.
+        match = None
     if match:
         char, length = match.group("fence")[0], len(match.group("fence"))
         if open_char is None:
             open_char, open_len = char, length
+            skip[index] = True
             continue
         if char == open_char and length >= open_len and not match.group("info").strip():
             open_char, open_len = None, 0
+            skip[index] = True
             continue
-    if open_char is not None:
+    skip[index] = open_char is not None
+
+failures = []
+folded, folded_at = None, 0
+for number, line in enumerate(lines, 1):
+    if skip[number - 1]:
+        folded, folded_at = None, 0
         continue
 
-    text = comparable(line)
-    # Scan the line as written and, when it is commentary, as Git would store it
-    # under `whitespace` cleanup with the marker still present.
-    candidates = [text]
-    stripped = text.lstrip()
-    if stripped.startswith(comment_char):
-        candidates.append(stripped[len(comment_char):])
-    for candidate in candidates:
-        for name, rx in RX:
-            if rx.match(candidate):
-                failures.append("line %d: %s (%s)" % (number, line.strip()[:120], name))
+    # Every physical line is scanned on its own. A continuation is scanned a
+    # second time joined onto its trailer, so folding can only add a detection.
+    candidates = [(line, number)]
+    if folded is not None and line[:1] in (" ", "\t"):
+        folded = folded + " " + line.strip()
+        candidates.append((folded, folded_at))
+    elif TRAILER_START.match(line):
+        folded, folded_at = line, number
+    else:
+        folded, folded_at = None, 0
+
+    for text, at in candidates:
+        hit = None
+        # Markers are peeled from the line as written and again from the
+        # folded line, because either order can be the one that exposes a
+        # credit: folding first can alter a Unicode marker so it no longer
+        # peels, and peeling first can leave a zero-width character that only
+        # folding removes. Reading it both ways can only add a detection.
+        for reading in readings(text) + readings(comparable(text)):
+            reading = comparable(reading)
+            for name, rx in RX:
+                if rx.match(reading):
+                    hit = "line %d: %s (%s)" % (at, text.strip()[:120], name)
+                    break
+            if hit:
                 break
-        else:
-            continue
-        break
+        if hit:
+            failures.append(hit)
+            break
 
 
 def check_identity(role, ident):
-    identity = re.fullmatch(r"(.*) <(.*)> -?[0-9]+ [+-][0-9]{4}", ident)
+    # The field shapes and the raw-character check below match the shared
+    # action, which refuses a non-printable identity BEFORE normalising it.
+    # Normalising first would drop the offending character and accept locally
+    # what the push audit then rejects.
+    identity = re.fullmatch(r"([^<>\n]*) <([^<>\n]*)> -?[0-9]+ [+-][0-9]{4}", ident)
     if identity is None:
         failures.append("%s identity is malformed: %s" % (role, ident))
         return
-    name, email = (comparable(part) for part in identity.groups())
-    name, email = name.strip(), email.strip()
+    name, email = identity.groups()
+    if any(not char.isprintable() or char == "�" for char in name + email):
+        failures.append("%s identity carries a non-printable character" % role)
+        return
+    name, email = comparable(name).strip(), comparable(email).strip()
     account = re.fullmatch(r"(?:[0-9]+\+)?([^@]+)@users\.noreply\.github\.com", email, re.I)
     if (AI_NAME.fullmatch(name)
             or email.casefold() in BLOCKED_EMAILS
