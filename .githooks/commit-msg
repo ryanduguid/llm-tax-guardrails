@@ -9,6 +9,10 @@
 #
 #     pre-commit install --hook-type commit-msg
 #
+# Use one or the other, never both. `pre-commit install` writes its wrapper
+# into the directory core.hooksPath names, so pointing that at .githooks lets
+# pre-commit overwrite this tracked file with a wrapper that then calls it.
+#
 # This is a local copy of the message and identity rules in the shared
 # `No AI attribution` policy (ryanduguid/release-policy, the composite action
 # .github/actions/no-ai-attribution/action.yml). It exists so a commit fails at

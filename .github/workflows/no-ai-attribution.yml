@@ -20,12 +20,19 @@ permissions:
   contents: read
 
 concurrency:
-  group: attribution-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
+  # Keyed on the commit for a push: every pushed revision gets its own audit.
+  # Keying on the ref would let a rapid second push cancel the first one's
+  # audit, and that commit would then never be scanned.
+  group: attribution-${{ github.event_name }}-${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: true
 
 jobs:
   policy:
     name: Attribution policy
+    # A branch deletion is also a push event, but GitHub then resolves
+    # github.sha to the default branch tip, so the runner would scan an
+    # unrelated range and post its status on an unrelated commit.
+    if: ${{ github.event_name != 'push' || github.event.deleted != true }}
     permissions:
       contents: read
       pull-requests: read
