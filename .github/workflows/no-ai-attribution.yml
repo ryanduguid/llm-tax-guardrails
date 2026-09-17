@@ -6,26 +6,33 @@ name: No AI attribution
 #
 # The local commit-msg guard catches commits written on Ryan's machine; this
 # workflow hands pull request metadata to the shared Attribution policy runner
-# from the trusted base branch and audits commits after a default-branch push.
+# from the trusted base branch and audits commits on every branch push.
 # It never runs pull request code.
 
 on:
   pull_request_target:
     types: [opened, edited, synchronize, reopened, ready_for_review]
   push:
-    branches: [main]
+    branches: ['**']
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: attribution-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
+  # Keyed on the commit for a push: every pushed revision gets its own audit.
+  # Keying on the ref would let a rapid second push cancel the first one's
+  # audit, and that commit would then never be scanned.
+  group: attribution-${{ github.event_name }}-${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: true
 
 jobs:
   policy:
     name: Attribution policy
+    # A branch deletion is also a push event, but GitHub then resolves
+    # github.sha to the default branch tip, so the runner would scan an
+    # unrelated range and post its status on an unrelated commit.
+    if: ${{ github.event_name != 'push' || github.event.deleted != true }}
     permissions:
       contents: read
       pull-requests: read

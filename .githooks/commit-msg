@@ -1,0 +1,189 @@
+#!/bin/sh
+# Refuse AI authorship credit before a commit is written.
+#
+# Enable once per clone:
+#
+#     git config core.hooksPath .githooks
+#
+# or, where the repository already uses pre-commit:
+#
+#     pre-commit install --hook-type commit-msg
+#
+# Use one or the other, never both. `pre-commit install` writes its wrapper
+# into the directory core.hooksPath names, so pointing that at .githooks lets
+# pre-commit overwrite this tracked file with a wrapper that then calls it.
+#
+# This is a local copy of the message and identity rules in the shared
+# `No AI attribution` policy (ryanduguid/release-policy, the composite action
+# .github/actions/no-ai-attribution/action.yml). It exists so a commit fails at
+# the keyboard rather than after a push, so the two must agree: the vendor list,
+# the credit patterns, the Unicode folding and the identity rules below are
+# ported from that action rather than re-invented. Where this hook differs it is
+# deliberately STRICTER, never laxer, so a commit that passes here cannot fail
+# the workflow on a rule this file also carries.
+#
+# The two deliberate differences, both fail-closed:
+#
+#   * Comment lines are scanned. `git commit -m` and `-F` use `whitespace`
+#     cleanup, which keeps `#` commentary in the stored message, so a credit
+#     hidden behind a comment marker reaches history. The workflow never sees
+#     those lines because it reads the finished commit. Patterns are anchored,
+#     so an editor template ("# On branch claude/...") still does not match.
+#   * Folded trailer continuations are joined before matching, because Git lets
+#     a trailer value continue on a whitespace-indented line.
+#
+# Product references stay allowed: "publish the skills as a Claude Code plugin"
+# is a subject line, not a credit. Only credit grammar and vendor identities
+# are refused.
+
+set -eu
+
+msg_file=$1
+
+for candidate in python3 python; do
+	if command -v "$candidate" >/dev/null 2>&1; then
+		PY=$candidate
+		break
+	fi
+done
+
+if [ -z "${PY:-}" ]; then
+	printf 'commit-msg: no python3 on PATH; cannot check attribution.\n' >&2
+	printf 'Install Python, or skip with --no-verify and expect CI to reject it.\n' >&2
+	exit 1
+fi
+
+MSG_FILE=$msg_file \
+AUTHOR_IDENT=$(git var GIT_AUTHOR_IDENT) \
+COMMITTER_IDENT=$(git var GIT_COMMITTER_IDENT) \
+COMMENT_CHAR=$(git config --get core.commentChar || echo '#') \
+	"$PY" - <<'PY'
+import os
+import re
+import sys
+import unicodedata
+
+# --- ported verbatim from the shared action -------------------------------
+VENDOR = (r"(?:claude|anthropic|codex|openai|cursor|hermes|nousresearch|"
+          r"copilot|chatgpt|gemini|devin|codeium|windsurf|antigravity|aider|qodo|openhands|cascade)")
+
+DOMAIN = (r"(?:claude\.ai|claude\.com|anthropic\.com|openai\.com|"
+          r"chatgpt\.com|cursor\.com|cursor\.sh|codeium\.com|"
+          r"windsurf\.com|cognition\.ai|devin\.ai|nousresearch\.com|qodo\.ai|openhands\.dev|all-hands\.dev)")
+
+AI_NAME = re.compile(
+    r"(?:anthropic|codex|openai|cursor|nousresearch|copilot|chatgpt|"
+    r"codeium|windsurf|antigravity|aider|qodo|openhands)|" +
+    VENDOR + r"(?:[-_ ](?:agent|code|bot)(?:\[bot\])?|\[bot\])|"
+    + VENDOR + r"(?:[-_ ][a-z0-9]+)+\[bot\]|"
+    r"claude (?:opus|sonnet|haiku|fable)(?: [0-9.]+)?|"
+    r"hermes review|review (?:bot|agent|fixes)|"
+    r"(?:openai[-_ ]codex|github[-_ ]copilot|qodo[-_ ]code[-_ ]review|gemini[-_ ]code[-_ ]assist)(?:\[bot\])?", re.I)
+
+CREDIT_VERB = (r"(?:generated|addressed|authored|written|created|produced|"
+               r"reviewed|fixed|resolved|implemented|assisted|handled)")
+
+BLOCKED_EMAILS = {"noreply@anthropic.com", "openhands@all-hands.dev", "cascade@windsurf.com"}
+
+PATTERNS = [
+    ("co-author trailer", r"^\s*co-?authored-by:\s*.*" + VENDOR),
+    ("agent by-line trailer", r"^\s*" + CREDIT_VERB + r"[-_ ]by:\s*.*" + VENDOR),
+    ("session trailer", r"^\s*" + VENDOR + r"[-_ ]?(?:session|run|thread|trace|id):"),
+    ("robot emoji credit", r"^\s*_?\s*\U0001F916.*" + VENDOR),
+    ("generated-with footer", r"^\s*_?" + CREDIT_VERB + r"\s+(?:with|by)\s+\[?[^\]\n]*" + VENDOR),
+    ("bare vendor url", r"^\s*[_<(]*https?://(?:[\w.-]+\.)?" + DOMAIN + r"\b"),
+]
+RX = [(name, re.compile(p, re.I)) for name, p in PATTERNS]
+
+FENCE = re.compile(r"^(?P<indent> {0,3})(?P<fence>`{3,}|~{3,})(?P<info>.*)$")
+
+
+def comparable(text):
+    """Compare visible letters without hidden characters or combining marks."""
+    return "".join(" " if char.isspace() else "-" if unicodedata.category(char) == "Pd" else char
+                   for char in unicodedata.normalize("NFKD", text)
+                   if (char.isprintable() or char.isspace()) and not unicodedata.category(char).startswith("M"))
+
+
+comment_char = (os.environ.get("COMMENT_CHAR") or "#").strip() or "#"
+raw = open(os.environ["MSG_FILE"], encoding="utf-8", errors="replace").read()
+
+# Join folded trailer continuations: Git allows a trailer value to continue on a
+# following whitespace-indented line, which a line-at-a-time scan would miss.
+TRAILER_KEY = re.compile(r"^\s*[A-Za-z][A-Za-z0-9-]*:")
+logical = []
+for line in raw.split("\n"):
+    if (logical and line[:1] in (" ", "\t")
+            and TRAILER_KEY.match(logical[-1][0])):
+        logical[-1] = (logical[-1][0] + " " + line.strip(), logical[-1][1])
+    else:
+        logical.append((line, len(logical) + 1))
+
+failures = []
+open_char, open_len = None, 0
+for line, number in logical:
+    match = FENCE.match(line)
+    if match:
+        char, length = match.group("fence")[0], len(match.group("fence"))
+        if open_char is None:
+            open_char, open_len = char, length
+            continue
+        if char == open_char and length >= open_len and not match.group("info").strip():
+            open_char, open_len = None, 0
+            continue
+    if open_char is not None:
+        continue
+
+    text = comparable(line)
+    # Scan the line as written and, when it is commentary, as Git would store it
+    # under `whitespace` cleanup with the marker still present.
+    candidates = [text]
+    stripped = text.lstrip()
+    if stripped.startswith(comment_char):
+        candidates.append(stripped[len(comment_char):])
+    for candidate in candidates:
+        for name, rx in RX:
+            if rx.match(candidate):
+                failures.append("line %d: %s (%s)" % (number, line.strip()[:120], name))
+                break
+        else:
+            continue
+        break
+
+
+def check_identity(role, ident):
+    identity = re.fullmatch(r"(.*) <(.*)> -?[0-9]+ [+-][0-9]{4}", ident)
+    if identity is None:
+        failures.append("%s identity is malformed: %s" % (role, ident))
+        return
+    name, email = (comparable(part) for part in identity.groups())
+    name, email = name.strip(), email.strip()
+    account = re.fullmatch(r"(?:[0-9]+\+)?([^@]+)@users\.noreply\.github\.com", email, re.I)
+    if (AI_NAME.fullmatch(name)
+            or email.casefold() in BLOCKED_EMAILS
+            or (account and AI_NAME.fullmatch(account[1]))):
+        failures.append("AI %s identity: %s <%s>" % (role, name, email))
+
+
+check_identity("author", os.environ["AUTHOR_IDENT"])
+check_identity("committer", os.environ["COMMITTER_IDENT"])
+
+if failures:
+    print("commit-msg: AI attribution found:\n", file=sys.stderr)
+    for failure in failures:
+        print("  " + failure, file=sys.stderr)
+    print("""
+Commit refused: this repository does not carry AI authorship credit.
+
+Remove the reported trailer or footer from the message. If the report names an
+author or committer identity, set a human identity for this repository:
+
+    git config user.name  "Your Name"
+    git config user.email "you@example.com"
+
+For a commit that already exists, retry with:
+
+    git commit --amend --reset-author
+""", file=sys.stderr)
+    sys.exit(1)
+PY
