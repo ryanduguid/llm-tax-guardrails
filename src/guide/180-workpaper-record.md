@@ -25,6 +25,7 @@ Do not persist this record merely because it is required. Writing it to a workpa
 - [reference/tpb-catalogue.md](./reference/tpb-catalogue.md): complete live TPB Guidance Statement catalogue, GS01 to GS55
 - [reference/apes-110-map.md](./reference/apes-110-map.md): primary APES 110 reference map
 - [reference/ai-vendor-assurance.md](./reference/ai-vendor-assurance.md): AI tool and vendor assurance checklist
+- [DISCLAIMER.md](./DISCLAIMER.md): general disclaimer, no advice and no agent-client relationship
 - [MAINTENANCE.md](./MAINTENANCE.md): release and source-check protocol
 
 Retrieve these files when a routing decision needs them. The `SHA256SUMS` file at the repository root fixes the approved content of every file in the verified guide bundle.
