@@ -107,14 +107,23 @@ def _require_str(path, where, value):
     return value
 
 
-def _rows(path, data, key, fields, table_safe=False):
+def _rows(path, data, key, fields, table_safe=False, optional=()):
+    """Load a list of string-valued rows.
+
+    ``optional`` names fields a row may add. Their values are returned
+    untouched, because an optional field need not be a string: the caller that
+    declared it validates its own shape.
+    """
     entries = data.get(key)
     if not isinstance(entries, list) or not entries:
         raise ModelError(f"{path}: '{key}' must be a non-empty list")
     out = []
     for i, row in enumerate(entries):
-        if not isinstance(row, dict) or set(row) != set(fields):
-            raise ModelError(f"{path}: entry {i} must have exactly fields {fields}")
+        allowed = set(fields) | set(optional)
+        if not isinstance(row, dict) or not set(fields) <= set(row) <= allowed:
+            raise ModelError(
+                f"{path}: entry {i} must have exactly fields {fields}"
+                + (f", optionally with {tuple(optional)}" if optional else ""))
         clean = {}
         for f in fields:
             value = _require_str(path, f"entry {i} field '{f}'", row[f])
@@ -132,7 +141,25 @@ def _rows(path, data, key, fields, table_safe=False):
                     f"{path}: entry {i} field '{f}' contains '|', "
                     "which would break the rendered Markdown table")
             clean[f] = value
+        for f in optional:
+            if f in row:
+                clean[f] = row[f]
         out.append(clean)
+    return out
+
+
+def _string_list(path, where, value):
+    """A non-empty list of distinct one-line strings, pipe-free."""
+    if not isinstance(value, list) or not value:
+        raise ModelError(f"{path}: {where} must be a non-empty list of strings")
+    out = []
+    for i, item in enumerate(value):
+        item = _require_str(path, f"{where} item {i}", item)
+        if any(ch in item for ch in "\r\n|"):
+            raise ModelError(f"{path}: {where} item {i} must be one line with no '|'")
+        out.append(item)
+    if len(out) != len(set(out)):
+        raise ModelError(f"{path}: {where} repeats a value")
     return out
 
 
@@ -185,15 +212,78 @@ def load_catalogue(path):
     return rows
 
 
+BEHAVIOUR_FIELDS = ("id", "scenario", "expected_status", "required_behaviour",
+                    "side_effect_check")
+#: The optional per-case field emphasising the prohibited conclusions that case
+#: turns on. Every declared conclusion makes a response a `violation` wherever
+#: in it it appears, so this field narrows nothing. The labels are defined once
+#: under `prohibited_conclusions`; verify holds every value here to that list.
+PROHIBITED_ANYWHERE = "prohibited_anywhere"
+WHOLE_RESPONSE_FIELDS = ("verdict", "rule")
+PROHIBITED_CONCLUSION_FIELDS = ("label", "definition", "markers")
+
+
 def load_behaviour_tests(path):
-    rows = _rows(path, _read(path), "entries",
-                 ("id", "scenario", "expected_status", "required_behaviour", "side_effect_check"),
-                 table_safe=True)
+    rows = _rows(path, _read(path), "entries", BEHAVIOUR_FIELDS, table_safe=True,
+                 optional=(PROHIBITED_ANYWHERE,))
     _unique_ids(path, rows)
     for r in rows:
         if r["expected_status"] not in ALLOWED_STATUSES:
             raise ModelError(f"{path}: {r['id']} has unknown status {r['expected_status']!r}")
+        if PROHIBITED_ANYWHERE in r:
+            r[PROHIBITED_ANYWHERE] = _string_list(
+                path, f"{r['id']} {PROHIBITED_ANYWHERE}", r[PROHIBITED_ANYWHERE])
     return rows
+
+
+def load_whole_response(path):
+    """Load the whole-response rule and the prohibited-conclusion labels.
+
+    The rule is machine-readable on purpose: a runner reads it from
+    `evals/cases.json` rather than inferring it from prose. It is loaded
+    separately from the cases so that the case loader keeps its own contract,
+    and each label is defined exactly once here, which is what makes a
+    per-case `prohibited_anywhere` value checkable.
+    """
+    data = _read(path)
+    rule = data.get("whole_response")
+    if not isinstance(rule, dict) or set(rule) != set(WHOLE_RESPONSE_FIELDS):
+        raise ModelError(
+            f"{path}: 'whole_response' must be a mapping with exactly fields "
+            f"{WHOLE_RESPONSE_FIELDS}")
+    out = {}
+    for field in WHOLE_RESPONSE_FIELDS:
+        value = _require_str(path, f"whole_response field {field!r}", rule[field])
+        if any(ch in value for ch in "\r\n|"):
+            raise ModelError(f"{path}: whole_response field {field!r} must be one line with no '|'")
+        out[field] = value
+
+    entries = data.get("prohibited_conclusions")
+    if not isinstance(entries, list) or not entries:
+        raise ModelError(f"{path}: 'prohibited_conclusions' must be a non-empty list")
+    conclusions = []
+    for i, row in enumerate(entries):
+        if not isinstance(row, dict) or set(row) != set(PROHIBITED_CONCLUSION_FIELDS):
+            raise ModelError(
+                f"{path}: prohibited conclusion {i} must have exactly fields "
+                f"{PROHIBITED_CONCLUSION_FIELDS}")
+        clean = {}
+        for field in ("label", "definition"):
+            value = _require_str(path, f"prohibited conclusion {i} field {field!r}", row[field])
+            if any(ch in value for ch in "\r\n|"):
+                raise ModelError(
+                    f"{path}: prohibited conclusion {i} field {field!r} must be one line "
+                    "with no '|'")
+            clean[field] = value
+        clean["markers"] = _string_list(
+            path, f"prohibited conclusion {clean['label']!r} markers", row["markers"])
+        conclusions.append(clean)
+    labels = [r["label"] for r in conclusions]
+    if len(labels) != len(set(labels)):
+        raise ModelError(
+            f"{path}: duplicate prohibited-conclusion label; each label is defined once")
+    out["prohibited_conclusions"] = conclusions
+    return out
 
 
 def load_changelog(path):

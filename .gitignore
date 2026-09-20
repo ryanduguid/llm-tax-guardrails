@@ -32,5 +32,6 @@ env/
 .DS_Store
 Thumbs.db
 
-# Evaluation transcripts stay local; only evals/results/*.json (pass or fail per case) is committed
+# Evaluation transcripts stay local; only the verdict records in evals/results/
+# and evals/observations/ (one verdict per case, no prompts or responses) are committed
 evals/transcripts/

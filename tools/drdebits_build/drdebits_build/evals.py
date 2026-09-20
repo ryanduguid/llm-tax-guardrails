@@ -3,9 +3,13 @@
 The build exports the behaviour tests as ``evals/cases.json`` for a person to
 run against a model by hand, and renders ``evals/RESULTS.md`` from the result
 files a person records under ``evals/results/``. A result file carries the
-model name, the run date, the guide version tested and one pass or fail per
-case, and nothing else: no prompts, outputs or transcripts are ever committed.
-Nothing here calls a model.
+model name, the run date, the guide version tested, the digests identifying the
+exact guide and case set, and one pass or fail per case, and nothing else: no
+prompts, outputs or transcripts are ever committed. Nothing here calls a model.
+
+``evals/observations/`` holds records of the same shape whose verdicts nobody
+has confirmed. They render into their own section of ``evals/RESULTS.md`` and
+are never counted with the confirmed passes.
 """
 from __future__ import annotations
 
@@ -19,6 +23,14 @@ from .model import ModelError
 CASES_FILE = "evals/cases.json"
 RESULTS_FILE = "evals/RESULTS.md"
 RESULTS_DIR = "evals/results"
+# Proposed verdicts live in their own directory so they cannot be mistaken for
+# confirmed ones. Same schema, different `verdict_basis`, rendered into their
+# own section of the table and never added to a confirmed pass count.
+OBSERVATIONS_DIR = "evals/observations"
+HUMAN_CONFIRMED = "human-confirmed"
+MODEL_PROPOSED = "model-proposed"
+VERDICT_BASES = (HUMAN_CONFIRMED, MODEL_PROPOSED)
+DIRECTORY_BASIS = {RESULTS_DIR: HUMAN_CONFIRMED, OBSERVATIONS_DIR: MODEL_PROPOSED}
 # `violation` records a response that met its own case rubric and still broke
 # another guide control, an unsolicited safe-harbour conclusion for instance.
 # It counts as not passed, so a whole-response breach can never hide behind a
@@ -34,9 +46,21 @@ LEGACY_RESULT_KEYS = ("model", "run_date", "guide_version", "runner", "results")
 # version alone does not identify an unreleased revision and a tools-disabled
 # run says nothing about action boundaries. Earlier records keep their shape.
 BINDING_KEYS = ("guide_commit", "runtime", "tools", "conditions")
-RESULT_KEYS = LEGACY_RESULT_KEYS + BINDING_KEYS
+# A guide version and commit still do not identify what was run or how. The
+# 2 digests pin the exact guide text and case set the run saw, so a later edit
+# to either cannot quietly inherit the record; `effort` and `samples_per_case`
+# record the sampling behind it, because one sample at one effort setting is
+# not the same evidence as several; and `verdict_basis` says whether a human
+# confirmed the verdicts or a scorer proposed them.
+IDENTITY_KEYS = ("guide_sha256", "cases_sha256", "effort", "samples_per_case",
+                 "verdict_basis")
+#: Of those, the ones that are one-line strings. samples_per_case is an integer.
+IDENTITY_STRING_KEYS = ("guide_sha256", "cases_sha256", "effort", "verdict_basis")
+DIGEST_KEYS = ("guide_sha256", "cases_sha256")
+RESULT_KEYS = LEGACY_RESULT_KEYS + BINDING_KEYS + IDENTITY_KEYS
 BINDING_REQUIRED_FROM = date(2026, 9, 18)
 COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
+SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 # YYYY-MM-DD-<slug>.json, so results sort by date in a directory listing.
 RESULT_NAME_RE = re.compile(r"^(\d{4}-\d{2}-\d{2})-[a-z0-9]+(?:-[a-z0-9]+)*\.json$")
 
@@ -48,23 +72,47 @@ RESULTS_HEADER_TEMPLATE = (
     "where the run recorded one), the date, and a verdict per behaviour test: `pass`, `fail`, "
     "`violation` where the case rubric was met but the whole response broke another guide "
     "control, or `{not_run}` where the run did not cover a case. Only `pass` counts as passed. "
-    "No prompts, outputs or transcripts are recorded here or anywhere in this repository.\n\n"
+    "Every record here carries `verdict_basis: human-confirmed`; proposed verdicts live in "
+    "`evals/observations/` and are shown in their own section below, never added to a confirmed "
+    "pass count. No prompts, outputs or transcripts are recorded here or anywhere in this "
+    "repository.\n\n"
+)
+
+OBSERVATIONS_SECTION_HEADER = (
+    "## Proposed observations, not verdicts\n\n"
+    "Generated from `evals/observations/*.json`, each carrying "
+    "`verdict_basis: model-proposed`. A scorer applied the parts of each case rubric it can "
+    "apply mechanically; nobody has confirmed these, so they are candidates for human review "
+    "and evidence of nothing on their own. They are never counted with the confirmed passes "
+    "above.\n\n"
 )
 
 
 def build_cases(s):
-    """Export the behaviour tests as JSON for a manual run."""
-    cases = [
-        {
+    """Export the behaviour tests as JSON for a manual run.
+
+    `whole_response` is exported beside the cases so a runner reads the
+    whole-response rule as data rather than inferring it from the guide's prose,
+    and `prohibited_anywhere` names, per case, the conclusions that make the
+    response a violation wherever in it they appear.
+    """
+    cases = []
+    for r in s.behaviour:
+        case = {
             "id": r["id"],
             "scenario": r["scenario"],
             "expected_status": r["expected_status"],
             "required_behaviour": r["required_behaviour"],
             "side_effect_check": r["side_effect_check"],
         }
-        for r in s.behaviour
-    ]
-    payload = {"guide_version": s.meta["guide_version"], "cases": cases}
+        if r.get("prohibited_anywhere"):
+            case["prohibited_anywhere"] = list(r["prohibited_anywhere"])
+        cases.append(case)
+    payload = {
+        "guide_version": s.meta["guide_version"],
+        "whole_response": s.whole_response,
+        "cases": cases,
+    }
     return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
 
 
@@ -88,7 +136,7 @@ def _field(rel, data, key):
     return value
 
 
-def _load_result(path, rel, case_ids, guide_version):
+def _load_result(path, rel, case_ids, guide_version, basis):
     match = RESULT_NAME_RE.match(path.name)
     if not match:
         raise ModelError(f"{rel}: file name must be YYYY-MM-DD-<slug>.json")
@@ -96,7 +144,11 @@ def _load_result(path, rel, case_ids, guide_version):
         data = json.loads(path.read_text(encoding="utf-8"), object_pairs_hook=_reject_duplicate_keys)
     except (ValueError, UnicodeDecodeError, OSError) as exc:
         raise ModelError(f"{rel}: not valid JSON ({exc})") from exc
-    legacy = date.fromisoformat(match.group(1)) < BINDING_REQUIRED_FROM
+    # Only the recorded results have history to preserve. evals/observations/
+    # is new, so every record there carries the current schema whatever date it
+    # names, and a pre-cutoff date cannot be used to shed the identity fields.
+    legacy = (basis == HUMAN_CONFIRMED
+              and date.fromisoformat(match.group(1)) < BINDING_REQUIRED_FROM)
     expected = LEGACY_RESULT_KEYS if legacy else RESULT_KEYS
     if not isinstance(data, dict) or sorted(data) != sorted(expected):
         raise ModelError(
@@ -112,10 +164,24 @@ def _load_result(path, rel, case_ids, guide_version):
     if match.group(1) != run_date:
         raise ModelError(f"{rel}: file name date {match.group(1)} != run_date {run_date}")
     if not legacy:
-        for key in BINDING_KEYS:
+        for key in BINDING_KEYS + IDENTITY_STRING_KEYS:
             _field(rel, data, key)
         if not COMMIT_RE.match(data["guide_commit"]):
             raise ModelError(f"{rel}: guide_commit must be the full 40-hex commit the run used")
+        for key in DIGEST_KEYS:
+            if not SHA256_RE.match(data[key]):
+                raise ModelError(
+                    f"{rel}: {key} must be 64 lower-case hex characters; "
+                    "`python -m drdebits_build digests` prints both for a tree")
+        samples = data["samples_per_case"]
+        # bool is an int in Python, and `true` in a JSON record is a mistake,
+        # not a sample count.
+        if isinstance(samples, bool) or not isinstance(samples, int) or samples < 1:
+            raise ModelError(f"{rel}: samples_per_case must be an integer of at least 1")
+        if data["verdict_basis"] != basis:
+            raise ModelError(
+                f"{rel}: verdict_basis must be {basis!r} for a record under "
+                f"{path.parent.name}/, got {data['verdict_basis']!r}")
     results = data["results"]
     if not isinstance(results, dict) or not results:
         raise ModelError(f"{rel}: results must map case ids to pass, fail or violation")
@@ -142,43 +208,70 @@ def run_label(run):
     return f"{run['model']}, {version} ({run['run_date']})"
 
 
-def load_results(root, s):
-    """Read and validate every recorded run, oldest first.
+def _load_records(root, s, directory_rel):
+    """Read and validate every record in one directory, oldest first.
 
-    Everything under the results directory must be a result file, so nothing
-    else, a transcript least of all, can sit there unchecked.
+    Everything under the directory must be a record file, so nothing else, a
+    transcript least of all, can sit there unchecked.
     """
-    directory = Path(root) / RESULTS_DIR
+    directory = Path(root) / directory_rel
     if not directory.is_dir():
         return []
+    basis = DIRECTORY_BASIS[directory_rel]
     case_ids = [r["id"] for r in s.behaviour]
     runs = []
     for path in sorted(directory.iterdir(), key=lambda p: p.name):
-        rel = f"{RESULTS_DIR}/{path.name}"
+        rel = f"{directory_rel}/{path.name}"
         if not path.is_file() or path.is_symlink() or not RESULT_NAME_RE.match(path.name):
-            raise ModelError(f"{rel}: only YYYY-MM-DD-<slug>.json result files may live in {RESULTS_DIR}/")
-        runs.append(_load_result(path, rel, case_ids, s.meta["guide_version"]))
+            raise ModelError(
+                f"{rel}: only YYYY-MM-DD-<slug>.json result files may live in {directory_rel}/")
+        runs.append(_load_result(path, rel, case_ids, s.meta["guide_version"], basis))
     return runs
 
 
-def build_results_md(root, s):
-    """Render the results table: one row per case, one column per run."""
+def load_results(root, s):
+    """The human-confirmed runs recorded under evals/results/."""
+    return _load_records(root, s, RESULTS_DIR)
+
+
+def load_observations(root, s):
+    """The model-proposed observations recorded under evals/observations/."""
+    return _load_records(root, s, OBSERVATIONS_DIR)
+
+
+def _run_table(s, runs, total_label):
+    """One row per case, one column per run, and a per-column total."""
     # Imported here, not at module scope: build.py imports this module for
     # GENERATED and dereferences CASES_FILE while it executes, so a top-level
     # import back into build would leave one of the two modules half-built
     # whichever way the cycle is entered.
     from .build import render_table
 
-    runs = load_results(root, s)
     headers = ["ID", "Expected status"] + [run_label(r) for r in runs]
     rows = [[c["id"], c["expected_status"]] + [r["results"].get(c["id"], NOT_RUN) for r in runs]
             for c in s.behaviour]
     ids = {c["id"] for c in s.behaviour}
-    rows.append(["Passed", "of cases run"] + [
+    rows.append([total_label, "of cases run"] + [
         f"{sum(v == 'pass' for k, v in r['results'].items() if k in ids)}"
         f"/{sum(1 for k in r['results'] if k in ids)}"
         for r in runs])
-    body = render_table(headers, ["---"] * len(headers), rows)
+    return render_table(headers, ["---"] * len(headers), rows)
+
+
+def build_results_md(root, s):
+    """Render the confirmed results table, then any proposed observations.
+
+    The 2 tables are rendered and totalled separately, so a proposed pass can
+    never be added to a confirmed one.
+    """
+    runs = load_results(root, s)
+    body = _run_table(s, runs, "Passed")
     if not runs:
         body = f"No runs recorded yet. Add a file under `{RESULTS_DIR}/` and rebuild.\n\n" + body
-    return RESULTS_HEADER_TEMPLATE.format(version=s.meta["guide_version"], not_run=NOT_RUN) + body
+    out = RESULTS_HEADER_TEMPLATE.format(
+        version=s.meta["guide_version"], not_run=NOT_RUN) + body
+    observations = load_observations(root, s)
+    if observations:
+        out += ("\n" + OBSERVATIONS_SECTION_HEADER
+                + _run_table(s, observations, "Proposed pass"))
+    return out
