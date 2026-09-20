@@ -10,7 +10,7 @@ Load [drdebits.md](./drdebits.md) as project context, then give the model that r
 
 **Human decision:** the registered practitioner assesses the position from those facts. The guide routes the work to that decision.
 
-Thirty-five such cases are in [tests/behaviour-tests.md](./tests/behaviour-tests.md). The [recorded run](./evals/RESULTS.md) passed 19 of the 25 cases it covered; the example above states the expected behaviour. See [evaluation notes](EVALUATION-NOTES.md) for the failures, test limitations and pending rerun of the revised wording.
+Thirty-seven such cases are in [tests/behaviour-tests.md](./tests/behaviour-tests.md). The [recorded run](./evals/RESULTS.md) passed 19 of the 25 cases it covered; the example above states the expected behaviour. See [evaluation notes](EVALUATION-NOTES.md) for the failures, test limitations and pending rerun of the revised wording.
 
 > Australian tax-practice and accounting-ethics guardrails for LLM-assisted work
 >
@@ -28,9 +28,15 @@ Supply `drdebits.md` as persistent project context at the highest configurable i
 
 ### Load into Claude Code / Antigravity
 ```bash
-# Add as persistent project context in your repository
-mkdir -p .claude/rules
-cp drdebits.md .claude/rules/drdebits.md
+# Fetch the approved release at its tag, check every digest, then install as
+# persistent project context. The steps are chained, so a modified copy fails
+# sha256sum -c and nothing is copied.
+DRDEBITS=$(mktemp -d) &&
+  git clone --depth 1 --branch v0.3.3 \
+    https://github.com/ryanduguid/llm-tax-guardrails.git "$DRDEBITS" &&
+  (cd "$DRDEBITS" && sha256sum -c SHA256SUMS) &&
+  mkdir -p .claude/rules &&
+  cp "$DRDEBITS/drdebits.md" .claude/rules/drdebits.md
 ```
 
 ### Configure for Cursor (`.cursorrules`)
@@ -77,7 +83,7 @@ The diagram summarises the guide's own gate, classification, workflow and decisi
 | [AGENTS.md](./AGENTS.md) | Routing instructions for autonomous coding agents |
 | [DISCLAIMER.md](./DISCLAIMER.md) | General disclaimer: no advice, no agent-client relationship, human responsibility |
 | [MAINTENANCE.md](./MAINTENANCE.md) | Release and source-check protocol |
-| [SHA256SUMS](./SHA256SUMS) | Digests of the nine files in the verified guide bundle |
+| [SHA256SUMS](./SHA256SUMS) | Digests of the ten files in the verified guide bundle |
 
 ## Integrity
 

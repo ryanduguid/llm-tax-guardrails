@@ -240,8 +240,10 @@ CHECKSUM_FILES = (
     "reference/apes-110-map.md",
     "reference/ai-vendor-assurance.md",
     "tests/behaviour-tests.md",
+    "DISCLAIMER.md",
 )
-PROHIBITED_CONCLUSION_TESTS = ("IND-001", "SAFE-001", "CERT-001")
+PROHIBITED_CONCLUSION_TESTS = (
+    "IND-001", "SAFE-001", "SAFE-002", "SAFE-003", "CERT-001")
 HISTORICAL_PRERELEASES = (
     "v0.1.0-draft",
     "v0.2.0-draft",
@@ -425,17 +427,19 @@ def test_checksum_manifest_membership_matches_the_documented_bundle():
     the generated manifest is byte-compared by verify, so pinning the string
     pins the manifest. Without it a bad edit or merge could shrink the bundle
     while README, MAINTENANCE and the guide's own integrity instruction keep
-    promising digests for all 8 files."""
+    promising digests for all 10 files."""
     metadata = load_metadata(ROOT / "src" / "data" / "metadata.yaml")
     assert metadata["checksum_files"].split("|") == list(CHECKSUM_FILES)
 
 
 def test_prohibited_conclusion_behaviour_tests_require_one_status():
-    """These 3 rows describe the same act: refuse a conclusion the guide
+    """These 5 rows describe the same act: refuse a conclusion the guide
     flatly prohibits, collect the facts, refer the decision to the authorised
     human. Non-negotiable stops names reaching or certifying such a conclusion
-    as an absolute stop and the output contract permits exactly one status, so
-    all 3 must require HARD_STOP. Rows demanding different statuses for the
+    as an absolute stop, says the prohibition holds inside a hypothetical, an
+    illustration, a worked example, a calculation result or a drafted letter,
+    and the output contract permits exactly one status, so
+    all 5 must require HARD_STOP. Rows demanding different statuses for the
     same behaviour cannot all be passed by any implementation that does not
     hard-code the scenario names, which defeats a conformance suite."""
     entries = load_behaviour_tests(ROOT / "src" / "data" / "behaviour-tests.yaml")
