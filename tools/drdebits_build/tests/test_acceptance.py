@@ -9,8 +9,12 @@ from drdebits_build.__main__ import main
 from drdebits_build.build import find_root
 
 REAL = find_root(Path(__file__).resolve())
+# Every checksum_files member has to be here: build_sha256sums hashes each one
+# off disk, so a bundle member missing from the clone fails the build for a
+# reason that has nothing to do with the tree under test.
 COPY_ITEMS = ["src", "drdebits.md", "reference", "tests", "evals", "SHA256SUMS",
-              "README.md", "MAINTENANCE.md", "LICENSE", "CITATION.cff", "llms.txt"]
+              "README.md", "MAINTENANCE.md", "LICENSE", "CITATION.cff", "llms.txt",
+              "DISCLAIMER.md"]
 
 REAL_META = model.load_metadata(REAL / "src" / "data" / "metadata.yaml")
 # The date verify checks review_due against. Every test here drives verify

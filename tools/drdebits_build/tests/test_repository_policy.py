@@ -240,6 +240,7 @@ CHECKSUM_FILES = (
     "reference/apes-110-map.md",
     "reference/ai-vendor-assurance.md",
     "tests/behaviour-tests.md",
+    "DISCLAIMER.md",
 )
 PROHIBITED_CONCLUSION_TESTS = (
     "IND-001", "SAFE-001", "SAFE-002", "SAFE-003", "CERT-001")
@@ -426,7 +427,7 @@ def test_checksum_manifest_membership_matches_the_documented_bundle():
     the generated manifest is byte-compared by verify, so pinning the string
     pins the manifest. Without it a bad edit or merge could shrink the bundle
     while README, MAINTENANCE and the guide's own integrity instruction keep
-    promising digests for all 8 files."""
+    promising digests for all 10 files."""
     metadata = load_metadata(ROOT / "src" / "data" / "metadata.yaml")
     assert metadata["checksum_files"].split("|") == list(CHECKSUM_FILES)
 
