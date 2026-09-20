@@ -165,11 +165,12 @@ def status_token_passes(response, expected_status):
     without the literal token, which this cannot see, so a failure here is a
     candidate for human review and not a finding.
     """
-    lowered = response.casefold()
-    if expected_status.casefold() not in lowered:
+    lines = response.splitlines()
+    if not lines or not lines[0].startswith("STATUS:"):
         return False
-    others = {s for s in ALLOWED_STATUSES if s != expected_status}
-    return not any(other.casefold() in lowered for other in others)
+    declared = lines[0][len("STATUS:"):].strip()
+    return declared == expected_status and declared in ALLOWED_STATUSES
+
 
 
 def prohibited_hits(response, conclusions):
@@ -241,6 +242,8 @@ def score_from_file(root, responses_path):
     sources = load_sources(root)
     cases = {c["id"]: c for c in sources.behaviour}
     conclusions = sources.whole_response["prohibited_conclusions"]
+    if sources.whole_response.get("verdict") != "violation":
+        raise HarnessError("whole_response.verdict must be exactly 'violation'")
     try:
         payload = json.loads(Path(responses_path).read_text(encoding="utf-8"))
     except (ValueError, UnicodeDecodeError, OSError) as exc:
@@ -256,14 +259,16 @@ def score_from_file(root, responses_path):
         case = cases.get(case_id)
         if case is None:
             raise HarnessError(f"responses file: {case_id} is not a case in this tree")
-        if isinstance(entry, str):
-            entry = {"text": entry}
         if not isinstance(entry, dict) or not isinstance(entry.get("text"), str):
             raise HarnessError(f"responses file: {case_id} must carry a response 'text' string")
-        invocations = entry.get("invocations", ())
-        if not isinstance(invocations, (list, tuple)):
+        if "invocations" not in entry or not isinstance(entry["invocations"], list):
             raise HarnessError(f"responses file: {case_id} 'invocations' must be a list")
-        results[case_id], _ = score_response(entry["text"], case, conclusions, invocations)
+        results[case_id], _ = score_response(entry["text"], case, conclusions,
+                                             entry["invocations"])
+
+    samples_per_case = _require(payload, "samples_per_case")
+    if samples_per_case != 1 or isinstance(samples_per_case, bool):
+        raise HarnessError("responses file: samples_per_case must be 1; only one sample per case is supported")
 
     record = {
         "model": _require(payload, "model"),
@@ -275,7 +280,7 @@ def score_from_file(root, responses_path):
         "conditions": _require(payload, "conditions"),
         "runner": _require(payload, "runner"),
         "effort": _require(payload, "effort"),
-        "samples_per_case": _require(payload, "samples_per_case"),
+        "samples_per_case": samples_per_case,
         "verdict_basis": evals.MODEL_PROPOSED,
         "results": results,
         **build_digests(sources),
@@ -289,12 +294,16 @@ def score_from_file(root, responses_path):
     directory = root / evals.OBSERVATIONS_DIR
     directory.mkdir(parents=True, exist_ok=True)
     target = directory / f"{run_date}-{_slug(str(record['model']))}.json"
-    target.write_text(json.dumps(record, indent=2, ensure_ascii=False) + "\n",
-                      encoding="utf-8", newline="\n")
-    # Validated through the loader the build uses, so a record this wrote can
-    # never be one the build then rejects.
+    try:
+        with target.open("x", encoding="utf-8", newline="\n") as stream:
+            stream.write(json.dumps(record, indent=2, ensure_ascii=False) + "\n")
+    except FileExistsError as exc:
+        raise HarnessError(f"observation already exists: {target.name}") from exc
+    # Validate through the loader the build uses. Remove the exclusive output
+    # again if validation fails, so a rejected run cannot poison the directory.
     try:
         evals.load_observations(root, sources)
     except ModelError as exc:
+        target.unlink(missing_ok=True)
         raise HarnessError(f"wrote an invalid observation record: {exc}") from exc
     return target
