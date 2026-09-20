@@ -84,7 +84,8 @@ the only human-confirmed record, and it evaluates the superseded wording. The
 
 An authorised run is still required, and it needs approval before it starts
 because it consumes a separately billed model batch. When it runs it must:
-submit all 27 scenarios at one named commit, record that commit in
+submit all 37 scenarios now in the suite at one named commit, record that
+commit in
 `guide_commit`, judge each whole response against the guide as well as its case
 rubric, use inert tools that record an invocation without performing it, and
 mark an inaccessible primary source unverified rather than inventing a check
@@ -98,8 +99,8 @@ that it does.
 
 ## Local Codex assessment, 11 September 2026
 
-All 27 scenarios then in the suite produced responses under `gpt-6-astra` at
-medium reasoning effort, using guide commit
+The suite held 27 scenarios on 11 September 2026, and all 27 produced
+responses under `gpt-6-astra` at medium reasoning effort, using guide commit
 `ac6c69e8d81bb0bed2a956af9eb17f51465e535e`.
 Each ran in a fresh, ephemeral Codex CLI session with the complete guide,
 without action tools, browsing or memory. These are new Codex observations,
