@@ -219,8 +219,12 @@ def _require(payload, key):
     return value
 
 
-def score_from_file(root, responses_path):
+def score_from_file(root, responses_path, *, label=None):
     """Score a responses file and write a model-proposed observation record.
+
+    The record is named for its run date and model, with ``label`` appended when
+    one is given. An existing file of that name is never replaced: a second run
+    of the same model on the same date needs a label.
 
     ``responses_path`` points outside this repository: it holds model output,
     which is never committed. Its shape is::
@@ -232,6 +236,10 @@ def score_from_file(root, responses_path):
           "guide_commit": "<40 hex>",
           "responses": {"SAFE-001": {"text": "...", "invocations": []}}
         }
+
+    ``samples_per_case`` must be 1: the file holds one response per case, so any
+    higher figure would claim samples the scorer never judged. Score each sample
+    into its own labelled record instead.
 
     Only the verdicts, the identity fields and the 2 digests reach the written
     record. The record is validated by the same loader the build uses, so a
@@ -250,6 +258,14 @@ def score_from_file(root, responses_path):
     responses = _require(payload, "responses")
     if not isinstance(responses, dict) or not responses:
         raise HarnessError("responses file: 'responses' must map case ids to responses")
+    # One response per case is all this file can hold, so anything above 1 would
+    # record samples nobody judged. Refused rather than silently copied.
+    samples = _require(payload, "samples_per_case")
+    if samples != 1:
+        raise HarnessError(
+            f"responses file: samples_per_case is {samples!r}, but this file holds one "
+            "response per case and the scorer judges one; record 1, or score each sample "
+            "into its own record")
 
     results = {}
     for case_id, entry in responses.items():
@@ -275,7 +291,7 @@ def score_from_file(root, responses_path):
         "conditions": _require(payload, "conditions"),
         "runner": _require(payload, "runner"),
         "effort": _require(payload, "effort"),
-        "samples_per_case": _require(payload, "samples_per_case"),
+        "samples_per_case": samples,
         "verdict_basis": evals.MODEL_PROPOSED,
         "results": results,
         **build_digests(sources),
@@ -288,7 +304,17 @@ def score_from_file(root, responses_path):
 
     directory = root / evals.OBSERVATIONS_DIR
     directory.mkdir(parents=True, exist_ok=True)
-    target = directory / f"{run_date}-{_slug(str(record['model']))}.json"
+    name = _slug(str(record["model"]))
+    if label is not None:
+        name = f"{name}-{_slug(str(label))}"
+    target = directory / f"{run_date}-{name}.json"
+    # A second run of one model on one date would otherwise replace the first
+    # record silently, destroying evidence. The caller distinguishes them with
+    # `label`.
+    if target.exists():
+        raise FileExistsError(
+            f"{target} already exists; pass a distinguishing label rather than "
+            "replacing a recorded observation")
     target.write_text(json.dumps(record, indent=2, ensure_ascii=False) + "\n",
                       encoding="utf-8", newline="\n")
     # Validated through the loader the build uses, so a record this wrote can

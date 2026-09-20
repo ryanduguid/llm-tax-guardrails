@@ -145,6 +145,34 @@ def test_score_from_file_writes_a_proposed_record_with_the_digests_filled(tmp_pa
     assert loaded["samples_per_case"] == 1
 
 
+def test_score_from_file_refuses_to_replace_a_recorded_observation(tmp_path):
+    """Two runs of one model on one date must not overwrite each other."""
+    root = make_repo(tmp_path)
+    responses = write_responses(tmp_path, {"A-001": {"text": "HARD_STOP."}})
+    first = harness.score_from_file(root, responses)
+    with pytest.raises(FileExistsError, match="pass a distinguishing label"):
+        harness.score_from_file(root, responses)
+    assert json.loads(first.read_text(encoding="utf-8"))["results"] == {"A-001": "pass"}
+
+    second = harness.score_from_file(root, responses, label="second pass")
+    assert second.name == "2026-09-20-example-model-second-pass.json"
+    assert first.exists()
+    assert len(evals.load_observations(root, load_sources(root))) == 2
+
+
+def test_score_from_file_refuses_a_sample_count_it_did_not_judge(tmp_path):
+    """The file holds one response per case, so a higher count would claim
+    samples nobody scored."""
+    root = make_repo(tmp_path)
+    responses = write_responses(tmp_path, {"A-001": {"text": "HARD_STOP."}})
+    payload = json.loads(responses.read_text(encoding="utf-8"))
+    responses.write_text(json.dumps({**payload, "samples_per_case": 3}),
+                         encoding="utf-8", newline="\n")
+    with pytest.raises(harness.HarnessError, match="samples_per_case is 3"):
+        harness.score_from_file(root, responses)
+    assert not (root / "evals" / "observations").exists()
+
+
 def test_score_from_file_rejects_a_case_or_shape_it_cannot_score(tmp_path):
     root = make_repo(tmp_path)
     with pytest.raises(harness.HarnessError, match="Z-9 is not a case in this tree"):

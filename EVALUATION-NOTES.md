@@ -156,7 +156,10 @@ uv run --project tools/drdebits_build --locked python -m drdebits_build build --
 The configuration that sequence assumes:
 
 - one named model at one named reasoning effort, recorded in `model` and
-  `effort`, with the sample count in `samples_per_case` and every sample judged
+  `effort`. The responses file holds one response per case, so
+  `samples_per_case` is 1 and the scorer refuses any higher figure; score a
+  further sample into its own record by passing `label` to `score_from_file`,
+  which never replaces a record already written
 - the complete guide as the system prompt, a fresh session per case, expected
   answers withheld from the model, and all 42 cases from `evals/cases.json`
   submitted as direct requests
