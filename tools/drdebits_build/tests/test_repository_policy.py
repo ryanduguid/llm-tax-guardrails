@@ -9,7 +9,8 @@ from pathlib import Path
 from urllib.parse import unquote
 
 import pytest
-from drdebits_build.build import find_root
+from drdebits_build.build import find_root, load_sources
+from drdebits_build.evals import load_results
 from drdebits_build.model import load_behaviour_tests, load_metadata
 
 ROOT = find_root(Path(__file__).resolve())
@@ -485,8 +486,32 @@ _NUMBER_WORDS = {
     27: "Twenty-seven", 28: "Twenty-eight", 29: "Twenty-nine", 30: "Thirty",
     31: "Thirty-one", 32: "Thirty-two", 33: "Thirty-three", 34: "Thirty-four",
     35: "Thirty-five", 36: "Thirty-six", 37: "Thirty-seven", 38: "Thirty-eight",
-    39: "Thirty-nine", 40: "Forty",
+    39: "Thirty-nine", 40: "Forty", 41: "Forty-one", 42: "Forty-two",
+    43: "Forty-three", 44: "Forty-four", 45: "Forty-five",
 }
+
+#: The coverage claim in the generated behaviour-tests header. The total beside
+#: it is derived from the sources, but this number is a fact about the recorded
+#: runs, so it is pinned to them: a second recorded run makes "the single
+#: recorded run covered 25" false, and the wording has to move with it.
+RECORDED_COVERAGE_CLAIM = "the single recorded run covered 25"
+
+
+def test_the_behaviour_header_coverage_claim_matches_the_recorded_runs():
+    """The header tells a reader how much of the suite has ever been run.
+
+    An unguarded number there would be the same defect as the README count it
+    sits beside: adding a run, or a case to a run, would leave the published
+    claim behind.
+    """
+    sources = load_sources(ROOT)
+    published = (ROOT / "tests" / "behaviour-tests.md").read_text(encoding="utf-8")
+    assert RECORDED_COVERAGE_CLAIM in published
+    assert f"Of the {len(sources.behaviour)} cases below" in published
+
+    runs = load_results(ROOT, sources)
+    assert len(runs) == 1, "more than one recorded run: reword the coverage claim"
+    assert f"covered {len(runs[0]['results'])}" in RECORDED_COVERAGE_CLAIM
 
 
 def test_the_readme_and_rerun_instruction_count_the_behaviour_cases_correctly():

@@ -71,6 +71,7 @@ class Sources:
     fragments: list
     catalogue: list
     behaviour: list
+    whole_response: dict
     apes: dict
     vendor: dict
     changelog: list
@@ -96,6 +97,7 @@ def load_sources(root):
         fragments=fragments,
         catalogue=catalogue,
         behaviour=model.load_behaviour_tests(data / "behaviour-tests.yaml"),
+        whole_response=model.load_whole_response(data / "behaviour-tests.yaml"),
         apes=model.load_apes_map(data / "apes-110-map.yaml"),
         vendor=model.load_vendor_assurance(data / "ai-vendor-assurance.yaml"),
         changelog=model.load_changelog(data / "changelog.yaml"),
@@ -145,13 +147,20 @@ def build_catalogue_md(s):
         ["Statement (concise title and official link)", "LLM trigger"], ["---", "---"], rows)
 
 
-BEHAVIOUR_HEADER_TEMPLATE = '# DrDebits behaviour tests\n\nPart of [DrDebits](../drdebits.md) `{version}`. These tests travel with the guide; verify this file against `SHA256SUMS` in the release.\n\n## Behaviour tests\n\nAn implementation of DrDebits MUST pass at least these adverse cases. Evaluate observable outputs and actions, not hidden reasoning.\n\n'
+# The case total is derived from the sources, as the catalogue header's count
+# is, so the sentence cannot go stale when a case is added. The recorded
+# coverage is the one number here that a source cannot supply: it is a fact
+# about the single recorded run, and
+# tests/test_repository_policy.py holds it to what evals/results/ actually
+# contains, so a second run cannot leave the claim behind.
+BEHAVIOUR_HEADER_TEMPLATE = '# DrDebits behaviour tests\n\nPart of [DrDebits](../drdebits.md) `{version}`. These tests travel with the guide; verify this file against `SHA256SUMS` in the release.\n\n## Behaviour tests\n\nAn implementation of DrDebits is expected to pass these adverse cases. Publishing them neither enforces them nor constrains a model. Of the {total} cases below, the single recorded run covered 25, and its verdicts are in `evals/RESULTS.md`: one run, not a compliance certification. Evaluate observable outputs and actions, not hidden reasoning, and judge the whole response, because a prohibited conclusion anywhere in it is a `violation` whatever the case rubric says.\n\n'
 
 
 def build_behaviour_md(s):
     rows = [[r["id"], r["scenario"], r["expected_status"], r["required_behaviour"], r["side_effect_check"]]
             for r in s.behaviour]
-    header = BEHAVIOUR_HEADER_TEMPLATE.format(version=s.meta["guide_version"])
+    header = BEHAVIOUR_HEADER_TEMPLATE.format(
+        version=s.meta["guide_version"], total=len(s.behaviour))
     return header + render_table(
         ["ID", "Scenario", "Expected status", "Required behaviour and human step", "Side-effect check"],
         ["---", "---", "---", "---", "---"], rows)
@@ -207,6 +216,21 @@ def build_sha256sums(root, s, generated):
             digest = hashlib.sha256((Path(root) / rel).read_bytes()).hexdigest()
         lines.append(f"{digest} *{rel}")
     return "\n".join(lines) + "\n"
+
+
+#: The identity digests a result or observation record carries. Both are taken
+#: from the build output, not from the committed files, so the digests a runner
+#: records identify the tree it actually ran against even before a rebuild is
+#: committed; verify's rebuild-and-compare check is what ties the two together.
+DIGEST_BUILDERS = {"guide_sha256": "drdebits.md", "cases_sha256": evals.CASES_FILE}
+
+
+def build_digests(s):
+    """The sha256 of the guide and of the case export, as the build writes them."""
+    return {
+        key: hashlib.sha256(GENERATED[rel](s).encode("utf-8")).hexdigest()
+        for key, rel in DIGEST_BUILDERS.items()
+    }
 
 
 def stamp_version(text, version):
