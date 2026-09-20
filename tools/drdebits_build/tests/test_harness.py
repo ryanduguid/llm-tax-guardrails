@@ -148,7 +148,7 @@ def test_score_from_file_writes_a_proposed_record_with_the_digests_filled(tmp_pa
 def test_score_from_file_refuses_to_replace_a_recorded_observation(tmp_path):
     """Two runs of one model on one date must not overwrite each other."""
     root = make_repo(tmp_path)
-    responses = write_responses(tmp_path, {"A-001": {"text": "HARD_STOP."}})
+    responses = write_responses(tmp_path, {"A-001": {"text": "HARD_STOP.", "invocations": []}})
     first = harness.score_from_file(root, responses)
     with pytest.raises(FileExistsError, match="pass a distinguishing label"):
         harness.score_from_file(root, responses)
@@ -164,7 +164,8 @@ def test_score_from_file_refuses_a_sample_count_it_did_not_judge(tmp_path):
     """The file holds one response per case, so a higher count would claim
     samples nobody scored."""
     root = make_repo(tmp_path)
-    responses = write_responses(tmp_path, {"A-001": {"text": "HARD_STOP."}})
+    responses = write_responses(
+        tmp_path, {"A-001": {"text": "HARD_STOP.", "invocations": []}})
     payload = json.loads(responses.read_text(encoding="utf-8"))
     responses.write_text(json.dumps({**payload, "samples_per_case": 3}),
                          encoding="utf-8", newline="\n")
@@ -176,11 +177,37 @@ def test_score_from_file_refuses_a_sample_count_it_did_not_judge(tmp_path):
 def test_score_from_file_rejects_a_case_or_shape_it_cannot_score(tmp_path):
     root = make_repo(tmp_path)
     with pytest.raises(harness.HarnessError, match="Z-9 is not a case in this tree"):
-        harness.score_from_file(root, write_responses(tmp_path, {"Z-9": {"text": "x"}}))
+        harness.score_from_file(root, write_responses(
+            tmp_path, {"Z-9": {"text": "x", "invocations": []}}))
     with pytest.raises(harness.HarnessError, match="must carry a response 'text' string"):
         harness.score_from_file(root, write_responses(tmp_path, {"A-001": {"body": "x"}}))
     with pytest.raises(harness.HarnessError, match="'responses' must map case ids"):
         harness.score_from_file(root, write_responses(tmp_path, {}))
+
+
+def test_an_entry_silent_about_tool_calls_is_refused_not_passed(tmp_path):
+    """Silence about tool calls is not evidence that none were made."""
+    root = make_repo(tmp_path)
+    with pytest.raises(harness.HarnessError, match="must carry 'invocations'"):
+        harness.score_from_file(root, write_responses(tmp_path, {"A-001": {"text": "HARD_STOP."}}))
+    with pytest.raises(harness.HarnessError, match="'invocations' must be a list"):
+        harness.score_from_file(root, write_responses(
+            tmp_path, {"A-001": {"text": "HARD_STOP.", "invocations": "none"}}))
+    assert not (root / "evals" / "observations").exists()
+
+
+def test_a_record_that_fails_validation_is_not_left_behind(tmp_path):
+    """A broken record would fail the next build and take every other record's
+    load down with it, so the scorer removes what it cannot stand behind."""
+    root = make_repo(tmp_path)
+    path = write_responses(tmp_path, {"A-001": {"text": "HARD_STOP.", "invocations": []}})
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    path.write_text(json.dumps({**payload, "guide_commit": "abc123"}),
+                    encoding="utf-8", newline="\n")
+    with pytest.raises(harness.HarnessError, match="refused an invalid observation record"):
+        harness.score_from_file(root, path)
+    assert list((root / "evals" / "observations").iterdir()) == []
+    assert evals.load_observations(root, load_sources(root)) == []
 
 
 def test_an_undefined_prohibited_label_is_reported_not_scored():

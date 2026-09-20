@@ -220,6 +220,11 @@ BEHAVIOUR_FIELDS = ("id", "scenario", "expected_status", "required_behaviour",
 #: under `prohibited_conclusions`; verify holds every value here to that list.
 PROHIBITED_ANYWHERE = "prohibited_anywhere"
 WHOLE_RESPONSE_FIELDS = ("verdict", "rule")
+#: The only verdict the whole-response rule can carry. The scorer records a
+#: whole-response breach as `violation` and the results table counts only
+#: `pass`, so a source that published any other verdict would export a rule the
+#: harness and the table both contradict.
+WHOLE_RESPONSE_VERDICT = "violation"
 PROHIBITED_CONCLUSION_FIELDS = ("label", "definition", "markers")
 
 
@@ -257,6 +262,10 @@ def load_whole_response(path):
         if any(ch in value for ch in "\r\n|"):
             raise ModelError(f"{path}: whole_response field {field!r} must be one line with no '|'")
         out[field] = value
+    if out["verdict"] != WHOLE_RESPONSE_VERDICT:
+        raise ModelError(
+            f"{path}: whole_response verdict must be {WHOLE_RESPONSE_VERDICT!r}, got "
+            f"{out['verdict']!r}; the exported rule cannot disagree with the scorer")
 
     entries = data.get("prohibited_conclusions")
     if not isinstance(entries, list) or not entries:

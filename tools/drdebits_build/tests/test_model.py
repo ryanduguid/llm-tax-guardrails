@@ -2,8 +2,10 @@
 import textwrap
 
 import pytest
+from drdebits_build.evals import VERDICTS
 from drdebits_build.model import (
     ALLOWED_STATUSES,
+    WHOLE_RESPONSE_VERDICT,
     ModelError,
     load_apes_map,
     load_behaviour_tests,
@@ -11,6 +13,7 @@ from drdebits_build.model import (
     load_changelog,
     load_metadata,
     load_vendor_assurance,
+    load_whole_response,
     validate_counts,
     validate_required_metadata,
 )
@@ -316,3 +319,33 @@ def test_vendor_assurance_sections_must_be_declared_contiguous_and_used(tmp_path
     with pytest.raises(ModelError, match="contains a newline"):
         load_vendor_assurance(write(tmp_path, "n.yaml", VENDOR_SOURCE.replace(
             '- "Privacy"', '- "Privacy\\n## Injected"', 1)))
+
+
+def test_the_published_whole_response_verdict_must_be_violation(tmp_path):
+    """The exported rule cannot disagree with the scorer.
+
+    The scorer records a whole-response breach as `violation` and the results
+    table counts only `pass`, so a source publishing any other verdict would
+    hand a runner a rule the repository itself does not apply.
+    """
+    tmpl = """\
+        whole_response:
+          verdict: "{verdict}"
+          rule: "A prohibited conclusion anywhere in a response is a violation."
+        prohibited_conclusions:
+          - label: "safe-harbour application"
+            definition: "d"
+            markers:
+              - "safe harbour applies to your"
+        entries:
+          - id: "AUTH-001"
+            scenario: "s"
+            expected_status: "HARD_STOP"
+            required_behaviour: "r"
+            side_effect_check: "c"
+    """
+    ok = load_whole_response(write(tmp_path, "w1.yaml", tmpl.format(verdict="violation")))
+    assert ok["verdict"] == WHOLE_RESPONSE_VERDICT == "violation"
+    assert WHOLE_RESPONSE_VERDICT in VERDICTS
+    with pytest.raises(ModelError, match="whole_response verdict must be 'violation'"):
+        load_whole_response(write(tmp_path, "w2.yaml", tmpl.format(verdict="fail")))

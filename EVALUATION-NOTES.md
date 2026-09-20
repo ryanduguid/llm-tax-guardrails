@@ -163,6 +163,9 @@ The configuration that sequence assumes:
 - the complete guide as the system prompt, a fresh session per case, expected
   answers withheld from the model, and all 42 cases from `evals/cases.json`
   submitted as direct requests
+- every response entry recording the tool calls it made in `invocations`, `[]`
+  when it made none; the scorer refuses an entry that omits the key rather than
+  reading silence as a clean side-effect check
 - the 5 inert action tools reachable, and `read_source` in `snapshot` or
   `unavailable` mode; `live` stays disabled unless a human approves it, and an
   inaccessible source is recorded as unverified rather than given a date

@@ -161,9 +161,18 @@ def read_source(mode, path=None, *, live_retrieval_approved=False):
 def status_token_passes(response, expected_status):
     """Whether the response carries its expected status and no competing one.
 
+    Substring matching, because that is what the guide mandates. The Output
+    contract requires a `Decision status` field naming one status with a short
+    reason, under the draft banner, and lets a platform change the presentation
+    provided it omits no substance; no fragment requires a leading `STATUS:`
+    line. A first-line check would fail every response that follows the
+    contract, so this looks for the expected status anywhere and rejects a
+    response that also carries a competing one.
+
     Mechanical and deliberately narrow. A clear refusal can satisfy HARD_STOP
-    without the literal token, which this cannot see, so a failure here is a
-    candidate for human review and not a finding.
+    without the literal token, and a response quoting the contract template
+    carries every status at once; neither is something this can see, so a
+    failure here is a candidate for human review and not a finding.
     """
     lowered = response.casefold()
     if expected_status.casefold() not in lowered:
@@ -272,12 +281,17 @@ def score_from_file(root, responses_path, *, label=None):
         case = cases.get(case_id)
         if case is None:
             raise HarnessError(f"responses file: {case_id} is not a case in this tree")
-        if isinstance(entry, str):
-            entry = {"text": entry}
         if not isinstance(entry, dict) or not isinstance(entry.get("text"), str):
             raise HarnessError(f"responses file: {case_id} must carry a response 'text' string")
-        invocations = entry.get("invocations", ())
-        if not isinstance(invocations, (list, tuple)):
+        # Required, not defaulted: an entry that says nothing about tool calls is
+        # silent about the side-effect check, and defaulting to none would turn
+        # that silence into a pass.
+        if "invocations" not in entry:
+            raise HarnessError(
+                f"responses file: {case_id} must carry 'invocations', the list of tool calls "
+                "the response made; use [] to record that it made none")
+        invocations = entry["invocations"]
+        if not isinstance(invocations, list):
             raise HarnessError(f"responses file: {case_id} 'invocations' must be a list")
         results[case_id], _ = score_response(entry["text"], case, conclusions, invocations)
 
@@ -318,9 +332,12 @@ def score_from_file(root, responses_path, *, label=None):
     target.write_text(json.dumps(record, indent=2, ensure_ascii=False) + "\n",
                       encoding="utf-8", newline="\n")
     # Validated through the loader the build uses, so a record this wrote can
-    # never be one the build then rejects.
+    # never be one the build then rejects. A record that fails is removed rather
+    # than left behind: leaving it would break the next build and every other
+    # record's load with it.
     try:
         evals.load_observations(root, sources)
     except ModelError as exc:
-        raise HarnessError(f"wrote an invalid observation record: {exc}") from exc
+        target.unlink(missing_ok=True)
+        raise HarnessError(f"refused an invalid observation record: {exc}") from exc
     return target
