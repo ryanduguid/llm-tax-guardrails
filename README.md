@@ -28,13 +28,22 @@ Supply `drdebits.md` as persistent project context at the highest configurable i
 
 ### Load into Claude Code / Antigravity
 ```bash
-# Fetch the approved release at its tag, check every digest, then install as
-# persistent project context. The steps are chained, so a modified copy fails
-# sha256sum -c and nothing is copied.
+# Fetch the approved release at its tag, authenticate the tag and commit, check
+# every digest, then install as persistent project context. The steps are
+# chained, so an untrusted release or modified copy is never installed.
 DRDEBITS=$(mktemp -d) &&
   git clone --depth 1 --branch v0.3.3 \
     https://github.com/ryanduguid/llm-tax-guardrails.git "$DRDEBITS" &&
-  (cd "$DRDEBITS" && sha256sum -c SHA256SUMS) &&
+  (cd "$DRDEBITS" &&
+    test "$(git rev-parse HEAD)" = 713ed2b9ec7d9c6f5e0e5fe70ed61992c6db9c92 &&
+    git verify-tag v0.3.3 &&
+    git verify-commit HEAD) &&
+  (cd "$DRDEBITS" &&
+    if command -v sha256sum >/dev/null 2>&1; then
+      sha256sum -c SHA256SUMS
+    else
+      shasum -a 256 -c SHA256SUMS
+    fi) &&
   mkdir -p .claude/rules &&
   cp "$DRDEBITS/drdebits.md" .claude/rules/drdebits.md
 ```
