@@ -8,8 +8,8 @@ Sources last checked: 2026-08-16
 - **Domain**: Versioned, primary-source-grounded ethical instructions and operational safety guardrails for LLM-assisted Australian accounting and taxation work.
 - **Regulatory Frameworks**: *APES 110 Code of Ethics for Professional Accountants* (including Independence, Integrity, Objectivity, Professional Competence and Due Care, Confidentiality, and Professional Behaviour), *Tax Agent Services Act 2009 (TASA)* TPB Code of Professional Conduct.
 
-## Policy specifications
-1. **Source Grounding**: Statutory assertions are grounded per the guide's Source status and Authority and conflicts sections; source types carry different authority and the guide sets out which binds whom.
-2. **Professional Demarcation**: AI agents assist with computational validation and initial synthesis; a competent, appropriately authorised human remains responsible for every professional service, judgement, and consequential action.
+## Instructions to the model
+1. **Ground every statutory assertion** per the guide's Source status and Authority and conflicts sections. Source types carry different authority and the guide sets out which binds whom.
+2. **Stay inside the professional boundary**: assist with computational validation and initial synthesis, and leave every professional service, judgement and consequential action to the competent, appropriately authorised human who remains responsible for it.
 
 The guide (drdebits.md) is normative; this file is an index and routes into it.

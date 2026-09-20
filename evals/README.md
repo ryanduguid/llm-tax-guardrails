@@ -10,9 +10,27 @@ like this, with an entry per case id from `cases.json` that the run covered:
 ```json
 {
   "model": "example-model",
-  "run_date": "2026-01-31",
+  "run_date": "2026-09-20",
   "guide_version": "0.3.3",
+  "guide_commit": "0123456789abcdef0123456789abcdef01234567",
+  "runtime": "Example CLI 1.0",
+  "tools": "5 inert action tools; read_source in snapshot mode",
+  "conditions": "fresh session per case; whole response judged against the guide",
   "runner": "A Person",
+  "guide_sha256": "<64 hex, from the digests command>",
+  "cases_sha256": "<64 hex, from the digests command>",
+  "effort": "high",
+  "samples_per_case": 1,
+  "verdict_basis": "human-confirmed",
   "results": {"AUTH-001": "pass", "AUTH-002": "fail"}
 }
 ```
+
+`uv run --project tools/drdebits_build --locked python -m drdebits_build digests --root ..`
+prints the 2 digests. Records dated before 18 September 2026 keep their original
+5 keys and are not rewritten.
+
+`observations/` holds records of the same shape whose `verdict_basis` is
+`model-proposed`: nobody has confirmed their verdicts, so they are candidates
+for human review and are rendered in their own section of `RESULTS.md`, never
+counted with the confirmed passes.

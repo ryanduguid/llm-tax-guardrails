@@ -13,14 +13,25 @@ from tests.test_cli import TODAY
 GOOD = {"model": "example-model", "run_date": "2026-02-01", "guide_version": "0.9.9-test",
         "runner": "A Person", "results": {"A-001": "pass"}}
 COMMIT = "0123456789abcdef0123456789abcdef01234567"
+DIGEST = "a" * 64
 BOUND = {**GOOD, "run_date": "2026-09-18", "guide_commit": COMMIT,
          "runtime": "Example CLI 1.0", "tools": "3 inert action tools; read-only source snapshots",
-         "conditions": "fresh session per case; whole response judged against the guide"}
+         "conditions": "fresh session per case; whole response judged against the guide",
+         "guide_sha256": DIGEST, "cases_sha256": "b" * 64, "effort": "high",
+         "samples_per_case": 1, "verdict_basis": "human-confirmed"}
+PROPOSED = {**BOUND, "verdict_basis": "model-proposed"}
 
 
 def write_result(root, name="2026-02-01-example-model.json", **overrides):
     data = {**GOOD, **overrides}
     directory = root / "evals" / "results"
+    directory.mkdir(parents=True, exist_ok=True)
+    (directory / name).write_text(json.dumps(data), encoding="utf-8")
+
+
+def write_observation(root, name="2026-09-18-example-model.json", **overrides):
+    data = {**PROPOSED, **overrides}
+    directory = root / "evals" / "observations"
     directory.mkdir(parents=True, exist_ok=True)
     (directory / name).write_text(json.dumps(data), encoding="utf-8")
 
@@ -32,6 +43,22 @@ def test_cases_export_carries_every_behaviour_test(tmp_path):
     assert [c["id"] for c in payload["cases"]] == ["A-001"]
     assert set(payload["cases"][0]) == {
         "id", "scenario", "expected_status", "required_behaviour", "side_effect_check"}
+    # The whole-response rule travels with the cases as data, so a runner reads
+    # it rather than inferring it from the guide's prose.
+    assert payload["whole_response"]["verdict"] == "violation"
+    assert [c["label"] for c in payload["whole_response"]["prohibited_conclusions"]] == [
+        "safe-harbour application"]
+
+
+def test_a_case_exports_its_prohibited_conclusions(tmp_path):
+    root = make_repo(tmp_path)
+    source = root / "src" / "data" / "behaviour-tests.yaml"
+    source.write_text(
+        source.read_text(encoding="utf-8")
+        + '    prohibited_anywhere:\n      - "safe-harbour application"\n',
+        encoding="utf-8", newline="\n")
+    payload = json.loads(evals.build_cases(load_sources(root)))
+    assert payload["cases"][0]["prohibited_anywhere"] == ["safe-harbour application"]
 
 
 def test_results_table_with_no_runs_lists_the_cases(tmp_path):
@@ -132,6 +159,63 @@ def test_a_bound_run_rejects_a_missing_or_malformed_binding(tmp_path, overrides,
     write_result(root, name="2026-09-18-example-model.json", **{**BOUND, **overrides})
     with pytest.raises(ModelError, match=message):
         evals.load_results(root, load_sources(root))
+
+
+@pytest.mark.parametrize("overrides, message", [
+    ({"guide_sha256": "abc"}, "guide_sha256 must be 64 lower-case hex"),
+    ({"cases_sha256": DIGEST.upper()}, "cases_sha256 must be 64 lower-case hex"),
+    ({"effort": ""}, "effort must be a non-empty string"),
+    ({"samples_per_case": 0}, "samples_per_case must be an integer of at least 1"),
+    ({"samples_per_case": "1"}, "samples_per_case must be an integer of at least 1"),
+    ({"samples_per_case": True}, "samples_per_case must be an integer of at least 1"),
+    ({"verdict_basis": "model-proposed"}, "verdict_basis must be 'human-confirmed'"),
+    ({"verdict_basis": "confirmed"}, "verdict_basis must be 'human-confirmed'"),
+])
+def test_a_bound_run_must_identify_the_tree_the_sampling_and_the_basis(tmp_path, overrides, message):
+    root = make_repo(tmp_path)
+    write_result(root, name="2026-09-18-example-model.json", **{**BOUND, **overrides})
+    with pytest.raises(ModelError, match=message):
+        evals.load_results(root, load_sources(root))
+
+
+def test_a_proposed_record_cannot_sit_among_the_confirmed_results(tmp_path):
+    """The 2 directories are what separates confirmed evidence from a candidate."""
+    root = make_repo(tmp_path)
+    write_result(root, name="2026-09-18-example-model.json", **PROPOSED)
+    with pytest.raises(ModelError, match="verdict_basis must be 'human-confirmed'"):
+        evals.load_results(root, load_sources(root))
+    (root / "evals" / "results" / "2026-09-18-example-model.json").unlink()
+    write_observation(root, **BOUND)
+    with pytest.raises(ModelError, match="verdict_basis must be 'model-proposed'"):
+        evals.load_observations(root, load_sources(root))
+
+
+def test_an_observation_dated_before_the_cutoff_still_carries_the_full_schema(tmp_path):
+    """Only evals/results/ has history. A proposed record cannot shed the
+    identity fields by naming an earlier date."""
+    root = make_repo(tmp_path)
+    directory = root / "evals" / "observations"
+    directory.mkdir(parents=True)
+    (directory / "2026-02-01-example-model.json").write_text(
+        json.dumps({**GOOD, "verdict_basis": "model-proposed"}), encoding="utf-8")
+    with pytest.raises(ModelError, match="keys must be exactly model, run_date"):
+        evals.load_observations(root, load_sources(root))
+
+
+def test_proposed_observations_render_apart_and_are_never_summed_with_passes(tmp_path):
+    root = make_repo(tmp_path)
+    write_result(root)
+    write_observation(root)
+    out = evals.build_results_md(root, load_sources(root))
+    assert "## Proposed observations, not verdicts" in out
+    assert "| Passed | of cases run | 1/1 |" in out
+    assert "| Proposed pass | of cases run | 1/1 |" in out
+    # The confirmed table stops before the proposed section, so no column and no
+    # total spans the two.
+    confirmed, proposed = out.split("## Proposed observations, not verdicts")
+    assert "example-model, 0.9.9-test (2026-02-01)" in confirmed
+    assert "example-model, 0.9.9-test@0123456 (2026-09-18)" in proposed
+    assert "Proposed pass" not in confirmed and "| Passed |" not in proposed
 
 
 def test_the_legacy_record_keeps_its_shape_and_cannot_grow_binding_keys(tmp_path):

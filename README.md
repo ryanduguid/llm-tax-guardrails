@@ -10,7 +10,7 @@ Load [drdebits.md](./drdebits.md) as project context, then give the model that r
 
 **Human decision:** the registered practitioner assesses the position from those facts. The guide routes the work to that decision.
 
-Thirty-seven such cases are in [tests/behaviour-tests.md](./tests/behaviour-tests.md). The [recorded run](./evals/RESULTS.md) passed 19 of the 25 cases it covered; the example above states the expected behaviour. See [evaluation notes](EVALUATION-NOTES.md) for the failures, test limitations and pending rerun of the revised wording.
+Forty-two such cases are in [tests/behaviour-tests.md](./tests/behaviour-tests.md). The [recorded run](./evals/RESULTS.md) passed 19 of the 25 cases it covered; the example above states the expected behaviour. See [evaluation notes](EVALUATION-NOTES.md) for the failures, test limitations and pending rerun of the revised wording.
 
 > Australian tax-practice and accounting-ethics guardrails for LLM-assisted work
 >
@@ -46,6 +46,8 @@ Follow Australian accounting ethics and statutory boundaries defined in @drdebit
 All tax positions must be cited against primary ATO/Commonwealth sources.
 ```
 
+Prompt wording is an instruction to the model, not enforcement: it cannot stop a model sending, posting, paying, uploading or lodging anything. Apply the action restrictions in the host, through the tools the assistant is given, the approvals it needs and the human who reviews its output.
+
 ## Ethical routing and boundary architecture
 
 ```mermaid
@@ -75,9 +77,9 @@ The diagram summarises the guide's own gate, classification, workflow and decisi
 | File | Purpose |
 |---|---|
 | [drdebits.md](./drdebits.md) | The guide: core operating controls. Load this as persistent context. |
-| [tests/behaviour-tests.md](./tests/behaviour-tests.md) | Adverse-case tests an implementation must pass |
-| [evals/RESULTS.md](./evals/RESULTS.md) | Recorded manual evaluation runs: model, date and a pass or fail per behaviour test. Not in the bundle. |
-| [reference/tpb-catalogue.md](./reference/tpb-catalogue.md) | Complete live TPB Guidance Statement catalogue, GS01 to GS55 |
+| [tests/behaviour-tests.md](./tests/behaviour-tests.md) | Adverse-case tests an implementation is expected to pass |
+| [evals/RESULTS.md](./evals/RESULTS.md) | Recorded manual evaluation runs: model, date and a pass or fail per behaviour test, with proposed observations in their own section. Not in the bundle. |
+| [reference/tpb-catalogue.md](./reference/tpb-catalogue.md) | The live TPB Guidance Statement catalogue, GS01 to GS55. Complete for the checked live Guidance Statement category, which is what the catalogue's own header says it covers, not every product the TPB has published |
 | [reference/apes-110-map.md](./reference/apes-110-map.md) | Primary APES 110 reference map |
 | [reference/ai-vendor-assurance.md](./reference/ai-vendor-assurance.md) | AI tool and vendor assurance checklist: the question, the evidence that answers it and where the obligation sits |
 | [AGENTS.md](./AGENTS.md) | Routing instructions for autonomous coding agents |
@@ -95,4 +97,4 @@ Copyright © 2026 Ryan Duguid. Original DrDebits material is licensed under [CC 
 
 ## Contributing and maintenance
 
-The guide, reference files, behaviour tests, `evals/cases.json` and `evals/RESULTS.md` are generated. Edit their sources under `src/` and run `uv run --project tools/drdebits_build python -m drdebits_build build`; CI rejects hand edits to generated files. People write and maintain the records in `evals/results/*.json`; keep historical result records unchanged. See `MAINTENANCE.md` for the release protocol.
+The guide, reference files, behaviour tests, `evals/cases.json` and `evals/RESULTS.md` are generated. Edit their sources under `src/` and run `uv run --project tools/drdebits_build python -m drdebits_build build`; CI rejects hand edits to generated files. People write and maintain the records in `evals/results/*.json`; keep historical result records unchanged. `evals/observations/*.json` holds proposed verdicts nobody has confirmed, which the table shows separately and never counts as passes. See `MAINTENANCE.md` for the release protocol.

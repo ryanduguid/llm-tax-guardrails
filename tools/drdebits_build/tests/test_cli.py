@@ -3,7 +3,8 @@ from datetime import date
 
 import pytest
 from drdebits_build import verify as verify_module
-from drdebits_build.__main__ import main
+from drdebits_build.__main__ import VERIFY_OK_LINE, main
+from drdebits_build.build import build_digests, load_sources
 from drdebits_build.verify import run_verify
 
 from tests.test_build import make_repo
@@ -25,7 +26,21 @@ def test_build_then_verify_roundtrip(tmp_path, capsys):
     root = make_repo(tmp_path)
     assert main(["build", "--root", str(root)]) == 0
     assert main(["verify", "--root", str(root)]) == 0
-    assert "verify: OK" in capsys.readouterr().out
+    # The success line says what was checked. A bare "OK" reads as a wider
+    # clearance than these checks give: source currency is a separate command
+    # that goes to the Federal Register, and nothing here looks at it.
+    assert VERIFY_OK_LINE in capsys.readouterr().out
+    assert "not a source-currency check" in VERIFY_OK_LINE
+
+
+def test_digests_prints_the_two_record_digests(tmp_path, capsys):
+    root = make_repo(tmp_path)
+    assert main(["build", "--root", str(root)]) == 0
+    capsys.readouterr()  # drop the build's own output
+    assert main(["digests", "--root", str(root)]) == 0
+    printed = dict(line.split(": ") for line in capsys.readouterr().out.splitlines())
+    assert printed == build_digests(load_sources(root))
+    assert all(len(d) == 64 for d in printed.values())
 
 
 def test_verify_failure_exit_code(tmp_path):

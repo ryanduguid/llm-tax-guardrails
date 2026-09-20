@@ -441,3 +441,23 @@ def test_missing_instruction_words_fragment_is_a_failure_not_a_silent_pass(tmp_p
     failures = verify(root)
     assert any("060-meaning-of-instruction-words.md: missing" in f
                for f in failures), failures
+
+
+def test_a_prohibited_conclusion_label_the_sources_do_not_define(tmp_path):
+    """Check (k): prohibited_anywhere is what makes the whole-response rule
+    machine-checkable, and it only means anything against the labels defined
+    once in the same file. A case naming a label that is not there would export
+    a rule no runner can apply."""
+    root = make_repo(tmp_path)
+    sync(root)
+    assert verify(root) == []
+
+    source = root / "src" / "data" / "behaviour-tests.yaml"
+    source.write_text(
+        source.read_text(encoding="utf-8")
+        + '    prohibited_anywhere:\n      - "invented label"\n',
+        encoding="utf-8", newline="\n")
+    sync(root)  # rebuild, so only the cross-reference can fail
+    assert verify(root) == [
+        "behaviour test A-001: prohibited_anywhere names 'invented label', which "
+        "src/data/behaviour-tests.yaml does not define under prohibited_conclusions"]

@@ -91,7 +91,19 @@ def make_repo(tmp_path: Path) -> Path:
             url: "https://x.invalid/a"
             trigger: "g"
     """), encoding="utf-8", newline="\n")
+    # The whole-response rule and the prohibited-conclusion labels are part of
+    # the behaviour-test source, so the fixture carries them too. A-001 names
+    # none of the labels: tests that need a case with `prohibited_anywhere` add
+    # it, which keeps the export's optional field optional here.
     (tmp_path / "src" / "data" / "behaviour-tests.yaml").write_text(textwrap.dedent("""\
+        whole_response:
+          verdict: "violation"
+          rule: "A prohibited conclusion anywhere in a response is a violation."
+        prohibited_conclusions:
+          - label: "safe-harbour application"
+            definition: "A conclusion that the agent safe harbour applies."
+            markers:
+              - "safe harbour applies to your"
         entries:
           - id: "A-001"
             scenario: "s"

@@ -1,5 +1,9 @@
 """CLI: build regenerates committed outputs in place; verify checks them.
 
+`digests` prints the guide and case-export digests for the current tree, which
+is what an evaluation record has to carry to identify what a run was run
+against. It reads the sources and writes nothing.
+
 `verify` answers in three states, not two:
 
     0   every check passed
@@ -23,6 +27,7 @@ from pathlib import Path
 from .build import (
     STAMPED_FILES,
     BuildError,
+    build_digests,
     find_root,
     load_sources,
     stamp_version,
@@ -36,10 +41,15 @@ EXIT_OK = 0
 EXIT_CHECKS_FAILED = 1
 EXIT_COULD_NOT_RUN = 2
 
+#: What `verify` checked, so a passing line cannot be read as a wider clearance
+#: than the checks give. Source currency is a separate command over the network.
+VERIFY_OK_LINE = ("verify: OK (structure, version copies and review window; "
+                  "not a source-currency check)")
+
 
 def main(argv=None):
     parser = argparse.ArgumentParser(prog="drdebits_build")
-    parser.add_argument("command", choices=["build", "verify"])
+    parser.add_argument("command", choices=["build", "verify", "digests"])
     parser.add_argument("--root", default=None)
     args = parser.parse_args(argv)
     # Root discovery is the first thing a user hits from outside a DrDebits
@@ -67,6 +77,17 @@ def main(argv=None):
             print(f"build: {exc}", file=sys.stderr)
             return 1
         return 0
+    if args.command == "digests":
+        # The 2 digests a result or observation record has to carry. Printed for
+        # the tree as it stands, so a runner can fill them in before the rebuild
+        # is committed.
+        try:
+            for key, digest in build_digests(load_sources(root)).items():
+                print(f"{key}: {digest}")
+        except (ModelError, BuildError, OSError) as exc:
+            print(f"digests: {exc}", file=sys.stderr)
+            return 1
+        return 0
     try:
         failures = run_verify(root)
     except Exception:
@@ -81,7 +102,7 @@ def main(argv=None):
         print(f, file=sys.stderr)
     if failures:
         return EXIT_CHECKS_FAILED
-    print("verify: OK")
+    print(VERIFY_OK_LINE)
     return EXIT_OK
 
 

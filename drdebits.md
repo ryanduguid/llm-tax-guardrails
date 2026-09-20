@@ -64,7 +64,7 @@ DrDebits does not reproduce APES 110, certify compliance, replace the source doc
 - [AML/CTF control set](#amlctf-control-set)
 - [Output and workpaper contract](#output-contract)
 - [Behaviour tests](./tests/behaviour-tests.md) (separate file)
-- [Complete live TPB Guidance Statement catalogue](./reference/tpb-catalogue.md) (separate file)
+- [Live TPB Guidance Statement catalogue](./reference/tpb-catalogue.md) (separate file; complete for the checked live Guidance Statement category, as its own header states)
 - [APES 110 reference map](./reference/apes-110-map.md) (separate file)
 - [AI tool and vendor assurance checklist](./reference/ai-vendor-assurance.md) (separate file)
 - [Copyright and licence boundaries](#copyright-attribution-and-licence-boundaries)
@@ -536,7 +536,7 @@ Do not persist this record merely because it is required. Writing it to a workpa
 **Core operating controls end here.** The behaviour tests, the TPB Guidance Statement catalogue, the APES 110 reference map and the vendor assurance checklist are part of DrDebits but ship as separate files so this core guide stays small enough to load as persistent context:
 
 - [tests/behaviour-tests.md](./tests/behaviour-tests.md): adverse-case tests an implementation must pass
-- [reference/tpb-catalogue.md](./reference/tpb-catalogue.md): complete live TPB Guidance Statement catalogue, GS01 to GS55
+- [reference/tpb-catalogue.md](./reference/tpb-catalogue.md): the live TPB Guidance Statement catalogue, GS01 to GS55, complete for the checked live Guidance Statement category as its own header states
 - [reference/apes-110-map.md](./reference/apes-110-map.md): primary APES 110 reference map
 - [reference/ai-vendor-assurance.md](./reference/ai-vendor-assurance.md): AI tool and vendor assurance checklist
 - [DISCLAIMER.md](./DISCLAIMER.md): general disclaimer, no advice and no agent-client relationship

@@ -329,4 +329,18 @@ def run_verify(root, today=None):
                     f"{row['expected_status']!r} is not defined in "
                     f"src/guide/{INSTRUCTION_WORDS_FRAGMENT}")
 
+    # (k) a case's prohibited_anywhere entries are what makes the whole-response
+    # rule machine-checkable, and they are only meaningful against the labels
+    # defined once under prohibited_conclusions. A case naming a label that does
+    # not exist there would publish a rule a runner cannot apply, and the export
+    # would carry the orphan label as though src/data defined it.
+    labels = {r["label"] for r in s.whole_response["prohibited_conclusions"]}
+    for row in s.behaviour:
+        for label in row.get("prohibited_anywhere", ()):
+            if label not in labels:
+                failures.append(
+                    f"behaviour test {row['id']}: prohibited_anywhere names {label!r}, "
+                    "which src/data/behaviour-tests.yaml does not define under "
+                    "prohibited_conclusions")
+
     return failures
