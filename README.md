@@ -28,9 +28,15 @@ Supply `drdebits.md` as persistent project context at the highest configurable i
 
 ### Load into Claude Code / Antigravity
 ```bash
-# Add as persistent project context in your repository
-mkdir -p .claude/rules
-cp drdebits.md .claude/rules/drdebits.md
+# Fetch the approved release at its tag, check every digest, then install as
+# persistent project context. The steps are chained, so a modified copy fails
+# sha256sum -c and nothing is copied.
+DRDEBITS=$(mktemp -d) &&
+  git clone --depth 1 --branch v0.3.3 \
+    https://github.com/ryanduguid/llm-tax-guardrails.git "$DRDEBITS" &&
+  (cd "$DRDEBITS" && sha256sum -c SHA256SUMS) &&
+  mkdir -p .claude/rules &&
+  cp "$DRDEBITS/drdebits.md" .claude/rules/drdebits.md
 ```
 
 ### Configure for Cursor (`.cursorrules`)
