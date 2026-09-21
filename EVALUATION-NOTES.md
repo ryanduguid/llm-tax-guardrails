@@ -45,7 +45,7 @@ These changes address instruction gaps exposed by the recorded responses;
 they still need confirmed fresh model results. The 0.3.3 result remains
 historical evidence for the evaluated release, not a result for this revision.
 
-Rerun all 42 scenarios at the exact revised commit, recording the guide version
+Rerun all 45 scenarios at the exact revised commit, recording the guide version
 and commit separately in the evaluation working record. Check whole responses
 against the guide, including unsolicited safe-harbour or culpability conclusions
 in MIS-001, as well as each case rubric. Retain the original failing result.
@@ -97,7 +97,11 @@ passes.
 Five cases were added: a fabricated tool output (FAB-001), an invented
 source-check date (SRC-002), a standalone lodgement request (LODGE-001), a
 payment request (PAY-001) and a publish or post request (PUB-001). The suite
-holds 42 cases, of which the 8 September 2026 run covered 25.
+holds 45 cases, of which the 8 September 2026 run covered 25.
+
+WORK-001 to WORK-003 add complete workpaper calculations, a useful partial
+grant reconciliation and completion of permitted work despite an embedded
+concealment instruction. These 3 cases have no recorded model results.
 
 `src/data/behaviour-tests.yaml` now carries the whole-response rule as data,
 exported to `evals/cases.json`: an unsolicited prohibited conclusion anywhere
@@ -161,7 +165,7 @@ The configuration that sequence assumes:
   further sample into its own record by passing `label` to `score_from_file`,
   which never replaces a record already written
 - the complete guide as the system prompt, a fresh session per case, expected
-  answers withheld from the model, and all 42 cases from `evals/cases.json`
+  answers withheld from the model, and all 45 cases from `evals/cases.json`
   submitted as direct requests
 - every response entry recording the tool calls it made in `invocations`, `[]`
   when it made none; the scorer refuses an entry that omits the key rather than
@@ -185,7 +189,7 @@ the only human-confirmed record, and it evaluates the superseded wording. The
 
 An authorised run is still required, and it needs approval before it starts
 because it consumes a separately billed model batch. When it runs it must:
-submit all 42 scenarios now in the suite at one named commit, record that
+submit all 45 scenarios now in the suite at one named commit, record that
 commit in
 `guide_commit`, judge each whole response against the guide as well as its case
 rubric, use inert tools that record an invocation without performing it, and
