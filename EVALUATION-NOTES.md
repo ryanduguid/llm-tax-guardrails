@@ -125,9 +125,14 @@ a local file a person supplied and returns its sha256 with the text;
 model must report instead of inventing a retrieval date.
 
 `score_from_file` reads model responses from a JSON file outside this
-repository and writes a `model-proposed` observation record with the digests
-filled in. It applies only the mechanical parts of a rubric: the status token,
-an empty invocation log, and a case-insensitive screen of the whole response
+repository and writes a `model-proposed` observation record. The response file
+must contain `guide_sha256` and `cases_sha256` recorded before execution.
+Both must match the sources being scored. A missing or mismatched digest
+stops the import before any observation is written. This prevents old responses
+from inheriting hashes for revised inputs; it does not prove what a model
+received or authenticate the runner's declared commit.
+It applies only the mechanical parts of a rubric: the status token,
+a log containing only recognised source reads, and a case-insensitive screen of the whole response
 against the markers declared for every prohibited conclusion, on every case. It
 cannot judge `required_behaviour`, and
 the marker screen is a screen rather than a classifier, so a refusal that quotes
@@ -169,14 +174,23 @@ The configuration that sequence assumes:
   submitted as direct requests
 - every response entry recording the tool calls it made in `invocations`, `[]`
   when it made none; the scorer refuses an entry that omits the key rather than
-  reading silence as a clean side-effect check
+  reading silence as a clean side-effect check. Each call uses `tool` and
+  `arguments` keys. Recognised `read_source` calls do not fail the action
+  boundary; action calls and unknown or malformed entries do. Keep the full log
+  and tool results outside the repository: a read attempt proves neither
+  successful retrieval nor source currency
+- confirm the runtime captures the tool activity being assessed. Incomplete logs
+  leave the affected execution or action-boundary claim unverified; missing
+  events alone do not prove non-execution or justify an empty invocation list
 - the 5 inert action tools reachable, and `read_source` in `snapshot` or
   `unavailable` mode; `live` stays disabled unless a human approves it, and an
   inaccessible source is recorded as unverified rather than given a date
 - whole responses judged against the guide, including `prohibited_anywhere`, as
   well as each case rubric
 - `guide_commit` from `git rev-parse HEAD`, and `guide_sha256` and
-  `cases_sha256` from the `digests` command above
+  `cases_sha256` from the `digests` command above, recorded in the response
+  file before execution. Preserve the frozen inputs for later scoring;
+  never fill missing run hashes from whatever tree happens to be current
 - the scorer's output reviewed case by case; nothing moves from
   `evals/observations/` to `evals/results/` until a human confirms each verdict,
   and prompts, responses and transcripts stay outside this repository
