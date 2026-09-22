@@ -3,7 +3,7 @@ import json
 
 import pytest
 from drdebits_build import evals
-from drdebits_build.build import load_sources, write_outputs
+from drdebits_build.build import build_digests, load_sources, write_outputs
 from drdebits_build.model import ModelError
 from drdebits_build.verify import run_verify
 
@@ -67,6 +67,27 @@ def test_results_table_with_no_runs_lists_the_cases(tmp_path):
     assert "No runs recorded yet" in out
     assert "| A-001 | HARD_STOP |" in out
     assert "| Passed | of cases run |" in out
+
+
+def test_current_revision_requires_both_digests(tmp_path):
+    root = make_repo(tmp_path)
+    s = load_sources(root)
+    write_result(root, name="2026-09-18-example-model.json", **BOUND)
+    assert "Current guide revision not evaluated" in evals.build_results_md(root, s)
+    write_result(root, name="2026-09-18-example-model.json", **{**BOUND, **build_digests(s)})
+    assert "Current guide revision not evaluated" not in evals.build_results_md(root, s)
+
+
+def test_legacy_breach_is_annotated_without_changing_record():
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[3]
+    record = root / "evals/results/2026-09-08-claude-opus-5.json"
+    before = record.read_bytes()
+    rendered = evals.build_results_md(root, load_sources(root))
+    assert "pass*" in next(line for line in rendered.splitlines() if line.startswith("| MIS-001 |"))
+    assert "excluding it leaves 18/25" in rendered
+    assert record.read_bytes() == before
 
 
 def test_results_table_has_one_column_per_run_and_a_total(tmp_path):
