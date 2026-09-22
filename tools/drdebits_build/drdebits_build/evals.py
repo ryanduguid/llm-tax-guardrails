@@ -198,6 +198,9 @@ def _load_result(path, rel, case_ids, guide_version, basis):
         if verdict not in VERDICTS:
             raise ModelError(
                 f"{rel}: {case_id} must be pass, fail or violation, got {verdict!r}")
+    # Keep the validated source identity for annotations. This is deliberately
+    # internal metadata rather than part of the on-disk result schema.
+    data["_source"] = rel
     return data
 
 
@@ -242,7 +245,8 @@ def load_observations(root, s):
 
 def _legacy_breach(run, case_id):
     """The whole-response breach recorded in EVALUATION-NOTES.md, without rewriting history."""
-    return (run["run_date"] == "2026-09-08" and run["guide_version"] == "0.3.3"
+    return (run.get("_source") == "evals/results/2026-09-08-claude-opus-5.json"
+            and run["run_date"] == "2026-09-08" and run["guide_version"] == "0.3.3"
             and run["model"] == "claude-opus-5 (tools disabled; Claude Code 2.1.261)"
             and case_id == "MIS-001"
             and run["results"].get(case_id) == "pass")
