@@ -18,17 +18,19 @@
 # .github/actions/no-ai-attribution/action.yml). It exists so a commit fails at
 # the keyboard rather than after a push, so the two must agree: the vendor list,
 # the credit patterns, the Unicode folding and the identity rules below are
-# ported from that action rather than re-invented. Where this hook differs it is
-# deliberately STRICTER, never laxer, so a commit that passes here cannot fail
-# the workflow on a rule this file also carries.
+# ported from that action rather than re-invented. The action applies the same
+# two extra readings below, so a commit that passes here cannot fail the
+# workflow on a rule this file also carries; the hook is never laxer than the
+# action.
 #
-# The two deliberate differences, both fail-closed:
+# The two extra readings, both fail-closed and shared with the action:
 #
 #   * Comment lines are scanned. `git commit -m` and `-F` use `whitespace`
 #     cleanup, which keeps commentary in the stored message, so a credit hidden
-#     behind a comment marker reaches history. The workflow never sees those
-#     lines because it reads the finished commit. Patterns are anchored, so an
-#     editor template ("# On branch claude/...") still does not match.
+#     behind a comment marker reaches history. This hook peels the markers the
+#     clone has configured; the action, which cannot know them, peels every
+#     marker Git may use. Patterns are anchored, so an editor template
+#     ("# On branch claude/...") still does not match.
 #   * Folded trailer continuations are scanned twice: as the physical line they
 #     are, and again joined onto the trailer they continue. Git lets a trailer
 #     value continue on a whitespace-indented line, so the join is what catches
@@ -160,17 +162,21 @@ def readings(text):
 
     Repeated markers are peeled in turn, so "## Co-authored-by: ..." is read
     down to the bare trailer rather than only to "# Co-authored-by: ...".
+    Explore every matching marker: either a shorter or a longer marker can
+    hide the credit if it is the only one tried. Deduplicating suffixes keeps
+    overlapping paths from repeating work.
     """
     found = [text]
-    rest = text.lstrip()
-    while True:
+    seen = {text}
+    for reading in found:
+        rest = reading.lstrip()
         for marker in MARKERS:
             if rest.startswith(marker):
-                rest = rest[len(marker):].lstrip()
-                found.append(rest)
-                break
-        else:
-            return found
+                candidate = rest[len(marker):].lstrip()
+                if candidate not in seen:
+                    seen.add(candidate)
+                    found.append(candidate)
+    return found
 
 
 # --- prose credit grammar, ported verbatim from the shared action -------
