@@ -137,3 +137,35 @@ def test_unreadable_sources_stay_a_finding(tmp_path):
     main(["build", "--root", str(root)])
     (root / "src" / "data" / "metadata.yaml").write_text("{ not: [valid", encoding="utf-8")
     assert main(["verify", "--root", str(root)]) == 1
+
+
+def test_a_malformed_evaluation_run_leaves_the_worktree_unchanged(tmp_path):
+    # The stamped files used to be written before write_outputs validated the runs, so
+    # a malformed result failed the command with README.md, MAINTENANCE.md and llms.txt
+    # already changed. SHA256SUMS covers those files, so the order cannot simply move;
+    # everything that does not read them is rendered and discarded first instead.
+    root = make_repo(tmp_path)
+    (root / "llms.txt").write_text(
+        "# G\n\nVersion: `0.0.1`\nSources last checked: 2026-01-01\n",
+        encoding="utf-8", newline="\n")
+    before = {
+        rel: (root / rel).read_bytes()
+        for rel in ("llms.txt", "README.md", "MAINTENANCE.md")
+        if (root / rel).is_file()
+    }
+    results = root / "evals" / "results"
+    results.mkdir(parents=True, exist_ok=True)
+    (results / "not-a-result.txt").write_text("junk\n", encoding="utf-8", newline="\n")
+
+    assert main(["build", "--root", str(root)]) == 1
+    for rel, data in before.items():
+        assert (root / rel).read_bytes() == data, rel
+
+
+def test_invalid_bytes_in_a_source_file_report_the_path(tmp_path, capsys):
+    root = make_repo(tmp_path)
+    source = root / "src" / "data" / "metadata.yaml"
+    source.write_bytes(b"meta:\n  guide_version: \xff\xfe bad\n")
+
+    assert main(["build", "--root", str(root)]) == 1
+    assert "Traceback" not in capsys.readouterr().err

@@ -94,6 +94,10 @@ def _read(path):
                 loader.dispose()
     except yaml.YAMLError as e:
         raise ModelError(f"{path}: {e}") from e
+    except UnicodeDecodeError as e:
+        # A path-qualified ModelError, not a traceback: every other read failure
+        # here already reports the file it could not read.
+        raise ModelError(f"{path}: is not valid UTF-8 ({e})") from e
     except OSError as e:
         raise ModelError(f"{path}: cannot read source file ({e})") from e
     if not isinstance(data, dict):

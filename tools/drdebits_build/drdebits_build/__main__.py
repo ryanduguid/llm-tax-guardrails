@@ -24,7 +24,9 @@ import sys
 import traceback
 from pathlib import Path
 
+from . import evals
 from .build import (
+    GENERATED,
     STAMPED_FILES,
     BuildError,
     build_digests,
@@ -66,6 +68,14 @@ def main(argv=None):
     if args.command == "build":
         try:
             s = load_sources(root)
+            # Render everything that does not read the stamped files, and discard it.
+            # The stamped files are written first because SHA256SUMS covers them, so
+            # a malformed evaluation run used to fail the command with README.md,
+            # MAINTENANCE.md and llms.txt already changed. Failing here leaves the
+            # worktree as it was.
+            for render in GENERATED.values():
+                render(s)
+            evals.build_results_md(root, s)
             for rel in STAMPED_FILES:
                 p = root / rel
                 if p.is_file():
@@ -73,7 +83,7 @@ def main(argv=None):
                     print(f"stamped {rel}")
             for rel in write_outputs(root, root, s):
                 print(f"wrote {rel}")
-        except (ModelError, BuildError, OSError) as exc:
+        except (ModelError, BuildError, OSError, UnicodeDecodeError) as exc:
             print(f"build: {exc}", file=sys.stderr)
             return 1
         return 0

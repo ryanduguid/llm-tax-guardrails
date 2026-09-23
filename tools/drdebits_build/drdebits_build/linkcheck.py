@@ -2,9 +2,12 @@
 from __future__ import annotations
 
 import argparse
+import http.client
+import ipaddress
 import re
 import socket
 import urllib.error
+import urllib.parse
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
@@ -58,6 +61,8 @@ def _classify_exception(exc):
     and so on can echo attacker- or server-controlled text and must not flow into
     issue bodies).
     """
+    if isinstance(exc, _BlockedDestination):
+        return "unreachable", exc.detail
     if isinstance(exc, urllib.error.HTTPError):
         detail = str(exc.code)
         if exc.code in DEAD_HTTP_STATUSES:
@@ -65,6 +70,9 @@ def _classify_exception(exc):
         return "unreachable", detail
     if isinstance(exc, urllib.error.URLError):
         reason = exc.reason
+        if isinstance(reason, _BlockedDestination):
+            # Raised while connecting; urllib wraps it in a plain URLError.
+            return "unreachable", reason.detail
         if isinstance(reason, socket.gaierror):
             if reason.errno in DEAD_GAI_ERRNOS:
                 return "dead", "gaierror"
@@ -79,15 +87,114 @@ def _classify_exception(exc):
     return "unreachable", type(exc).__name__
 
 
+class _BlockedDestination(urllib.error.URLError):
+    """A destination this checker refused to request or connect to."""
+
+    def __init__(self, detail: str) -> None:
+        super().__init__(detail)
+        self.detail = detail
+
+
+def _destination_problem(url: str) -> str | None:
+    """Why `url` must not be requested, or None when it may be.
+
+    Only public https destinations are allowed. Anything resolving to a
+    loopback, private, link-local, shared or otherwise reserved address is
+    refused, so a linked site cannot point this checker at a service on the
+    runner or inside its network. A name that does not resolve is left to the
+    request itself, because _classify_exception distinguishes definitive name
+    rot from a transient resolver failure and this must not pre-empt that.
+    This is the early refusal; _connect_public repeats the address check on the
+    answer the connection actually uses.
+    """
+    parts = urllib.parse.urlsplit(url)
+    if parts.scheme != "https":
+        return "non-https"
+    try:
+        host = parts.hostname
+        port = parts.port or 443
+    except ValueError:
+        return "unparsable-url"
+    if not host:
+        return "no-host"
+    try:
+        infos = socket.getaddrinfo(host, port, type=socket.SOCK_STREAM)
+    except (socket.gaierror, UnicodeError):
+        return None
+    if any(not ipaddress.ip_address(info[4][0]).is_global for info in infos):
+        return "non-public-address"
+    return None
+
+
+class _ValidatingRedirectHandler(urllib.request.HTTPRedirectHandler):
+    """Check a redirect target before the request that would follow it.
+
+    urlopen follows redirects itself, so checking resp.geturl() afterwards
+    checks a request that has already gone out. This runs first instead.
+    """
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):  # noqa: ANN001, ANN201
+        problem = _destination_problem(newurl)
+        if problem is not None:
+            raise _BlockedDestination(problem)
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
+def _connect_public(address, timeout=socket._GLOBAL_DEFAULT_TIMEOUT, source_address=None):
+    """Resolve once, refuse any non-public answer, and connect to that exact answer.
+
+    _destination_problem resolves a name to check it, and the connection used to
+    resolve it again, so a name could answer public for the check and private for
+    the connection. Connecting to an address from the answer that was checked
+    closes that gap for the first request and for every redirect hop.
+    """
+    host, port = address
+    infos = socket.getaddrinfo(host, port, type=socket.SOCK_STREAM)
+    if any(not ipaddress.ip_address(info[4][0].split("%")[0]).is_global for info in infos):
+        raise _BlockedDestination("non-public-address")
+    error = None
+    for info in infos:
+        try:
+            return socket.create_connection(info[4][:2], timeout, source_address)
+        except OSError as exc:
+            error = exc
+    raise error or OSError(f"no address for {host}")
+
+
+class _PublicHTTPSConnection(http.client.HTTPSConnection):
+    def __init__(self, *args, **kwargs) -> None:  # noqa: ANN002, ANN003
+        super().__init__(*args, **kwargs)
+        self._create_connection = _connect_public
+
+
+class _PublicHTTPSHandler(urllib.request.HTTPSHandler):
+    def https_open(self, req):  # noqa: ANN001, ANN201
+        return self.do_open(_PublicHTTPSConnection, req, context=self._context)
+
+
+# ProxyHandler({}) turns off the proxy urllib otherwise takes from the environment:
+# through a proxy, _connect_public would check the proxy's address while the proxy
+# resolved the destination itself, so the check would guard the wrong host.
+_OPENER = urllib.request.build_opener(
+    urllib.request.ProxyHandler({}), _ValidatingRedirectHandler, _PublicHTTPSHandler
+)
+
+
+def _open(req, timeout):
+    """The only place this module issues a request. The offline tests stub it."""
+    return _OPENER.open(req, timeout=timeout)
+
+
 def _attempt(url, timeout):
-    # collect_urls only yields https:// URLs, but keep urlopen pinned to that
-    # scheme here too so a future collector change cannot make this fetch
-    # file:// or other local schemes.
-    if not url.startswith("https://"):
-        return "unreachable", "non-https"
+    # collect_urls only yields https:// URLs, but keep the fetch pinned to a
+    # public https destination here too, so a future collector change cannot
+    # make this reach file://, a local service or a private address.
+    problem = _destination_problem(url)
+    if problem is not None:
+        return "unreachable", problem
     req = urllib.request.Request(url, headers={"User-Agent": UA}, method="GET")
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
+        with _open(req, timeout) as resp:
             status = resp.status
             final = resp.geturl()
         if not str(final).startswith("https://"):
