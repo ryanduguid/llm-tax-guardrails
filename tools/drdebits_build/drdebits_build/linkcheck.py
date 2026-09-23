@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import http.client
 import ipaddress
 import re
 import socket
@@ -32,6 +33,33 @@ DEAD_GAI_ERRNOS = frozenset(
     getattr(socket, name) for name in ("EAI_NONAME", "EAI_NODATA")
     if hasattr(socket, name)
 )
+
+
+class _PinnedHTTPSConnection(http.client.HTTPSConnection):
+    """Connect to the approved address while retaining the URL hostname."""
+
+    def __init__(self, host, pinned_ip, **kwargs):
+        super().__init__(host, **kwargs)
+        self._pinned_ip = pinned_ip
+
+    def connect(self):
+        self.sock = socket.create_connection((self._pinned_ip, self.port), self.timeout)
+        self.sock = self._context.wrap_socket(self.sock, server_hostname=self.host)
+
+
+class _PinnedHTTPSHandler(urllib.request.HTTPSHandler):
+    def https_open(self, req):
+        return self.do_open(_PinnedHTTPSConnection, req, context=self._context)
+
+    def do_open(self, http_class, req, **http_conn_args):
+        pinned_ip = getattr(req, "_pinned_ip", None)
+        if pinned_ip is None:
+            raise _BlockedDestination("unvalidated-destination")
+        return super().do_open(
+            lambda host, **kwargs: http_class(host, pinned_ip, **kwargs),
+            req,
+            **http_conn_args,
+        )
 
 
 def collect_urls(root):
@@ -114,9 +142,21 @@ def _destination_problem(url: str) -> str | None:
     try:
         infos = socket.getaddrinfo(host, port, type=socket.SOCK_STREAM)
     except (socket.gaierror, UnicodeError):
-        return None
+        return "unresolvable"
     if any(not ipaddress.ip_address(info[4][0]).is_global for info in infos):
         return "non-public-address"
+    return None
+
+
+def _validated_ip(url: str) -> str | None:
+    parts = urllib.parse.urlsplit(url)
+    host = parts.hostname
+    port = parts.port or 443
+    infos = socket.getaddrinfo(host, port, type=socket.SOCK_STREAM)
+    for info in infos:
+        address = info[4][0]
+        if ipaddress.ip_address(address).is_global:
+            return address
     return None
 
 
@@ -131,10 +171,12 @@ class _ValidatingRedirectHandler(urllib.request.HTTPRedirectHandler):
         problem = _destination_problem(newurl)
         if problem is not None:
             raise _BlockedDestination(problem)
-        return super().redirect_request(req, fp, code, msg, headers, newurl)
+        redirected = super().redirect_request(req, fp, code, msg, headers, newurl)
+        redirected._pinned_ip = _validated_ip(newurl)
+        return redirected
 
 
-_OPENER = urllib.request.build_opener(_ValidatingRedirectHandler)
+_OPENER = urllib.request.build_opener(_ValidatingRedirectHandler, _PinnedHTTPSHandler)
 
 
 def _open(req, timeout):
@@ -150,6 +192,7 @@ def _attempt(url, timeout):
     if problem is not None:
         return "unreachable", problem
     req = urllib.request.Request(url, headers={"User-Agent": UA}, method="GET")
+    req._pinned_ip = _validated_ip(url)
     try:
         with _open(req, timeout) as resp:
             status = resp.status
