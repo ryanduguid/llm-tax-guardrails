@@ -103,6 +103,21 @@ PATTERNS = [
 ]
 RX = [(name, re.compile(p, re.I)) for name, p in PATTERNS]
 
+# Prose credits are intentionally separate from the anchored trailer rules.
+# Keep technical references (URLs, command lines, and inline code) out of this
+# check: mentioning a product is not attribution, while "Claude authored ..."
+# is.  The shared policy uses the same bounded, case-insensitive grammar.
+PROSE_CREDIT = re.compile(
+    r"\\b(?:" + VENDOR + r")\\b(?:[^\\n]{0,80}?)\\b" + CREDIT_VERB +
+    r"\\b|\\b" + CREDIT_VERB + r"\\b(?:[^\\n]{0,80}?)\\b(?:" + VENDOR + r")\\b", re.I)
+TECHNICAL_REFERENCE = re.compile(r"(?:https?://|`[^`]*`|(?:^|\\s)(?:git|npm|pip|uv|docker)\\s+[^\\n]+$)", re.I)
+
+
+def prose_credits(text):
+    if TECHNICAL_REFERENCE.search(text):
+        return False
+    return PROSE_CREDIT.search(text) is not None
+
 FENCE = re.compile(r"^(?P<indent> {0,3})(?P<fence>`{3,}|~{3,})(?P<info>.*)$")
 
 # A trailer key, so an indented line following one can be read as its
@@ -231,6 +246,8 @@ for number, line in enumerate(lines, 1):
                 if rx.match(reading):
                     hit = "line %d: %s (%s)" % (at, text.strip()[:120], name)
                     break
+            if not hit and prose_credits(reading):
+                hit = "line %d: %s (prose AI credit)" % (at, text.strip()[:120])
             if hit:
                 break
         if hit:
