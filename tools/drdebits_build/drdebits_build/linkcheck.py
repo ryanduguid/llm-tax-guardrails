@@ -172,7 +172,12 @@ class _PublicHTTPSHandler(urllib.request.HTTPSHandler):
         return self.do_open(_PublicHTTPSConnection, req, context=self._context)
 
 
-_OPENER = urllib.request.build_opener(_ValidatingRedirectHandler, _PublicHTTPSHandler)
+# ProxyHandler({}) turns off the proxy urllib otherwise takes from the environment:
+# through a proxy, _connect_public would check the proxy's address while the proxy
+# resolved the destination itself, so the check would guard the wrong host.
+_OPENER = urllib.request.build_opener(
+    urllib.request.ProxyHandler({}), _ValidatingRedirectHandler, _PublicHTTPSHandler
+)
 
 
 def _open(req, timeout):

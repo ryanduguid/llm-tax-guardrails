@@ -1,5 +1,6 @@
 """URL collection and outcome classification are tested offline with a
 monkeypatched urllib - no live network calls. Liveness is CI/local-only."""
+import importlib
 import socket
 import threading
 import urllib.error
@@ -325,3 +326,20 @@ def test_the_connection_uses_the_address_it_checked(monkeypatch):
     monkeypatch.setattr(linkcheck.socket, "create_connection", record)
     assert linkcheck.check("https://public.example/", 5) == ("unreachable", "ConnectionRefusedError")
     assert connected == [(PUBLIC_ADDRESS, 443), (PUBLIC_ADDRESS, 443)]
+
+
+def test_an_environment_proxy_is_not_used(monkeypatch):
+    """Through a proxy the guard would check the proxy's address, not the destination's.
+
+    urllib reads proxies from the environment when the opener is built, so the module
+    is reloaded with one set."""
+    monkeypatch.setenv("HTTPS_PROXY", "http://10.0.0.9:3128")
+    monkeypatch.setenv("https_proxy", "http://10.0.0.9:3128")
+    try:
+        importlib.reload(linkcheck)
+        proxies = [handler.proxies for handler in linkcheck._OPENER.handlers
+                   if isinstance(handler, urllib.request.ProxyHandler) and handler.proxies]
+        assert proxies == []
+    finally:
+        monkeypatch.undo()
+        importlib.reload(linkcheck)
