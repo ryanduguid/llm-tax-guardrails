@@ -294,3 +294,34 @@ def test_a_public_https_destination_is_still_requested(monkeypatch):
     monkeypatch.setattr(linkcheck, "_open", fake_open)
     assert linkcheck.check("https://www.ato.gov.au/", 5) == ("ok", "200")
     assert calls == ["https://www.ato.gov.au/"]
+
+
+def test_a_name_that_turns_private_after_the_check_is_not_connected(monkeypatch):
+    """The early check and the connection each resolve the name. A name answering
+    public for the check and private for the connection must not be connected."""
+    answers = iter([PUBLIC_ADDRESS])
+    connected = []
+
+    def rebinding(host, port, *args, **kwargs):
+        return _addrinfo(next(answers, "127.0.0.1"))(host, port)
+
+    def record(address, *args, **kwargs):
+        connected.append(address)
+        raise ConnectionRefusedError
+
+    monkeypatch.setattr(linkcheck.socket, "getaddrinfo", rebinding)
+    monkeypatch.setattr(linkcheck.socket, "create_connection", record)
+    assert linkcheck.check("https://rebind.example/", 5) == ("unreachable", "non-public-address")
+    assert connected == []
+
+
+def test_the_connection_uses_the_address_it_checked(monkeypatch):
+    connected = []
+
+    def record(address, *args, **kwargs):
+        connected.append(address)
+        raise ConnectionRefusedError
+
+    monkeypatch.setattr(linkcheck.socket, "create_connection", record)
+    assert linkcheck.check("https://public.example/", 5) == ("unreachable", "ConnectionRefusedError")
+    assert connected == [(PUBLIC_ADDRESS, 443), (PUBLIC_ADDRESS, 443)]

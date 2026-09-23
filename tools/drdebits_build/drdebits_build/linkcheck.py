@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import http.client
 import ipaddress
 import re
 import socket
@@ -69,6 +70,9 @@ def _classify_exception(exc):
         return "unreachable", detail
     if isinstance(exc, urllib.error.URLError):
         reason = exc.reason
+        if isinstance(reason, _BlockedDestination):
+            # Raised while connecting; urllib wraps it in a plain URLError.
+            return "unreachable", reason.detail
         if isinstance(reason, socket.gaierror):
             if reason.errno in DEAD_GAI_ERRNOS:
                 return "dead", "gaierror"
@@ -84,7 +88,7 @@ def _classify_exception(exc):
 
 
 class _BlockedDestination(urllib.error.URLError):
-    """A redirect target this checker refused to request."""
+    """A destination this checker refused to request or connect to."""
 
     def __init__(self, detail: str) -> None:
         super().__init__(detail)
@@ -100,6 +104,8 @@ def _destination_problem(url: str) -> str | None:
     runner or inside its network. A name that does not resolve is left to the
     request itself, because _classify_exception distinguishes definitive name
     rot from a transient resolver failure and this must not pre-empt that.
+    This is the early refusal; _connect_public repeats the address check on the
+    answer the connection actually uses.
     """
     parts = urllib.parse.urlsplit(url)
     if parts.scheme != "https":
@@ -134,7 +140,39 @@ class _ValidatingRedirectHandler(urllib.request.HTTPRedirectHandler):
         return super().redirect_request(req, fp, code, msg, headers, newurl)
 
 
-_OPENER = urllib.request.build_opener(_ValidatingRedirectHandler)
+def _connect_public(address, timeout=socket._GLOBAL_DEFAULT_TIMEOUT, source_address=None):
+    """Resolve once, refuse any non-public answer, and connect to that exact answer.
+
+    _destination_problem resolves a name to check it, and the connection used to
+    resolve it again, so a name could answer public for the check and private for
+    the connection. Connecting to an address from the answer that was checked
+    closes that gap for the first request and for every redirect hop.
+    """
+    host, port = address
+    infos = socket.getaddrinfo(host, port, type=socket.SOCK_STREAM)
+    if any(not ipaddress.ip_address(info[4][0].split("%")[0]).is_global for info in infos):
+        raise _BlockedDestination("non-public-address")
+    error = None
+    for info in infos:
+        try:
+            return socket.create_connection(info[4][:2], timeout, source_address)
+        except OSError as exc:
+            error = exc
+    raise error or OSError(f"no address for {host}")
+
+
+class _PublicHTTPSConnection(http.client.HTTPSConnection):
+    def __init__(self, *args, **kwargs) -> None:  # noqa: ANN002, ANN003
+        super().__init__(*args, **kwargs)
+        self._create_connection = _connect_public
+
+
+class _PublicHTTPSHandler(urllib.request.HTTPSHandler):
+    def https_open(self, req):  # noqa: ANN001, ANN201
+        return self.do_open(_PublicHTTPSConnection, req, context=self._context)
+
+
+_OPENER = urllib.request.build_opener(_ValidatingRedirectHandler, _PublicHTTPSHandler)
 
 
 def _open(req, timeout):
