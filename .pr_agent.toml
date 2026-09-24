@@ -23,3 +23,8 @@ compliance_user_guidelines = "drdebits.md is normative and AGENTS.md only routes
 show_daily_tips = false
 use_images_and_animations = false
 show_comment_footer = false
+
+[fixer_agent]
+# Auto fix pushed bot-authored commits onto pull request branches, which
+# the attribution policy rejects. Ask for a fix with @qodo when one is wanted.
+enable_auto_fix = false
