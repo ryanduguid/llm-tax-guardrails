@@ -8,6 +8,7 @@
 pr_commands = ["/agentic_review"]
 # Re-review each push so the review tracks the head that gets merged.
 handle_push_trigger = true
+push_commands = ["/agentic_review"]
 
 [review_agent]
 # Only "action required" findings open an inline thread; lower severities
