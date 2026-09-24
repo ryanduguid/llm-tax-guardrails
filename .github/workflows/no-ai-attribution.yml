@@ -1,7 +1,8 @@
 name: No AI attribution
 
-# Fails a pull request that carries AI authorship credit in its description or
-# in commit messages or author and committer identities on the branch.
+# Fails a pull request whose title, commit trailers, credit footers or author
+# and committer identities carry AI authorship credit. A prose-only match in
+# the description or a commit message is reported as a warning.
 # Product references are allowed.
 #
 # The local commit-msg guard catches commits written on Ryan's machine; this
