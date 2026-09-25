@@ -39,8 +39,8 @@ SOURCE_STATUS = Path("src") / "guide" / "040-source-status.md"
 API = "https://api.prod.legislation.gov.au/v1"
 # The API host is not the website host. linkcheck's note about AU government
 # sites refusing cloud IP ranges applies to www.legislation.gov.au; if the API
-# ever refuses too, every source reports `unreachable` and the run still exits
-# 0, because "could not check from here" is not "superseded".
+# ever refuses too, the run exits 2 for incomplete verification. A missing
+# answer never establishes that a compilation has been superseded.
 UA = "llm-tax-guardrails source-check (+https://github.com/ryanduguid/llm-tax-guardrails)"
 TIMEOUT = 60
 SELECT = "titleId,registerId,compilationNumber,start"
@@ -121,13 +121,18 @@ def current_version(title_id: str, timeout: int = TIMEOUT) -> dict[str, str] | N
             document = json.load(response)
     except (urllib.error.URLError, OSError, ValueError):
         return None
-    values = document.get("value") or []
-    if not values:
+    if not isinstance(document, dict):
+        return None
+    values = document.get("value")
+    if not isinstance(values, list) or not values or not isinstance(values[0], dict):
         return None
     version = values[0]
     # A response carrying another Act's record is worse than no response, so
     # it is refused rather than compared.
     if version.get("titleId") not in (None, title_id):
+        return None
+    if not isinstance(version.get("registerId"), str) or not re.fullmatch(
+            TITLE_ID, version["registerId"]):
         return None
     return {key: str(version.get(key) or "") for key in ("registerId", "compilationNumber", "start")}
 
@@ -183,7 +188,9 @@ def main(argv: list[str] | None = None) -> int:
             "competent human has reviewed the replacement. Do not advance "
             "sources_checked_at on the strength of this check."
         )
-    return 1 if counts[SUPERSEDED] else 0
+    if counts[SUPERSEDED]:
+        return 1
+    return 2 if counts[UNREACHABLE] or counts[UNPINNED] else 0
 
 
 if __name__ == "__main__":

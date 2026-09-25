@@ -38,4 +38,5 @@ packages = ["drdebits_build"]
 ignore_missing_imports = true
 disable_error_code = ["import-untyped"]
 pretty = true
+check_untyped_defs = true
 

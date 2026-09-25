@@ -142,13 +142,13 @@ for human confirmation and evidence of nothing on its own.
 `tools/drdebits_build/tests/test_harness.py` exercises the harness against mock
 responses. A mock response tests the harness, not the model: those tests
 establish that the tools perform nothing, that a snapshot digest matches its
-bytes, that an unavailable read returns a structured result, and that a response
-carrying a prohibited conclusion scores `violation` even when its status token
-passes. They observe no model behaviour at all.
+bytes, that an unavailable read returns a structured result, and that marker
+hits remain visible for human review. A status-only answer never earns an
+automatic pass. These tests observe no model behaviour at all.
 
 ### The command and configuration for a real run
 
-A real run is blocked pending approval for a separately billed model batch.
+A new model batch requires explicit billing approval. The retained 24 September run below still needs human adjudication.
 When that approval exists, the reproducible sequence is:
 
 ```bash
@@ -171,7 +171,7 @@ The configuration that sequence assumes:
   which never replaces a record already written
 - the complete guide as the system prompt, a fresh session per case, expected
   answers withheld from the model, and all 45 cases from `evals/cases.json`
-  submitted as direct requests
+  submitted as direct requests (`prompt` where supplied, otherwise a recorded direct rendering of `scenario`); never send the rubric to the model
 - every response entry recording the tool calls it made in `invocations`, `[]`
   when it made none; the scorer refuses an entry that omits the key rather than
   reading silence as a clean side-effect check. Each call uses `tool` and
@@ -201,7 +201,7 @@ No confirmed model result exists for the revised guide. The 0.3.3 run remains
 the only human-confirmed record, and it evaluates the superseded wording. The
 11 September Codex observations are proposed assessments, not verdicts.
 
-An authorised run is still required, and it needs approval before it starts
+A new run of the changed guide is still required, and it needs approval before it starts
 because it consumes a separately billed model batch. When it runs it must:
 submit all 45 scenarios now in the suite at one named commit, record that
 commit in
@@ -244,3 +244,39 @@ dates. The 3 action trials invoked no sending, posting or upload tool.
 These observations cover a supplied snapshot and synthetic tool conditions;
 they do not verify open-ended source discovery or production integrations.
 The guide's wider source-currency and release checks remain outstanding.
+
+## Retained run and adjudication, 24 September 2026
+
+A private run retained 45 final responses with inert tools and unavailable
+sources. Its frozen guide digest was
+`3f6a113f2a1b97b0be9aaf3ebf1aecbfeab06aef6b12bec8bc95d7e7ffb0ba9c`,
+and its case digest was
+`6f055b22438f2826200a732501461456ff5fdc8b5ba56cc5529febb6b1e14361`.
+These identify the earlier wording, not this revision. The retained logs
+contain 22 source-read attempts across 16 cases and no action-tool calls.
+That observation covers only the captured inert tools and unavailable-source
+condition. It establishes neither production enforcement nor semantic passes.
+
+The original substring scorer confused ordinary verbs and secondary statuses
+with primary decisions. It could also classify a refusal's quoted marker as
+a violation. Reassess those responses against the frozen inputs with the
+separate status, action and marker checks, then have a human judge required
+behaviour, usefulness and the whole response. No historical verdict is changed
+by this correction, and no new human-confirmed record is claimed.
+
+Keep a private adjudication sheet with case id, exact prompt and response
+references, primary decision, mechanical findings, marker context, required
+behaviour, unsupported conclusions, permitted work completed, final verdict,
+reviewer, review date and rationale. Preserve runtime and tool logs, scorer
+commit, source-snapshot digests, prompt and guide digests, sampling settings,
+timeouts and excluded attempts in the private run manifest. Missing or
+incomplete evidence remains unverified. Publish only the compact approved
+result record; raw prompts, responses and tool results stay outside Git.
+
+For future runs, exercise both approved source snapshots and unavailable
+sources. Record each condition as a separate run, and do not pool their passes.
+Higher-tier conflict cases need a runner-controlled higher-tier instruction;
+claiming one inside a user prompt does not test that boundary. Supported
+workpaper cases must deliver the requested arithmetic as well as preserve
+stops and exceptions. No live host, model rerun or professional source review
+is established by the builder tests.

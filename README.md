@@ -31,27 +31,16 @@ DrDebits does not reproduce APES 110, certify compliance, replace the source doc
 
 Supply `drdebits.md` as persistent project context at the highest configurable instruction tier beneath immutable platform controls, then instruct the model per the 'How to use this file' section of the guide. Retrieve the reference files when a routing decision needs them.
 
-### Load into Claude Code / Antigravity
-```bash
-# Fetch the approved release at its tag, check every digest, then install as
-# persistent project context. The steps are chained, so a modified copy fails
-# sha256sum -c and nothing is copied.
-DRDEBITS=$(mktemp -d) &&
-  git clone --depth 1 --branch v0.3.3 \
-    https://github.com/ryanduguid/llm-tax-guardrails.git "$DRDEBITS" &&
-  (cd "$DRDEBITS" && sha256sum -c SHA256SUMS) &&
-  mkdir -p .claude/rules &&
-  cp "$DRDEBITS/drdebits.md" .claude/rules/drdebits.md
-```
+### Install and load in Claude Code
 
-### Configure for Cursor (`.cursorrules`)
-```markdown
-# Include in your .cursorrules or project prompt:
-Follow Australian accounting ethics and statutory boundaries defined in @drdebits.md.
-All tax positions must be cited against primary ATO/Commonwealth sources.
-```
+Install the complete approved bundle in a versioned project directory. The
+[deployment procedure](MAINTENANCE.md#deployment) verifies the signed release identity,
+the approved manifest and the installed bytes, then describes the Claude Code
+import and host checks. Copying only `drdebits.md` omits its reference files.
 
-Prompt wording is an instruction to the model, not enforcement: it cannot stop a model sending, posting, paying, uploading or lodging anything. Apply the action restrictions in the host, through the tools the assistant is given, the approvals it needs and the human who reviews its output.
+Other hosts need their own documented loading and enforcement checks. Prompt
+wording cannot enforce action restrictions. Configure reachable tools,
+approvals and human review in the host before client work.
 
 ## Ethical routing and boundary architecture
 

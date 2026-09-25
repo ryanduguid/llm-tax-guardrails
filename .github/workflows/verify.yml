@@ -14,9 +14,24 @@ concurrency:
 
 jobs:
   verify:
-    name: build parity and structural checks
-    runs-on: ubuntu-latest
+    name: ${{ matrix.name }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            python: "3.14"
+            name: build parity and structural checks
+          - os: ubuntu-latest
+            python: "3.12"
+            name: Python 3.12 compatibility
+          - os: windows-latest
+            python: "3.14"
+            name: Windows build and installation
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 15
+    env:
+      UV_PYTHON: ${{ matrix.python }}
     steps:
       - name: Check out source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -26,7 +41,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
-          python-version: "3.14"
+          python-version: ${{ matrix.python }}
 
       - name: Install the locked toolchain
         uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
@@ -38,7 +53,7 @@ jobs:
         run: uv run --project tools/drdebits_build --locked --extra dev ruff check tools/drdebits_build/drdebits_build tools/drdebits_build/tests
 
       - name: Typecheck the builder
-        run: uv run --project tools/drdebits_build --locked --extra dev mypy tools/drdebits_build/drdebits_build
+        run: uv run --project tools/drdebits_build --locked --extra dev mypy --config-file tools/drdebits_build/pyproject.toml tools/drdebits_build/drdebits_build
 
       - name: Run the build package tests
         run: uv run --project tools/drdebits_build --locked --extra dev pytest tools/drdebits_build/tests -q
