@@ -38,11 +38,13 @@ def test_monitoring_reuses_legacy_alerts_and_recovers_all_reports(
     # Mock only the GitHub transport. The workflow's real jq selection and shell
     # control flow run unchanged; no GitHub write or network request can occur.
     stub = r'''
+jq() { "$JQ" "$@"; }
 gh() {
   case "$1 $2" in
     "api --paginate")
       [[ " $* " == *" --slurp "* ]] || return 91
-      printf '%s' "$FIXTURE" | "$JQ" -r "${!#}"
+      [[ " $* " != *" --jq "* ]] || return 92
+      printf '%s\n' "$FIXTURE"
       ;;
     "issue view") printf '%s\n' 'previous monitoring report' ;;
     *) printf '%s\n' "$*" >> operations.txt ;;

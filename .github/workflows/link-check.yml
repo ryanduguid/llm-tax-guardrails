@@ -64,7 +64,7 @@ jobs:
           printf '%s\n\n' 'SOURCE CURRENCY NOT CONFIRMED. Review the findings or incomplete checks below. An inaccessible source does not establish that it is superseded or dead. A checker error is not a source finding. Do not advance sources_checked_at without substantive human review.' > issue-body.txt
           printf 'Checker exit code: %s\n\n' "$CHECK_EXIT_CODE" >> issue-body.txt
           cat link-check.txt >> issue-body.txt
-          reports="$(gh api --paginate --slurp "repos/$GITHUB_REPOSITORY/issues?state=open&per_page=100" --jq 'add | map(select(.pull_request == null)) | map(select(.title == "Link check: review required" or .title == "Link check: SOURCE CURRENCY NOT CONFIRMED for listed links")) | sort_by(.number) | map(.number | tostring) | join(" ")')"
+          reports="$(gh api --paginate --slurp "repos/$GITHUB_REPOSITORY/issues?state=open&per_page=100" | jq -r 'add | map(select(.pull_request == null)) | map(select(.title == "Link check: review required" or .title == "Link check: SOURCE CURRENCY NOT CONFIRMED for listed links")) | sort_by(.number) | map(.number | tostring) | join(" ")')"
           existing="${reports%% *}"
           if [ -n "$existing" ]; then
             gh issue view "$existing" --repo "$GITHUB_REPOSITORY" --json body --jq .body > old-body.txt
@@ -87,7 +87,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          reports="$(gh api --paginate --slurp "repos/$GITHUB_REPOSITORY/issues?state=open&per_page=100" --jq 'add | map(select(.pull_request == null)) | map(select(.title == "Link check: review required" or .title == "Link check: SOURCE CURRENCY NOT CONFIRMED for listed links")) | sort_by(.number) | map(.number | tostring) | join(" ")')"
+          reports="$(gh api --paginate --slurp "repos/$GITHUB_REPOSITORY/issues?state=open&per_page=100" | jq -r 'add | map(select(.pull_request == null)) | map(select(.title == "Link check: review required" or .title == "Link check: SOURCE CURRENCY NOT CONFIRMED for listed links")) | sort_by(.number) | map(.number | tostring) | join(" ")')"
           for existing in $reports; do
             gh issue close "$existing" --repo "$GITHUB_REPOSITORY" --comment 'The latest automated check completed with exit 0. This closes the monitoring report, not the substantive professional review.'
           done
