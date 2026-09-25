@@ -76,15 +76,21 @@ jobs:
           printf '%s\n\n' 'SOURCE CURRENCY NOT CONFIRMED. Review the findings or incomplete checks below. An inaccessible source does not establish that it is superseded or dead. A checker error is not a source finding. Do not advance sources_checked_at without substantive human review.' > issue-body.txt
           printf 'Checker exit code: %s\n\n' "$CHECK_EXIT_CODE" >> issue-body.txt
           cat source-currency.txt >> issue-body.txt
-          existing="$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --search "$title in:title" --json number --jq '.[0].number // empty')"
+          reports="$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --limit 100 --search '"Source currency:" in:title' --json number,title --jq 'map(select(.title == "Source currency: review required" or .title == "Source currency: a pinned compilation has been superseded")) | sort_by(.number) | map(.number | tostring) | join(" ")')"
+          existing="${reports%% *}"
           if [ -n "$existing" ]; then
             gh issue view "$existing" --repo "$GITHUB_REPOSITORY" --json body --jq .body > old-body.txt
             if ! cmp -s old-body.txt issue-body.txt; then
-              gh issue edit "$existing" --repo "$GITHUB_REPOSITORY" --body-file issue-body.txt
+              gh issue edit "$existing" --repo "$GITHUB_REPOSITORY" --title "$title" --body-file issue-body.txt
             fi
           else
             gh issue create --repo "$GITHUB_REPOSITORY" --title "$title" --body-file issue-body.txt
           fi
+          for duplicate in $reports; do
+            if [ "$duplicate" != "$existing" ]; then
+              gh issue close "$duplicate" --repo "$GITHUB_REPOSITORY" --comment "Monitoring continues in #$existing. This closes a duplicate report, not the substantive professional review."
+            fi
+          done
 
       - name: Record recovery
         if: steps.check.outputs.exit_code == '0'
@@ -93,11 +99,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          title="Source currency: review required"
-          existing="$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --search "$title in:title" --json number --jq '.[0].number // empty')"
-          if [ -n "$existing" ]; then
+          reports="$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --limit 100 --search '"Source currency:" in:title' --json number,title --jq 'map(select(.title == "Source currency: review required" or .title == "Source currency: a pinned compilation has been superseded")) | sort_by(.number) | map(.number | tostring) | join(" ")')"
+          for existing in $reports; do
             gh issue close "$existing" --repo "$GITHUB_REPOSITORY" --comment 'The latest automated check completed with exit 0. This closes the monitoring report, not the substantive professional review.'
-          fi
+          done
 
       - name: Require complete verification
         if: always()
