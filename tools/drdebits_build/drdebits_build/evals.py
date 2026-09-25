@@ -36,6 +36,7 @@ DIRECTORY_BASIS = {RESULTS_DIR: HUMAN_CONFIRMED, OBSERVATIONS_DIR: MODEL_PROPOSE
 # It counts as not passed, so a whole-response breach can never hide behind a
 # narrow case-level pass.
 VERDICTS = ("pass", "fail", "violation")
+OBSERVATION_VERDICTS = (*VERDICTS, "review")
 NOT_RUN = "n/a"
 # The free-text fields are one line each and short: long enough for a model
 # name or a version, far too short for a pasted output.
@@ -85,7 +86,9 @@ OBSERVATIONS_SECTION_HEADER = (
     "`verdict_basis: model-proposed`. A scorer applied the parts of each case rubric it can "
     "apply mechanically; nobody has confirmed these, so they are candidates for human review "
     "and evidence of nothing on their own. They are never counted with the confirmed passes "
-    "above.\n\n"
+    "above. New mechanical assessments use `review` when status and action checks pass; "
+    "required behaviour and marker hits still need human judgement. `fail` is a mechanical "
+    "finding, not a complete semantic assessment.\n\n"
 )
 
 
@@ -106,6 +109,8 @@ def build_cases(s):
             "required_behaviour": r["required_behaviour"],
             "side_effect_check": r["side_effect_check"],
         }
+        if "prompt" in r:
+            case["prompt"] = r["prompt"]
         if r.get("prohibited_anywhere"):
             case["prohibited_anywhere"] = list(r["prohibited_anywhere"])
         cases.append(case)
@@ -195,7 +200,8 @@ def _load_result(path, rel, case_ids, guide_version, basis):
             f"{rel}: unknown case ids for guide {guide_version}: {unexpected}; "
             f"see {CASES_FILE}")
     for case_id, verdict in results.items():
-        if verdict not in VERDICTS:
+        allowed = OBSERVATION_VERDICTS if basis == MODEL_PROPOSED else VERDICTS
+        if verdict not in allowed:
             raise ModelError(
                 f"{rel}: {case_id} must be pass, fail or violation, got {verdict!r}")
     return data
@@ -289,6 +295,23 @@ def build_results_md(root, s):
         out += ("**Current guide revision not evaluated.** No confirmed run binds both the "
                 "current guide and case-set digests. Historical version labels do not "
                 "establish results for this revision.\n\n")
+    current = [run for run in runs
+               if all(run.get(key) == value for key, value in digests.items())]
+    ids = {case["id"] for case in s.behaviour}
+    covered = {case_id for run in current for case_id in run["results"] if case_id in ids}
+    out += (f"**Current-revision confirmed coverage: {len(covered)}/{len(ids)} cases.** "
+            "Coverage records assessment, not a pass or deployment approval. "
+            "Runs with different models or conditions remain separate.\n\n")
+    for run in current:
+        counts = {v: sum(result == v for key, result in run["results"].items() if key in ids)
+                  for v in VERDICTS}
+        assessed = sum(counts.values())
+        out += (f"- {run_label(run)}: {assessed}/{len(ids)} assessed; "
+                f"{counts['pass']} pass, {counts['fail']} fail, {counts['violation']} violation, "
+                f"{len(ids) - assessed} not assessed. "
+                f"Tools: {run['tools']}. Conditions: {run['conditions']}.\n")
+    if current:
+        out += "\n"
     out += body
     if any(_legacy_breach(run, case["id"]) for run in runs for case in s.behaviour):
         out += ("\n*The historical MIS-001 pass met its case rubric but included a "

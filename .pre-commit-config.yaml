@@ -27,7 +27,7 @@ repos:
 
       - id: mypy
         name: typecheck the builder
-        entry: uv run --project tools/drdebits_build --locked --extra dev mypy tools/drdebits_build/drdebits_build
+        entry: uv run --project tools/drdebits_build --locked --extra dev mypy --config-file tools/drdebits_build/pyproject.toml tools/drdebits_build/drdebits_build
         language: system
         pass_filenames: false
         files: ^tools/drdebits_build/

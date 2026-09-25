@@ -111,7 +111,7 @@ def test_check_dns_failure_is_dead(monkeypatch):
 
 def test_check_transient_dns_failure_is_unreachable_and_retried(monkeypatch):
     """EAI_AGAIN is a resolver hiccup, not link rot: it must land in the
-    unreachable bucket (exit 0, no SOURCE CURRENCY issue) and get the retry."""
+    unreachable bucket (incomplete verification) and get the retry."""
     calls = []
 
     def fake_urlopen(req, timeout):
@@ -201,7 +201,7 @@ def test_main_reports_dead_and_unreachable_and_exits_1_on_dead(tmp_path, monkeyp
     assert "checked 3: ok 0, dead 1, unreachable 2" in out
 
 
-def test_main_exits_0_when_only_unreachable(tmp_path, monkeypatch, capsys):
+def test_main_exits_2_when_only_unreachable(tmp_path, monkeypatch, capsys):
     root = make_repo(tmp_path)
     (root / "README.md").write_text(
         "See https://x.invalid/blocked\n", encoding="utf-8", newline="\n")
@@ -211,7 +211,7 @@ def test_main_exits_0_when_only_unreachable(tmp_path, monkeypatch, capsys):
     monkeypatch.setattr(linkcheck, "check", lambda url, timeout: ("unreachable", "403"))
     rc = linkcheck.main(["--root", str(root)])
     out = capsys.readouterr().out
-    assert rc == 0
+    assert rc == 2
     assert "UNREACHABLE 403 https://x.invalid/blocked" in out
     # make_repo's own fixture source contributes one more URL (x.invalid/a).
     assert "checked 2: ok 0, dead 0, unreachable 2" in out

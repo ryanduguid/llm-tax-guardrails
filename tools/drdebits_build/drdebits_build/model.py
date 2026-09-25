@@ -234,11 +234,15 @@ PROHIBITED_CONCLUSION_FIELDS = ("label", "definition", "markers")
 
 def load_behaviour_tests(path):
     rows = _rows(path, _read(path), "entries", BEHAVIOUR_FIELDS, table_safe=True,
-                 optional=(PROHIBITED_ANYWHERE,))
+                 optional=(PROHIBITED_ANYWHERE, "prompt"))
     _unique_ids(path, rows)
     for r in rows:
         if r["expected_status"] not in ALLOWED_STATUSES:
             raise ModelError(f"{path}: {r['id']} has unknown status {r['expected_status']!r}")
+        if "prompt" in r:
+            _require_str(path, f"{r['id']} prompt", r["prompt"])
+            if not r["prompt"].strip():
+                raise ModelError(f"{path}: {r['id']} prompt must not be blank")
         if PROHIBITED_ANYWHERE in r:
             r[PROHIBITED_ANYWHERE] = _string_list(
                 path, f"{r['id']} {PROHIBITED_ANYWHERE}", r[PROHIBITED_ANYWHERE])
@@ -346,7 +350,7 @@ def load_vendor_assurance(path):
     rows = _rows(path, data, "entries", VENDOR_FIELDS, table_safe=True)
     _unique_ids(path, rows)
     previous = None
-    order = []
+    order: list[str] = []
     for r in rows:
         match = VENDOR_ID_RE.match(r["id"])
         if match is None:
