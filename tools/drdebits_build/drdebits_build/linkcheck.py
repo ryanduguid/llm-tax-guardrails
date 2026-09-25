@@ -6,6 +6,7 @@ import http.client
 import ipaddress
 import re
 import socket
+import ssl
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -140,7 +141,8 @@ class _ValidatingRedirectHandler(urllib.request.HTTPRedirectHandler):
         return super().redirect_request(req, fp, code, msg, headers, newurl)
 
 
-def _connect_public(address, timeout=socket._GLOBAL_DEFAULT_TIMEOUT, source_address=None):
+def _connect_public(address, timeout=socket._GLOBAL_DEFAULT_TIMEOUT,  # type: ignore[attr-defined]
+                    source_address=None):
     """Resolve once, refuse any non-public answer, and connect to that exact answer.
 
     _destination_problem resolves a name to check it, and the connection used to
@@ -150,12 +152,12 @@ def _connect_public(address, timeout=socket._GLOBAL_DEFAULT_TIMEOUT, source_addr
     """
     host, port = address
     infos = socket.getaddrinfo(host, port, type=socket.SOCK_STREAM)
-    if any(not ipaddress.ip_address(info[4][0].split("%")[0]).is_global for info in infos):
+    if any(not ipaddress.ip_address(str(info[4][0]).split("%")[0]).is_global for info in infos):
         raise _BlockedDestination("non-public-address")
     error = None
     for info in infos:
         try:
-            return socket.create_connection(info[4][:2], timeout, source_address)
+            return socket.create_connection((str(info[4][0]), info[4][1]), timeout, source_address)
         except OSError as exc:
             error = exc
     raise error or OSError(f"no address for {host}")
@@ -168,6 +170,8 @@ class _PublicHTTPSConnection(http.client.HTTPSConnection):
 
 
 class _PublicHTTPSHandler(urllib.request.HTTPSHandler):
+    _context: ssl.SSLContext | None
+
     def https_open(self, req):  # noqa: ANN001, ANN201
         return self.do_open(_PublicHTTPSConnection, req, context=self._context)
 
@@ -241,7 +245,9 @@ def main(argv=None):
                 unreachable += 1
                 print(f"UNREACHABLE {detail} {url}")
     print(f"checked {ok + dead + unreachable}: ok {ok}, dead {dead}, unreachable {unreachable}")
-    return 1 if dead else 0
+    if dead:
+        return 1
+    return 2 if unreachable or not urls else 0
 
 
 if __name__ == "__main__":

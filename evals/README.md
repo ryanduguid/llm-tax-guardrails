@@ -34,3 +34,11 @@ prints the 2 digests. Records dated before 18 September 2026 keep their original
 `model-proposed`: nobody has confirmed their verdicts, so they are candidates
 for human review and are rendered in their own section of `RESULTS.md`, never
 counted with the confirmed passes.
+
+New mechanical observations use `review` when the primary status and recorded
+action boundary match, or `fail` when either does not. They cannot establish a
+semantic pass or violation. Historical proposed verdicts retain their original
+values. A human-confirmed record may contain only `pass`, `fail` or `violation`.
+Use `assess_response` to inspect status, invocation and marker findings
+separately. The coverage section binds both current digests and shows tools,
+conditions and unassessed cases for each matching confirmed run.

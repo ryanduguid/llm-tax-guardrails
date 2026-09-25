@@ -47,29 +47,61 @@ jobs:
           version: "0.12.0"
           enable-cache: true
 
-      - name: Check pinned compilations
-        id: compilations
+      - name: Check and retain the report
+        id: check
+        shell: bash
+        run: |
+          set +e
+          uv run --project tools/drdebits_build --locked python -m drdebits_build.sources --root . > source-currency.txt 2>&1
+          result=$?
+          set -e
+          echo "exit_code=$result" >> "$GITHUB_OUTPUT"
+          cat source-currency.txt
+          printf '### Verification result: %s\n\n' "$result" >> "$GITHUB_STEP_SUMMARY"
+          cat source-currency.txt >> "$GITHUB_STEP_SUMMARY"
+          # 0: checked; 1: finding; 2: incomplete. Any other code is an error.
+          if [ "$result" -ne 0 ]; then
+            echo "::warning::Verification needs review (exit $result); see the report."
+          fi
+
+      - name: Open or update the report issue
+        if: steps.check.outputs.exit_code != '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CHECK_EXIT_CODE: ${{ steps.check.outputs.exit_code }}
         shell: bash
         run: |
           set -euo pipefail
-          uv run --project tools/drdebits_build --locked python -m drdebits_build.sources --root . | tee compilations.txt || echo "superseded=true" >> "$GITHUB_OUTPUT"
+          title="Source currency: review required"
+          printf '%s\n\n' 'SOURCE CURRENCY NOT CONFIRMED. Review the findings or incomplete checks below. An inaccessible source does not establish that it is superseded or dead. A checker error is not a source finding. Do not advance sources_checked_at without substantive human review.' > issue-body.txt
+          printf 'Checker exit code: %s\n\n' "$CHECK_EXIT_CODE" >> issue-body.txt
+          cat source-currency.txt >> issue-body.txt
+          existing="$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --search "$title in:title" --json number --jq '.[0].number // empty')"
+          if [ -n "$existing" ]; then
+            gh issue view "$existing" --repo "$GITHUB_REPOSITORY" --json body --jq .body > old-body.txt
+            if ! cmp -s old-body.txt issue-body.txt; then
+              gh issue edit "$existing" --repo "$GITHUB_REPOSITORY" --body-file issue-body.txt
+            fi
+          else
+            gh issue create --repo "$GITHUB_REPOSITORY" --title "$title" --body-file issue-body.txt
+          fi
 
-      - name: Open or update the report issue
-        if: steps.compilations.outputs.superseded == 'true'
+      - name: Record recovery
+        if: steps.check.outputs.exit_code == '0'
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
-          title="Source currency: a pinned compilation has been superseded"
-          body="A compilation this guide reads is no longer the current one on the Federal Register. Treat the affected material as SOURCE CURRENCY NOT CONFIRMED until a competent human has reviewed the replacement. This workflow only reports; it changes nothing, and it does not advance sources_checked_at.
-
-          Sources listed UNREACHABLE could not be checked from GitHub's network and say nothing about currency; verify those from a local machine.
-
-          $(cat compilations.txt)"
+          title="Source currency: review required"
           existing="$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --search "$title in:title" --json number --jq '.[0].number // empty')"
           if [ -n "$existing" ]; then
-            gh issue comment "$existing" --repo "$GITHUB_REPOSITORY" --body "$body"
-          else
-            gh issue create --repo "$GITHUB_REPOSITORY" --title "$title" --body "$body"
+            gh issue close "$existing" --repo "$GITHUB_REPOSITORY" --comment 'The latest automated check completed with exit 0. This closes the monitoring report, not the substantive professional review.'
           fi
+
+      - name: Require complete verification
+        if: always()
+        env:
+          CHECK_EXIT_CODE: ${{ steps.check.outputs.exit_code }}
+        shell: bash
+        run: test "$CHECK_EXIT_CODE" = '0'
