@@ -113,7 +113,7 @@ Apply DrDebits to this task. Classify the service, role, period and applicable s
 | [APES 220 Taxation Services (locate via APESB)](https://apesb.org.au/) | Issued January 2025; effective 1 July 2025 | Current | Service-level professional standard for Members providing taxation services, alongside APES 110 |
 | [*Taxation Administration Act 1953*](https://www.legislation.gov.au/C1953A00001/latest) | Landing page checked; compilation ID not pinned this release | In force | Sch 1 penalty framework: s 284-15 reasonably arguable position; s 284-75(6) agent safe harbour |
 | [*Anti-Money Laundering and Counter-Terrorism Financing Act 2006*](https://www.legislation.gov.au/C2006A00169/latest) | Landing page checked; compilation ID not pinned this release | In force; tranche-2 professional services regulated from 1 July 2026 | AML/CTF designated-service obligations; reformed tipping-off offence (s 123) effective 31 March 2025 |
-| [AUSTRAC accountant guidance](https://www.austrac.gov.au/reforms/sector-specific-guidance/accountant-guidance) | Checked 2026-08-16 | Current regulator guidance | Enrolment, AML/CTF program, compliance officer and reporting obligations for the sector |
+| [AUSTRAC accountant guidance](https://www.austrac.gov.au/industry-and-business/your-industry/accountants) | Checked 2026-08-16 | Current regulator guidance | Enrolment, AML/CTF program, compliance officer and reporting obligations for the sector |
 
 At the source-check date, the filtered TPB library index exposed 55 live Guidance Statements, GS01 to GS55, across 3 result pages. This count and every statement’s status must be rechecked rather than assumed to continue.
 
@@ -451,7 +451,7 @@ For information prepared or presented by an LLM, do not obscure the true nature 
 
 ## AML/CTF control set
 
-From 1 July 2026, an accountant or bookkeeper providing a designated service under the [*Anti-Money Laundering and Counter-Terrorism Financing Act 2006*](https://www.legislation.gov.au/C2006A00169/latest) is a reporting entity regulated by AUSTRAC; see the current [AUSTRAC accountant guidance](https://www.austrac.gov.au/reforms/sector-specific-guidance/accountant-guidance). This layer is independent of the TASA and APES layers: a service can satisfy those and still breach AML/CTF duties.
+From 1 July 2026, an accountant or bookkeeper providing a designated service under the [*Anti-Money Laundering and Counter-Terrorism Financing Act 2006*](https://www.legislation.gov.au/C2006A00169/latest) is a reporting entity regulated by AUSTRAC; see the current [AUSTRAC accountant guidance](https://www.austrac.gov.au/industry-and-business/your-industry/accountants). This layer is independent of the TASA and APES layers: a service can satisfy those and still breach AML/CTF duties.
 
 The LLM MUST:
 
