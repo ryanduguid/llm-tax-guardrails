@@ -1,6 +1,7 @@
 """Compilation currency: parsing the pins, and what a mismatch is called."""
 from __future__ import annotations
 
+from datetime import date
 from pathlib import Path
 
 from drdebits_build import sources
@@ -81,6 +82,50 @@ def test_an_unpinned_row_reports_the_current_compilation_to_pin():
     )
     assert finding.outcome == sources.UNPINNED
     assert "C2026C00393" in finding.detail
+
+
+TODAY = date(2026, 9, 27)
+PIN = sources.Pin("Example Act 2009", "C2009A00013", "C2025C00107", "26")
+# Shaped like the Register's versions records, newest start first.
+VERSIONS: list[dict[str, object]] = [
+    {"titleId": "C2009A00013", "registerId": None, "start": "2034-10-01T00:00:00",
+     "reasons": [{"affect": "Repeal", "markdown": "s 50 of the [Legislation Act 2003](/C2004A01224)"}]},
+    {"titleId": "C2009A00013", "registerId": None, "start": "2026-10-01T00:00:00",
+     "reasons": [{"affect": "Amend", "markdown": "sch 1 (items 1-69) of the "
+                  "[Treasury Laws Amendment (Example) Act 2026](/C2026A00086)"}]},
+    {"titleId": "C2009A00013", "registerId": "C2025C00107", "start": "2025-02-21T00:00:00",
+     "reasons": []},
+]
+
+
+def test_a_registered_amendment_inside_the_horizon_is_upcoming():
+    """The 1 October 2026 TASA amendments sat on the Register while the check read clean."""
+    findings = sources.upcoming(PIN, VERSIONS, TODAY)
+    assert [finding.outcome for finding in findings] == [sources.UPCOMING]
+    assert "2026-10-01" in findings[0].detail
+    assert "Treasury Laws Amendment (Example) Act 2026 (C2026A00086)" in findings[0].detail
+
+
+def test_a_distant_sunset_and_past_versions_are_not_upcoming():
+    """Only the amendment is reported: not the 2034 sunset, not the current compilation."""
+    assert len(sources.upcoming(PIN, VERSIONS, TODAY)) == 1
+    assert sources.upcoming(PIN, VERSIONS, date(2026, 10, 1)) == []
+
+
+def test_upcoming_changes_are_reported_in_commencement_order():
+    staged = [
+        {"titleId": "C2009A00013", "start": "2026-12-01T00:00:00", "reasons": []},
+        {"titleId": "C2009A00013", "start": "2026-10-01T00:00:00", "reasons": []},
+    ]
+    details = [finding.detail for finding in sources.upcoming(PIN, staged, TODAY)]
+    assert "2026-10-01" in details[0]
+    assert "2026-12-01" in details[1]
+    assert "the Register records no reason" in details[0]
+
+
+def test_no_answer_on_future_versions_is_unreachable_not_clean():
+    """A failed query must not read as 'nothing scheduled'."""
+    assert [f.outcome for f in sources.upcoming(PIN, None, TODAY)] == [sources.UNREACHABLE]
 
 
 def test_the_real_source_status_table_still_parses():

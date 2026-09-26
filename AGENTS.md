@@ -28,7 +28,9 @@ For source currency, run
 `uv run --project tools/drdebits_build --locked python -m drdebits_build.sources --root .`.
 It asks the Federal Register whether each compilation the guide pins is still
 the current one, which a link check cannot tell you: a superseded compilation
-keeps resolving. [source-currency.yml](.github/workflows/source-currency.yml)
+keeps resolving. It also reports a registered amendment that comes into force
+within 120 days, while the pinned compilation still reads as current.
+[source-currency.yml](.github/workflows/source-currency.yml)
 runs it weekly and reports by issue. A changed compilation number is the
 trigger for a human to read the replacement, never grounds to advance
 `sources_checked_at`.
