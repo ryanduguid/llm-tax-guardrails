@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import io
 import urllib.parse
-from datetime import date
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 from drdebits_build import sources
@@ -137,6 +137,17 @@ def test_future_versions_are_requested_nearest_first(monkeypatch):
     assert sources.registered_versions("C2009A00013", TODAY) == []
     assert "$orderby=start asc" in requested[0]
     assert "start gt 2026-09-27T00:00:00" in requested[0]
+
+
+def test_an_unreadable_start_date_leaves_the_check_incomplete():
+    """A registered change that cannot be dated must not be dropped as clean."""
+    versions = [{"titleId": "C2009A00013", "start": None, "reasons": []}]
+    assert [f.outcome for f in sources.upcoming(PIN, versions, TODAY)] == [sources.UNREACHABLE]
+
+
+def test_the_date_is_taken_in_australia_not_on_the_runner():
+    """21:00 UTC on 30 September is already 1 October, the commencement day."""
+    assert sources.register_today(datetime(2026, 9, 30, 21, 0, tzinfo=timezone.utc)) == date(2026, 10, 1)
 
 
 def test_no_answer_on_future_versions_is_unreachable_not_clean():

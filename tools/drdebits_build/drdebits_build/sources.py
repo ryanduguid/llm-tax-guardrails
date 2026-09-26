@@ -36,7 +36,7 @@ import re
 import urllib.error
 import urllib.parse
 import urllib.request
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import NamedTuple
 
@@ -191,6 +191,17 @@ def describe(version: dict[str, object]) -> str:
     return "; ".join(parts) or "the Register records no reason"
 
 
+def register_today(now: datetime | None = None) -> date:
+    """Today's date in Australia, where commencement dates fall, not the runner's.
+
+    The weekly workflow runs at 21:00 UTC, already the next day in Australia.
+    ponytail: a fixed UTC+10 ignores daylight saving, so between 13:00 and 14:00
+    UTC in summer it still reads the previous day; use zoneinfo with a locked
+    tzdata if a run is ever scheduled in that hour.
+    """
+    return (now or datetime.now(timezone.utc)).astimezone(timezone(timedelta(hours=10))).date()
+
+
 def upcoming(pin: Pin, versions: list[dict[str, object]] | None, today: date,
              horizon_days: int = HORIZON_DAYS) -> list[Finding]:
     """Report each registered version that comes into force within the horizon."""
@@ -202,6 +213,11 @@ def upcoming(pin: Pin, versions: list[dict[str, object]] | None, today: date,
         try:
             start = date.fromisoformat(str(version.get("start") or "")[:10])
         except ValueError:
+            # A registered change with no readable date could fall anywhere,
+            # so it leaves the check incomplete rather than clean.
+            findings.append((date.max, Finding(
+                pin, UNREACHABLE,
+                f"the Register listed a future version without a readable start date: {describe(version)}")))
             continue
         if today < start <= cutoff:
             findings.append((start, Finding(
@@ -229,7 +245,7 @@ def classify(pin: Pin, version: dict[str, str] | None) -> Finding:
 def check(root: Path, timeout: int = TIMEOUT) -> tuple[int, list[Finding]]:
     """Return the number of sources checked and every finding for them."""
     text = (root / SOURCE_STATUS).read_text(encoding="utf-8")
-    today = date.today()
+    today = register_today()
     pins = parse_pins(text)
     findings: list[Finding] = []
     for pin in pins:
