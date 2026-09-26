@@ -113,7 +113,7 @@ Apply DrDebits to this task. Classify the service, role, period and applicable s
 | [APES 220 Taxation Services (locate via APESB)](https://apesb.org.au/) | Issued January 2025; effective 1 July 2025 | Current | Service-level professional standard for Members providing taxation services, alongside APES 110 |
 | [*Taxation Administration Act 1953*](https://www.legislation.gov.au/C1953A00001/latest) | Landing page checked; compilation ID not pinned this release | In force | Sch 1 penalty framework: s 284-15 reasonably arguable position; s 284-75(6) agent safe harbour |
 | [*Anti-Money Laundering and Counter-Terrorism Financing Act 2006*](https://www.legislation.gov.au/C2006A00169/latest) | Landing page checked; compilation ID not pinned this release | In force; tranche-2 professional services regulated from 1 July 2026 | AML/CTF designated-service obligations; reformed tipping-off offence (s 123) effective 31 March 2025 |
-| [AUSTRAC accountant guidance](https://www.austrac.gov.au/reforms/sector-specific-guidance/accountant-guidance) | Checked 2026-08-16 | Current regulator guidance | Enrolment, AML/CTF program, compliance officer and reporting obligations for the sector |
+| [AUSTRAC accountant guidance](https://www.austrac.gov.au/industry-and-business/your-industry/accountants) | Checked 2026-08-16 | Current regulator guidance | Enrolment, AML/CTF program, compliance officer and reporting obligations for the sector |
 
 At the source-check date, the filtered TPB library index exposed 55 live Guidance Statements, GS01 to GS55, across 3 result pages. This count and every statement’s status must be rechecked rather than assumed to continue.
 
@@ -298,18 +298,18 @@ Use the [current TASA text](https://www.legislation.gov.au/C2009A00013/latest) f
 
 ### Code Determination sections 10 to 45
 
-The staged commencement dates in s 100(1) had passed by the source-check date, but the application and transitional rules remain relevant to historical facts. Section 100(4) confines s 15 to statements made, and s 30 to services provided, on or after the applicable start date. Section 151(1) confines the events captured by s 45(1)(d) to those arising on or after 1 July 2022 despite its 5-year wording. Use the [latest compilation](https://www.legislation.gov.au/F2024L00849/latest), identify the practitioner’s applicable start date and apply the provisions to the relevant event date.
+The staged commencement dates in s 100(1) had passed by the source-check date, but the application and transitional rules remain relevant to historical facts. Section 100(4) confines s 15 to statements made, and s 30 to services provided, on or after the applicable start date. Section 151(1) confines the events captured by s 45(1)(d) to those arising on or after 1 July 2022 despite its 5-year wording. Section 101 applies the obligations inserted by the *Tax Agent Services (Code of Professional Conduct) Amendment (Enhancing Tax Practitioners Board Sanctions) Determination 2026* to events on or after 1 October 2026; apply the earlier text to earlier events. Use the [latest compilation](https://www.legislation.gov.au/F2024L00849/latest), identify the practitioner’s applicable start date and apply the provisions to the relevant event date.
 
 | Section | Additional obligation | DrDebits control |
 |---:|---|---|
 | 10 | Ethical standards of the profession | Do not promote conduct that undermines public trust in the tax profession or tax system. Distinguish professional criticism from reckless or dishonest claims. |
-| 15 | False or misleading statements | Do not make, prepare, permit or direct a statement to the TPB, Commissioner or another Australian government agency that is materially false or misleading, including by material omission. If s 15(2) is engaged, route the authorised practitioner through every applicable step: correct a non-client statement; advise a client to correct and explain the consequences; where the specified client-failure and recklessness or intentional-disregard conditions apply, withdraw from both the engagement and professional relationship; and where the substantial-harm conditions also apply, notify the TPB or Commissioner and take any further action reasonably considered necessary in the public interest, subject to the statutory safety and unlawfulness exceptions. The LLM records and escalates; it does not determine the statutory tests, withdraw or report. |
+| 15 | False or misleading statements | Do not make, prepare, permit or direct a statement to the TPB, Commissioner or another Australian government agency that is materially false or misleading, including by material omission. If s 15(2) is engaged, route the authorised practitioner through every applicable step: correct a non-client statement; advise a client to correct and explain the consequences; where the specified client-failure and recklessness or intentional-disregard conditions apply, withdraw from both the engagement and professional relationship; and where the substantial-harm conditions also apply, notify the TPB or Commissioner (from 1 October 2026 the notification must include details sufficient to identify the client and the statement) and take any further action reasonably considered necessary in the public interest, subject to the statutory safety and unlawfulness exceptions. The LLM records and escalates; it does not determine the statutory tests, withdraw or report. |
 | 20 | Government conflicts | Identify and control conflicts arising from government work before using related knowledge, access or influence for another client or purpose. |
 | 25 | Government confidentiality | Do not use or disclose confidential government information outside its authorised purpose. |
 | 30 | Proper client records | Create accurate records of the nature, scope, outcome, relevant information, advice, facts, assumptions and reasoning; retain required records for at least 5 years. |
 | 35 | Competence and supervision | Ensure every person or system contributing to the service is competent for its role and appropriately supervised. An LLM is not a substitute for supervision. |
 | 40 | Quality management | Work within documented, enforced quality-management policies covering governance, monitoring, engagements, records, confidentiality, conflicts, staff and review. |
-| 45 | Keeping clients informed | Prompt written, prominent, clear and unambiguous disclosure to current and prospective clients of TPB Register access, the complaint process, practitioner and client rights and obligations, specified adverse events and current registration conditions. Apply the timing in s 45(2), including the 30-day existing-client rule, and the post-1 July 2022 event limitation in s 151(1). |
+| 45 | Keeping clients informed | Prompt written, prominent, clear and unambiguous disclosure to current and prospective clients of TPB Register access, the complaint process, practitioner and client rights and obligations, specified adverse events and current registration conditions. Apply the timing in s 45(2), including the 30-day existing-client rule, and the post-1 July 2022 event limitation in s 151(1). For events on or after 1 October 2026, the 5-year adverse events also include an order for breaching an enforceable undertaking relating to the TASA and a TPB determination preventing an application for registration, and exclude a past interim suspension. A current suspension joins current registration conditions as a disclosable matter, and both current matters must be disclosed when a client inquires about engaging or re-engaging the practitioner and, for an existing client not previously advised, as soon as reasonably practicable after the event (s 45(2)(d)), not within 30 days. |
 
 ### AI-specific TPB rules
 
@@ -331,6 +331,18 @@ The LLM and practitioner MUST operate on these bases:
 ### Significant-breach reporting clock
 
 For a possible significant Code breach, preserve the evidence and record when reasonable grounds first existed or ought to have existed. TASA ss 30-35 and 30-40 require written notice to the TPB within 30 days of that point for the practitioner’s own or another registered practitioner’s significant breach. Section 30-40 also requires written notice to a TPB-accredited professional association when the reporting practitioner knows the other practitioner is a member. A qualified, authorised human determines whether the statutory tests are met and makes any report; the LLM must flag the possible clock immediately but must not notify anyone.
+
+### TPB sanctions from 1 October 2026
+
+Schedule 1 to the [*Treasury Laws Amendment (Strengthening Accountability for Tax Adviser Misconduct and Other Measures) Act 2026*](https://www.legislation.gov.au/C2026A00086/asmade) amends the TASA for conduct on or after 1 October 2026. Apply the earlier text to earlier conduct. From that date:
+
+- failing to comply with the Code is itself a civil penalty provision (s 50-31: 2,500 penalty units for an individual, 50,000 for a body corporate), and the TPB may apply for an order only after an investigation under Subdivision 60-E (s 50-35(4))
+- the TPB may issue infringement notices for listed Code items (s 52-5(2)), accept enforceable undertakings (s 52-10), suspend registration (Subdivision 40-A) and impose an interim suspension of up to 90 days without a natural-justice hearing, extendable once a TPB investigation has started (s 40-45)
+- a suspended practitioner must not provide tax agent services (ss 40-35 and 40-55)
+- where a partnership contravenes a civil penalty provision, each partner is taken to have contravened it unless the partner proves non-involvement (s 70-20(2))
+- providing tax agent or BAS services for a fee while unregistered, advertising them while unregistered, or falsely representing registration becomes a criminal offence (ss 51-5 to 51-25), alongside the existing civil penalty provisions.
+
+When a task discloses a possible Code failure, suspension or unregistered service, the LLM MUST flag the possible sanction for the authorised human. It MUST NOT assess the practitioner’s exposure, predict the TPB’s response, or advise on an infringement notice, undertaking or suspension.
 
 ### Penalty and safe-harbour layer
 
@@ -451,7 +463,7 @@ For information prepared or presented by an LLM, do not obscure the true nature 
 
 ## AML/CTF control set
 
-From 1 July 2026, an accountant or bookkeeper providing a designated service under the [*Anti-Money Laundering and Counter-Terrorism Financing Act 2006*](https://www.legislation.gov.au/C2006A00169/latest) is a reporting entity regulated by AUSTRAC; see the current [AUSTRAC accountant guidance](https://www.austrac.gov.au/reforms/sector-specific-guidance/accountant-guidance). This layer is independent of the TASA and APES layers: a service can satisfy those and still breach AML/CTF duties.
+From 1 July 2026, an accountant or bookkeeper providing a designated service under the [*Anti-Money Laundering and Counter-Terrorism Financing Act 2006*](https://www.legislation.gov.au/C2006A00169/latest) is a reporting entity regulated by AUSTRAC; see the current [AUSTRAC accountant guidance](https://www.austrac.gov.au/industry-and-business/your-industry/accountants). This layer is independent of the TASA and APES layers: a service can satisfy those and still breach AML/CTF duties.
 
 The LLM MUST:
 

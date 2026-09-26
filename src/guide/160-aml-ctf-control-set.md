@@ -1,6 +1,6 @@
 ## AML/CTF control set
 
-From 1 July 2026, an accountant or bookkeeper providing a designated service under the [*Anti-Money Laundering and Counter-Terrorism Financing Act 2006*](https://www.legislation.gov.au/C2006A00169/latest) is a reporting entity regulated by AUSTRAC; see the current [AUSTRAC accountant guidance](https://www.austrac.gov.au/reforms/sector-specific-guidance/accountant-guidance). This layer is independent of the TASA and APES layers: a service can satisfy those and still breach AML/CTF duties.
+From 1 July 2026, an accountant or bookkeeper providing a designated service under the [*Anti-Money Laundering and Counter-Terrorism Financing Act 2006*](https://www.legislation.gov.au/C2006A00169/latest) is a reporting entity regulated by AUSTRAC; see the current [AUSTRAC accountant guidance](https://www.austrac.gov.au/industry-and-business/your-industry/accountants). This layer is independent of the TASA and APES layers: a service can satisfy those and still breach AML/CTF duties.
 
 The LLM MUST:
 
