@@ -127,10 +127,12 @@ def test_current_revision_coverage_shows_partial_and_failed_runs(tmp_path):
     ([sources.UNPINNED], 2),
     ([sources.CURRENT, sources.UNREACHABLE], 2),
     ([sources.SUPERSEDED, sources.UNREACHABLE], 1),
+    ([sources.CURRENT, sources.UPCOMING], 1),
+    ([sources.UPCOMING, sources.UNREACHABLE], 1),
 ])
 def test_currency_exit_codes_distinguish_findings_from_incomplete_checks(
         tmp_path, monkeypatch, outcomes, expected):
     pin = sources.Pin("Synthetic Act", "C2009A00013", "C2025C00107", "26")
-    monkeypatch.setattr(sources, "check", lambda *_: [
-        sources.Finding(pin, outcome, "synthetic result") for outcome in outcomes])
+    monkeypatch.setattr(sources, "check", lambda *_, **__: (1, [
+        sources.Finding(pin, outcome, "synthetic result") for outcome in outcomes]))
     assert sources.main(["--root", str(tmp_path)]) == expected
