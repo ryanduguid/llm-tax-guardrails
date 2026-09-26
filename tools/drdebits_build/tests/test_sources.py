@@ -1,6 +1,8 @@
 """Compilation currency: parsing the pins, and what a mismatch is called."""
 from __future__ import annotations
 
+import io
+import urllib.parse
 from datetime import date
 from pathlib import Path
 
@@ -121,6 +123,20 @@ def test_upcoming_changes_are_reported_in_commencement_order():
     assert "2026-10-01" in details[0]
     assert "2026-12-01" in details[1]
     assert "the Register records no reason" in details[0]
+
+
+def test_future_versions_are_requested_nearest_first(monkeypatch):
+    """Newest-first with a page limit could push a near amendment off the page."""
+    requested: list[str] = []
+
+    def fake_urlopen(request, timeout):
+        requested.append(urllib.parse.unquote(request.full_url))
+        return io.BytesIO(b'{"value": []}')
+
+    monkeypatch.setattr(sources.urllib.request, "urlopen", fake_urlopen)
+    assert sources.registered_versions("C2009A00013", TODAY) == []
+    assert "$orderby=start asc" in requested[0]
+    assert "start gt 2026-09-27T00:00:00" in requested[0]
 
 
 def test_no_answer_on_future_versions_is_unreachable_not_clean():

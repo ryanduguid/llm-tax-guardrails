@@ -55,7 +55,9 @@ SELECT = "titleId,registerId,compilationNumber,start"
 # Longer than the gap between source reviews, so a change registered just after
 # one review is still inside the window when the next weekly run reports it.
 HORIZON_DAYS = 120
-# Enough to reach past a title's scheduled sunset and any staged commencements.
+# Future versions come back nearest first, so a full page can only leave out
+# changes later than every one it holds. If the page's last change is inside
+# the horizon, every change on it is reported and the run already exits 1.
 FUTURE_VERSIONS = 10
 
 # A Register title id: one letter, a year, one letter, five digits. C-prefixed
@@ -153,14 +155,15 @@ def current_version(title_id: str, timeout: int = TIMEOUT) -> dict[str, str] | N
     return {key: str(version.get(key) or "") for key in ("registerId", "compilationNumber", "start")}
 
 
-def registered_versions(title_id: str, timeout: int = TIMEOUT) -> list[dict[str, object]] | None:
-    """Return the title's latest-starting versions, future ones included, or None.
+def registered_versions(title_id: str, after: date,
+                        timeout: int = TIMEOUT) -> list[dict[str, object]] | None:
+    """Return the title's versions starting after `after`, nearest first, or None.
 
     A version that has not commenced has no register id yet, so these are
-    filtered on the title and ordered by start date rather than resolved by id.
+    filtered on the title and start date rather than resolved by id.
     """
-    query = urllib.parse.quote(f"titleId eq '{title_id}'")
-    order = urllib.parse.quote("start desc")
+    query = urllib.parse.quote(f"titleId eq '{title_id}' and start gt {after.isoformat()}T00:00:00")
+    order = urllib.parse.quote("start asc")
     url = f"{API}/versions?$top={FUTURE_VERSIONS}&$orderby={order}&$filter={query}"
     request = urllib.request.Request(url, headers={"User-Agent": UA})
     try:
@@ -234,7 +237,7 @@ def check(root: Path, timeout: int = TIMEOUT) -> tuple[int, list[Finding]]:
         findings.append(classify(pin, version))
         # A title the Register did not answer is already reported unreachable.
         if version is not None:
-            findings.extend(upcoming(pin, registered_versions(pin.title_id, timeout), today))
+            findings.extend(upcoming(pin, registered_versions(pin.title_id, today, timeout), today))
     return len(pins), findings
 
 
