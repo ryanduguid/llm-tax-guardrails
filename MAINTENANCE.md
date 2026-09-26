@@ -5,7 +5,8 @@ Part of [DrDebits](./drdebits.md) `0.3.3`.
 A source-check date does not guarantee continuing currency. Before professional reliance, retrieve the authority operative for the relevant historical event or period and the current duties governing action today.
 
 The scheduled source and link checks return `0` only for complete successful
-verification, `1` for a superseded compilation or dead link, and `2` for
+verification, `1` for a superseded compilation, a registered change that comes
+into force within 120 days, or a dead link, and `2` for
 incomplete verification (including unpinned legislation or unreachable links).
 The workflows retain the report in their logs and job summary, update one
 open report issue, and fail on every nonzero exit. A successful later check

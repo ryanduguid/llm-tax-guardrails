@@ -17,6 +17,13 @@ The pins come out of `src/guide/040-source-status.md`, which is where they are
 already maintained. A second copy in a data file would be one more thing to
 keep in step, and the two would eventually disagree.
 
+The current compilation is only half the answer. An amending Act or instrument
+is registered weeks before it commences, and until then the pinned compilation
+stays current: the check reads clean while the text the guide relies on is
+already scheduled to change. So each title's registered future versions are
+listed too, and one that comes into force within `HORIZON_DAYS` is a finding.
+The horizon keeps a sunset repeal years away from reporting every week.
+
 Run it before the `review_due` date rather than re-reading all eleven sources:
 
     uv run --project tools/drdebits_build --locked python -m drdebits_build.sources --root .
@@ -29,6 +36,7 @@ import re
 import urllib.error
 import urllib.parse
 import urllib.request
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import NamedTuple
 
@@ -44,6 +52,13 @@ API = "https://api.prod.legislation.gov.au/v1"
 UA = "llm-tax-guardrails source-check (+https://github.com/ryanduguid/llm-tax-guardrails)"
 TIMEOUT = 60
 SELECT = "titleId,registerId,compilationNumber,start"
+# Longer than the gap between source reviews, so a change registered just after
+# one review is still inside the window when the next weekly run reports it.
+HORIZON_DAYS = 120
+# Future versions come back nearest first, so a full page can only leave out
+# changes later than every one it holds. If the page's last change is inside
+# the horizon, every change on it is reported and the run already exits 1.
+FUTURE_VERSIONS = 10
 
 # A Register title id: one letter, a year, one letter, five digits. C-prefixed
 # ids are Acts, F-prefixed are legislative instruments; both appear here.
@@ -58,11 +73,14 @@ TABLE_ROW = re.compile(
 )
 PINNED_COMPILATION = re.compile(r"`(?P<register_id>" + TITLE_ID + r")`")
 COMPILATION_NUMBER = re.compile(r"Compilation No\s*(?P<number>\d+)", re.IGNORECASE)
+# The Register writes an amending title as a Markdown link to its own path.
+REASON_LINK = re.compile(r"\[(?P<name>[^\]]+)\]\(/(?P<title_id>" + TITLE_ID + r")\)")
 
 CURRENT = "current"
 SUPERSEDED = "superseded"
 UNPINNED = "unpinned"
 UNREACHABLE = "unreachable"
+UPCOMING = "upcoming"
 
 
 class Pin(NamedTuple):
@@ -137,6 +155,76 @@ def current_version(title_id: str, timeout: int = TIMEOUT) -> dict[str, str] | N
     return {key: str(version.get(key) or "") for key in ("registerId", "compilationNumber", "start")}
 
 
+def registered_versions(title_id: str, after: date,
+                        timeout: int = TIMEOUT) -> list[dict[str, object]] | None:
+    """Return the title's versions starting after `after`, nearest first, or None.
+
+    A version that has not commenced has no register id yet, so these are
+    filtered on the title and start date rather than resolved by id.
+    """
+    query = urllib.parse.quote(f"titleId eq '{title_id}' and start gt {after.isoformat()}T00:00:00")
+    order = urllib.parse.quote("start asc")
+    url = f"{API}/versions?$top={FUTURE_VERSIONS}&$orderby={order}&$filter={query}"
+    request = urllib.request.Request(url, headers={"User-Agent": UA})
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            document = json.load(response)
+    except (urllib.error.URLError, OSError, ValueError):
+        return None
+    values = document.get("value") if isinstance(document, dict) else None
+    if not isinstance(values, list) or not all(isinstance(value, dict) for value in values):
+        return None
+    if any(value.get("titleId") not in (None, title_id) for value in values):
+        return None
+    return values
+
+
+def describe(version: dict[str, object]) -> str:
+    """Summarise why a version exists, from the Register's own reasons."""
+    reasons = version.get("reasons")
+    parts = [
+        f"{reason.get('affect') or 'Change'}: "
+        + REASON_LINK.sub(r"\g<name> (\g<title_id>)", str(reason.get("markdown") or ""))
+        for reason in (reasons if isinstance(reasons, list) else [])
+        if isinstance(reason, dict)
+    ]
+    return "; ".join(parts) or "the Register records no reason"
+
+
+def register_today(now: datetime | None = None) -> date:
+    """Today's date in Australia, where commencement dates fall, not the runner's.
+
+    The weekly workflow runs at 21:00 UTC, already the next day in Australia.
+    ponytail: a fixed UTC+10 ignores daylight saving, so between 13:00 and 14:00
+    UTC in summer it still reads the previous day; use zoneinfo with a locked
+    tzdata if a run is ever scheduled in that hour.
+    """
+    return (now or datetime.now(timezone.utc)).astimezone(timezone(timedelta(hours=10))).date()
+
+
+def upcoming(pin: Pin, versions: list[dict[str, object]] | None, today: date,
+             horizon_days: int = HORIZON_DAYS) -> list[Finding]:
+    """Report each registered version that comes into force within the horizon."""
+    if versions is None:
+        return [Finding(pin, UNREACHABLE, "the Register did not answer for this title's future versions")]
+    cutoff = today + timedelta(days=horizon_days)
+    findings: list[tuple[date, Finding]] = []
+    for version in versions:
+        try:
+            start = date.fromisoformat(str(version.get("start") or "")[:10])
+        except ValueError:
+            # A registered change with no readable date could fall anywhere,
+            # so it leaves the check incomplete rather than clean.
+            findings.append((date.max, Finding(
+                pin, UNREACHABLE,
+                f"the Register listed a future version without a readable start date: {describe(version)}")))
+            continue
+        if today < start <= cutoff:
+            findings.append((start, Finding(
+                pin, UPCOMING, f"a registered change comes into force on {start}: {describe(version)}")))
+    return [finding for _, finding in sorted(findings, key=lambda item: item[0])]
+
+
 def classify(pin: Pin, version: dict[str, str] | None) -> Finding:
     if version is None:
         return Finding(pin, UNREACHABLE, "the Register did not answer for this title")
@@ -154,9 +242,19 @@ def classify(pin: Pin, version: dict[str, str] | None) -> Finding:
     )
 
 
-def check(root: Path, timeout: int = TIMEOUT) -> list[Finding]:
+def check(root: Path, timeout: int = TIMEOUT) -> tuple[int, list[Finding]]:
+    """Return the number of sources checked and every finding for them."""
     text = (root / SOURCE_STATUS).read_text(encoding="utf-8")
-    return [classify(pin, current_version(pin.title_id, timeout)) for pin in parse_pins(text)]
+    today = register_today()
+    pins = parse_pins(text)
+    findings: list[Finding] = []
+    for pin in pins:
+        version = current_version(pin.title_id, timeout)
+        findings.append(classify(pin, version))
+        # A title the Register did not answer is already reported unreachable.
+        if version is not None:
+            findings.extend(upcoming(pin, registered_versions(pin.title_id, today, timeout), today))
+    return len(pins), findings
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -166,8 +264,8 @@ def main(argv: list[str] | None = None) -> int:
     arguments = parser.parse_args(argv)
     root = Path(arguments.root) if arguments.root else find_root(Path.cwd())
 
-    findings = check(root, arguments.timeout)
-    if not findings:
+    checked, findings = check(root, arguments.timeout)
+    if not checked:
         print("no Register sources found in the source-status table", flush=True)
         return 1
 
@@ -175,11 +273,12 @@ def main(argv: list[str] | None = None) -> int:
         print(f"{finding.outcome.upper():<11} {finding.pin.name}: {finding.detail}")
 
     counts = {name: sum(1 for f in findings if f.outcome == name) for name in
-              (CURRENT, SUPERSEDED, UNPINNED, UNREACHABLE)}
+              (CURRENT, SUPERSEDED, UNPINNED, UNREACHABLE, UPCOMING)}
     print(
-        f"checked {len(findings)}: current {counts[CURRENT]}, "
+        f"checked {checked}: current {counts[CURRENT]}, "
         f"superseded {counts[SUPERSEDED]}, unpinned {counts[UNPINNED]}, "
-        f"unreachable {counts[UNREACHABLE]}"
+        f"unreachable {counts[UNREACHABLE]}, "
+        f"upcoming within {HORIZON_DAYS} days {counts[UPCOMING]}"
     )
     if counts[SUPERSEDED]:
         print(
@@ -188,7 +287,14 @@ def main(argv: list[str] | None = None) -> int:
             "competent human has reviewed the replacement. Do not advance "
             "sources_checked_at on the strength of this check."
         )
-    if counts[SUPERSEDED]:
+    if counts[UPCOMING]:
+        print(
+            "An upcoming change means the pinned text is scheduled to change. Read the "
+            "amending title before it comes into force, decide the guide's treatment of "
+            "conduct either side of that date, and re-pin once the new compilation is "
+            "registered."
+        )
+    if counts[SUPERSEDED] or counts[UPCOMING]:
         return 1
     return 2 if counts[UNREACHABLE] or counts[UNPINNED] else 0
 
