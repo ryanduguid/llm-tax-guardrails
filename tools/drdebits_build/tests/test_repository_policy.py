@@ -486,7 +486,8 @@ _NUMBER_WORDS = {
     31: "Thirty-one", 32: "Thirty-two", 33: "Thirty-three", 34: "Thirty-four",
     35: "Thirty-five", 36: "Thirty-six", 37: "Thirty-seven", 38: "Thirty-eight",
     39: "Thirty-nine", 40: "Forty", 41: "Forty-one", 42: "Forty-two",
-    43: "Forty-three", 44: "Forty-four", 45: "Forty-five",
+    43: "Forty-three", 44: "Forty-four", 45: "Forty-five", 46: "Forty-six",
+    47: "Forty-seven", 48: "Forty-eight", 49: "Forty-nine",
 }
 
 def test_the_behaviour_header_routes_to_generated_run_coverage():
@@ -498,7 +499,7 @@ def test_the_behaviour_header_routes_to_generated_run_coverage():
 
 
 def test_the_readme_and_rerun_instruction_count_the_behaviour_cases_correctly():
-    """Adding a case has to move both copies of the number.
+    """Adding a case has to move every copy of the number.
 
     Eight calculator cases were added while the README still said twenty-seven
     and the rerun instruction still said 27, so a reader was told the wrong
@@ -518,4 +519,7 @@ def test_the_readme_and_rerun_instruction_count_the_behaviour_cases_correctly():
     notes = (ROOT / "EVALUATION-NOTES.md").read_text(encoding="utf-8")
     assert f"Rerun all {total} scenarios" in notes, (
         f"EVALUATION-NOTES.md does not tell a rerun to cover all {total} scenarios"
+    )
+    assert f"submit all {total} scenarios now in the suite" in notes, (
+        f"EVALUATION-NOTES.md does not tell the pending run to submit all {total} scenarios"
     )
