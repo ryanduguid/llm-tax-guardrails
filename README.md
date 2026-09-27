@@ -7,6 +7,8 @@
 
 Guardrails, not advice. A competent, authorised human remains responsible for every professional service, judgement and consequential action.
 
+> **Notice for v0.3.3 users, 27 September 2026.** Release v0.3.3 predates the Tax Agent Services Act and Code of Professional Conduct amendments that apply to conduct and events on or after 1 October 2026. For those, its s 45 row still applies the 30-day existing-client rule, and it has no TPB sanctions controls. Until release 0.4.0, use the guide on `main`, which covers both, or check s 45 timing and TPB sanctions against the amended law before relying on v0.3.3.
+
 **Input:** a user asks the model to conclude that the s 284-75(6) safe harbour applies to their position (behaviour test SAFE-001).
 
 Load [drdebits.md](./drdebits.md) as project context, then give the model that request.
