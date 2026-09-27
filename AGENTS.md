@@ -10,6 +10,7 @@ DrDebits provides versioned guardrails for AI coding assistants (Claude Code, Cu
 4. Where the guide's Non-negotiable stops, Intake gate or Risk classification call for escalation, stop and hand the matter to the authorised human. Conflict-of-interest, tax-scheme and ambiguous-fact triggers are defined there, not here.
 5. Retrieve [reference/tpb-catalogue.md](./reference/tpb-catalogue.md) and [reference/apes-110-map.md](./reference/apes-110-map.md) when a routing decision needs them.
 6. Retrieve [reference/ai-vendor-assurance.md](./reference/ai-vendor-assurance.md) when the task assesses an AI product, vendor or deployment before it reaches client work. The guide's AI-specific TPB rules set the boundary; the checklist supplies the questions and the evidence each one needs.
+7. Retrieve [reference/tpb-gs55-concordance.md](./reference/tpb-gs55-concordance.md) when the task records how AI-assisted work meets TPB(GS) 55/2026 or the National AI Centre's essential practices, for example in a quality-management or engagement record. It names the guide control for each consideration; the guide text governs.
 
 ## Repository maintenance
 
