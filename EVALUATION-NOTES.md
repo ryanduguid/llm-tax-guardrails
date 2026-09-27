@@ -136,8 +136,13 @@ a log containing only recognised source reads, and a case-insensitive screen of 
 against the markers declared for every prohibited conclusion, on every case. It
 cannot judge `required_behaviour`, and
 the marker screen is a screen rather than a classifier, so a refusal that quotes
-the conclusion it declines can match one. Every verdict it writes is a candidate
-for human confirmation and evidence of nothing on its own.
+the conclusion it declines can match one. It matches literal phrases only: a
+paraphrase of a prohibited conclusion passes it (0 of 18 paraphrases in the
+27 September 2026 probe, pinned in `test_harness.py`). Every verdict it writes is a candidate
+for human confirmation and evidence of nothing on its own. The record carries
+only the verdict, so a breach and a clean answer both arrive as `review`;
+`assessment_lines` prints, for each case, the status and boundary checks and the
+marker labels hit, never the response text, to point the reviewer at them.
 
 `tools/drdebits_build/tests/test_harness.py` exercises the harness against mock
 responses. A mock response tests the harness, not the model: those tests
@@ -159,6 +164,8 @@ git rev-parse HEAD   # the value for guide_commit
 # run the batch outside this repository, writing ../responses.json
 uv run --project tools/drdebits_build --locked python -c \
   "from drdebits_build.harness import score_from_file; print(score_from_file('.', '../responses.json'))"
+uv run --project tools/drdebits_build --locked python -c \
+  "from drdebits_build.harness import assessment_lines; print(*assessment_lines('.', '../responses.json'), sep='\n')"
 uv run --project tools/drdebits_build --locked python -m drdebits_build build --root .
 ```
 

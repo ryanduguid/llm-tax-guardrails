@@ -297,6 +297,64 @@ def _require(payload, key):
     return value
 
 
+def _read_responses(root, responses_path):
+    """Read and check a responses file; return the sources, payload, digests and entries.
+
+    Shared by ``score_from_file`` and ``assessment_lines``, so both refuse the same files.
+    """
+    root = Path(root)
+    sources = load_sources(root)
+    cases = {c["id"]: c for c in sources.behaviour}
+    try:
+        payload = json.loads(Path(responses_path).read_text(encoding="utf-8"),
+                             object_pairs_hook=evals._reject_duplicate_keys)
+    except (ValueError, UnicodeDecodeError, OSError) as exc:
+        raise HarnessError(f"responses file: cannot read ({exc})") from exc
+    if not isinstance(payload, dict):
+        raise HarnessError("responses file: top level must be an object")
+    execution_digests = {}
+    for key, current_digest in build_digests(sources).items():
+        recorded_digest = _require(payload, key)
+        if recorded_digest != current_digest:
+            raise HarnessError(
+                f"responses file: {key} does not match the sources being scored; "
+                "use the frozen evaluation inputs, not a revised guide or case set")
+        execution_digests[key] = recorded_digest
+    responses = _require(payload, "responses")
+    if not isinstance(responses, dict) or not responses:
+        raise HarnessError("responses file: 'responses' must map case ids to responses")
+    # One response per case is all this file can hold, so anything above 1 would
+    # record samples nobody judged. Refused rather than silently copied.
+    samples = _require(payload, "samples_per_case")
+    if isinstance(samples, bool) or not isinstance(samples, int) or samples != 1:
+        raise HarnessError(
+            f"responses file: samples_per_case is {samples!r}, but this file holds one "
+            "response per case and the scorer judges one; record 1, or score each sample "
+            "into its own record")
+
+    entries = {}
+    for case_id, entry in responses.items():
+        case = cases.get(case_id)
+        if case is None:
+            raise HarnessError(f"responses file: {case_id} is not a case in this tree")
+        if not isinstance(entry, dict) or not isinstance(entry.get("text"), str):
+            raise HarnessError(f"responses file: {case_id} must carry a response 'text' string")
+        # Required, not defaulted: an entry that says nothing about tool calls is
+        # silent about the side-effect check, and defaulting to none would turn
+        # that silence into a pass.
+        if "invocations" not in entry:
+            raise HarnessError(
+                f"responses file: {case_id} must carry 'invocations', the list of tool calls "
+                "the response made; use [] to record that it made none")
+        if set(entry) != {"text", "invocations"}:
+            raise HarnessError(f"responses file: {case_id} has unknown response fields")
+        invocations = entry["invocations"]
+        if not isinstance(invocations, list):
+            raise HarnessError(f"responses file: {case_id} 'invocations' must be a list")
+        entries[case_id] = (case, entry["text"], invocations)
+    return sources, payload, execution_digests, samples, entries
+
+
 def score_from_file(root, responses_path, *, label=None):
     """Score a responses file and write a model-proposed observation record.
 
@@ -332,56 +390,10 @@ def score_from_file(root, responses_path, *, label=None):
     malformed one fails here rather than at the next build.
     """
     root = Path(root)
-    sources = load_sources(root)
-    cases = {c["id"]: c for c in sources.behaviour}
+    sources, payload, execution_digests, samples, entries = _read_responses(root, responses_path)
     conclusions = sources.whole_response["prohibited_conclusions"]
-    try:
-        payload = json.loads(Path(responses_path).read_text(encoding="utf-8"),
-                             object_pairs_hook=evals._reject_duplicate_keys)
-    except (ValueError, UnicodeDecodeError, OSError) as exc:
-        raise HarnessError(f"responses file: cannot read ({exc})") from exc
-    if not isinstance(payload, dict):
-        raise HarnessError("responses file: top level must be an object")
-    execution_digests = {}
-    for key, current_digest in build_digests(sources).items():
-        recorded_digest = _require(payload, key)
-        if recorded_digest != current_digest:
-            raise HarnessError(
-                f"responses file: {key} does not match the sources being scored; "
-                "use the frozen evaluation inputs, not a revised guide or case set")
-        execution_digests[key] = recorded_digest
-    responses = _require(payload, "responses")
-    if not isinstance(responses, dict) or not responses:
-        raise HarnessError("responses file: 'responses' must map case ids to responses")
-    # One response per case is all this file can hold, so anything above 1 would
-    # record samples nobody judged. Refused rather than silently copied.
-    samples = _require(payload, "samples_per_case")
-    if isinstance(samples, bool) or not isinstance(samples, int) or samples != 1:
-        raise HarnessError(
-            f"responses file: samples_per_case is {samples!r}, but this file holds one "
-            "response per case and the scorer judges one; record 1, or score each sample "
-            "into its own record")
-
-    results = {}
-    for case_id, entry in responses.items():
-        case = cases.get(case_id)
-        if case is None:
-            raise HarnessError(f"responses file: {case_id} is not a case in this tree")
-        if not isinstance(entry, dict) or not isinstance(entry.get("text"), str):
-            raise HarnessError(f"responses file: {case_id} must carry a response 'text' string")
-        # Required, not defaulted: an entry that says nothing about tool calls is
-        # silent about the side-effect check, and defaulting to none would turn
-        # that silence into a pass.
-        if "invocations" not in entry:
-            raise HarnessError(
-                f"responses file: {case_id} must carry 'invocations', the list of tool calls "
-                "the response made; use [] to record that it made none")
-        if set(entry) != {"text", "invocations"}:
-            raise HarnessError(f"responses file: {case_id} has unknown response fields")
-        invocations = entry["invocations"]
-        if not isinstance(invocations, list):
-            raise HarnessError(f"responses file: {case_id} 'invocations' must be a list")
-        results[case_id], _ = score_response(entry["text"], case, conclusions, invocations)
+    results = {case_id: score_response(text, case, conclusions, invocations)[0]
+               for case_id, (case, text, invocations) in entries.items()}
 
     record = {
         "model": _require(payload, "model"),
@@ -429,3 +441,23 @@ def score_from_file(root, responses_path, *, label=None):
         target.unlink(missing_ok=True)
         raise HarnessError(f"refused an invalid observation record: {exc}") from exc
     return target
+
+
+def assessment_lines(root, responses_path):
+    """One line per case: its status and boundary checks and the markers it hit.
+
+    ``score_from_file`` records only a verdict, so a breach and a clean answer
+    both arrive as ``review``; these lines point the reviewer at the marker hits.
+    They never repeat response text. The marker screen matches literal phrases
+    only, so a paraphrased conclusion prints no hit.
+    """
+    sources, _payload, _digests, _samples, entries = _read_responses(Path(root), responses_path)
+    conclusions = sources.whole_response["prohibited_conclusions"]
+    lines = []
+    for case_id, (case, text, invocations) in sorted(entries.items()):
+        found = assess_response(text, case, conclusions, invocations)
+        lines.append(
+            f"{case_id}: status {'ok' if found.status_matches else 'MISMATCH'}; "
+            f"boundary {'ok' if found.action_boundary_clear else 'CROSSED'}; "
+            f"markers {', '.join(found.marker_hits) or 'none'}")
+    return lines

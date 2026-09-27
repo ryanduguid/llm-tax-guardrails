@@ -18,6 +18,10 @@ guide controls and disposition of each change. Track TAA and AML/CTF Act
 compilations as well as TASA, TASR and the Code Determination. The automated
 register comparison does not cover TPB guidance, APESB publications or AUSTRAC
 guidance: review their catalogues, amendments and transition notices separately.
+AUSTRAC's guidance changes most often of the three and moves between URLs (its
+25 September 2026 update was found by hand), so review it monthly as well as for
+each release. The next AUSTRAC review is due on 26 October 2026; each review
+moves this date one month on.
 An unpinned source remains unverified until its substantive review is complete.
 
 For each DrDebits release:
