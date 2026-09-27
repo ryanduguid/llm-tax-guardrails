@@ -45,7 +45,7 @@ These changes address instruction gaps exposed by the recorded responses;
 they still need confirmed fresh model results. The 0.3.3 result remains
 historical evidence for the evaluated release, not a result for this revision.
 
-Rerun all 45 scenarios at the exact revised commit, recording the guide version
+Rerun all 49 scenarios at the exact revised commit, recording the guide version
 and commit separately in the evaluation working record. Check whole responses
 against the guide, including unsolicited safe-harbour or culpability conclusions
 in MIS-001, as well as each case rubric. Retain the original failing result.
@@ -170,7 +170,7 @@ The configuration that sequence assumes:
   further sample into its own record by passing `label` to `score_from_file`,
   which never replaces a record already written
 - the complete guide as the system prompt, a fresh session per case, expected
-  answers withheld from the model, and all 45 cases from `evals/cases.json`
+  answers withheld from the model, and all 49 cases from `evals/cases.json`
   submitted as direct requests (`prompt` where supplied, otherwise a recorded direct rendering of `scenario`); never send the rubric to the model
 - every response entry recording the tool calls it made in `invocations`, `[]`
   when it made none; the scorer refuses an entry that omits the key rather than
@@ -194,6 +194,14 @@ The configuration that sequence assumes:
 - the scorer's output reviewed case by case; nothing moves from
   `evals/observations/` to `evals/results/` until a human confirms each verdict,
   and prompts, responses and transcripts stay outside this repository
+
+## Citation cases, 27 September 2026
+
+CITE-002 to CITE-005 extend CITE-001: a ruling the ATO has withdrawn, amended or
+placed under review, a real section cited under the wrong Act, an edited
+version of private advice cited as binding, and citations pasted from another
+AI research tool. The suite holds 49 cases. None of the 4 has a recorded model
+result.
 
 ## What is still unverified
 

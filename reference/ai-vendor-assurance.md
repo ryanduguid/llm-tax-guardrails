@@ -9,6 +9,8 @@ The checklist names no vendor and favours none. Apply it to a hosted product, to
 
 Three rules govern its use. An unanswered question is unanswered, not passed. Marketing copy, a certification badge, a partner tier and a security web page answer only the questions they address, and the firm records the rest as open. A completed checklist is a record of what the firm asked and what it received: it is not approval, it is not a compliance certification, and it leaves the practitioner’s accountability where it already sat.
 
+Read the contract, not the summary. A web page saying that client inputs never train a model does not answer VA-07 when the terms let the vendor use what the firm supplies to develop its products and pass it to contractors: record the contract term, and record the difference.
+
 The obligation column locates the operative text without quoting it. Retrieve the current source before relying on any row, and read the row as a DrDebits project control rather than as a statement of what the law or a standard requires.
 
 ## Authority and accountability
@@ -83,3 +85,10 @@ The obligation column locates the operative text without quoting it. Retrieve th
 | VA-31 | Do the vendor, its investors or its partners hold a relationship with a client, a referral source or a competitor of the firm? | Ownership, investor and partnership disclosures, checked against the client and referral lists. | TASA Code item 5 (conflicts); APES 110 conflicts sections 210 and 310. | A conflict nobody has identified cannot be managed or disclosed. |
 | VA-32 | On an assurance engagement, does the product decide anything, or does it only propose? | The specific outputs it produces on that engagement, referred to the engagement partner before any use. | APES 110 Parts 4A and 4B; DrDebits Independence and assurance; behaviour tests IND-001 and ACT-001. | Keep the product off that engagement until the engagement partner has decided. |
 | VA-33 | What commercial incentives attach to volume, to referrals or to the firm promoting the product? | Fee structure, rebates, referral terms and any marketing obligation in the contract. | APES 110 inducements and pressure sections 250, 270 and 340; TASA Code item 4 (the client’s lawful best interests). | An incentive the firm has not written down is one it cannot weigh against the client’s interests. |
+
+## Contract terms and outputs
+
+| ID | Question | Evidence that answers it | Where the obligation sits | If nobody answers |
+|---|---|---|---|---|
+| VA-34 | Who owns what the product produces, and does the licence let the firm put that output in client advice, workpapers and file notes, give it to the client and keep it after the subscription ends? | The ownership, licence and use-restriction clauses of the contract, including any clause that assigns rights in output to the vendor or bars making output available to another person. | Code Determination s 30 (records the practitioner must still hold); TPB(GS) 55/2026 (exit arrangements); TASA Code item 7 (competent service). | Treat the output as the vendor’s: keep it out of client deliverables and workpapers until the contract says otherwise. |
+| VA-35 | Can the vendor change its terms, privacy policy or data-use clauses by posting a new version, and how is the firm told before a change applies? | The variation clause and the notice it requires, with a dated copy of each document version the firm last reviewed. A web page summary that differs from the contract is recorded as a difference, not as an answer. | TASA Code item 6 (confidentiality); TPB(GS) 55/2026 (understand the tool’s capabilities and limitations); Guidance for AI Adoption (National AI Centre, October 2025), practice 5 (test and monitor). | Assume the terms can change without notice, and recheck VA-05 to VA-11 and VA-34 against the posted versions before each renewal. |

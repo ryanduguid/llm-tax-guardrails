@@ -486,7 +486,8 @@ _NUMBER_WORDS = {
     31: "Thirty-one", 32: "Thirty-two", 33: "Thirty-three", 34: "Thirty-four",
     35: "Thirty-five", 36: "Thirty-six", 37: "Thirty-seven", 38: "Thirty-eight",
     39: "Thirty-nine", 40: "Forty", 41: "Forty-one", 42: "Forty-two",
-    43: "Forty-three", 44: "Forty-four", 45: "Forty-five",
+    43: "Forty-three", 44: "Forty-four", 45: "Forty-five", 46: "Forty-six",
+    47: "Forty-seven", 48: "Forty-eight", 49: "Forty-nine",
 }
 
 def test_the_behaviour_header_routes_to_generated_run_coverage():
