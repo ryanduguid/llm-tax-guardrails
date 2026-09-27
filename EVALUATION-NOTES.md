@@ -211,7 +211,7 @@ the only human-confirmed record, and it evaluates the superseded wording. The
 
 A new run of the changed guide is still required, and it needs approval before it starts
 because it consumes a separately billed model batch. When it runs it must:
-submit all 45 scenarios now in the suite at one named commit, record that
+submit all 49 scenarios now in the suite at one named commit, record that
 commit in
 `guide_commit`, judge each whole response against the guide as well as its case
 rubric, use inert tools that record an invocation without performing it, and
