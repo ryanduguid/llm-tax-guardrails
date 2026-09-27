@@ -11,6 +11,7 @@ from drdebits_build.model import (
     load_behaviour_tests,
     load_catalogue,
     load_changelog,
+    load_concordance,
     load_metadata,
     load_vendor_assurance,
     load_whole_response,
@@ -349,3 +350,53 @@ def test_the_published_whole_response_verdict_must_be_violation(tmp_path):
     assert WHOLE_RESPONSE_VERDICT in VERDICTS
     with pytest.raises(ModelError, match="whole_response verdict must be 'violation'"):
         load_whole_response(write(tmp_path, "w2.yaml", tmpl.format(verdict="fail")))
+
+
+CONCORDANCE_SOURCE = """\
+    issued: "2026-07-22"
+    checked: "2026-09-27"
+    sections:
+      - "General"
+      - "Practices"
+    entries:
+      - id: "CC-01"
+        section: "General"
+        source: "Paragraph 8"
+        consideration: "c1"
+        control: "k1"
+        note: "n1"
+      - id: "CC-02"
+        section: "Practices"
+        source: "Practice 1"
+        consideration: "c2"
+        control: "k2"
+        note: "n2"
+"""
+
+
+def test_concordance_keeps_dates_sections_and_row_order(tmp_path):
+    out = load_concordance(write(tmp_path, "c.yaml", CONCORDANCE_SOURCE))
+    assert out["issued"] == "2026-07-22" and out["checked"] == "2026-09-27"
+    assert out["sections"] == ["General", "Practices"]
+    assert [r["id"] for r in out["entries"]] == ["CC-01", "CC-02"]
+
+
+def test_concordance_ids_and_dates_are_validated(tmp_path):
+    """A quality-management record cites a row by id and the file header claims
+    the Guidance Statement revision it was read against, so a malformed id or
+    date is a load failure rather than a silently wrong claim."""
+    with pytest.raises(ModelError, match="concordance id"):
+        load_concordance(write(tmp_path, "b.yaml", CONCORDANCE_SOURCE.replace(
+            'id: "CC-02"', 'id: "VA-02"', 1)))
+    with pytest.raises(ModelError, match="ascending id order"):
+        load_concordance(write(tmp_path, "d.yaml", CONCORDANCE_SOURCE.replace(
+            'id: "CC-02"', 'id: "CC-00"', 1)))
+    with pytest.raises(ModelError, match="ISO date"):
+        load_concordance(write(tmp_path, "e.yaml", CONCORDANCE_SOURCE.replace(
+            'checked: "2026-09-27"', 'checked: "27 September 2026"', 1)))
+    with pytest.raises(ModelError, match="issued must be a non-empty string"):
+        load_concordance(write(tmp_path, "f.yaml", CONCORDANCE_SOURCE.replace(
+            'issued: "2026-07-22"', 'issued: ""', 1)))
+    with pytest.raises(ModelError, match="not declared"):
+        load_concordance(write(tmp_path, "u.yaml", CONCORDANCE_SOURCE.replace(
+            'section: "Practices"', 'section: "Other"', 1)))

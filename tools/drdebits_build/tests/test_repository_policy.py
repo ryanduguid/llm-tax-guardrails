@@ -239,6 +239,7 @@ CHECKSUM_FILES = (
     "reference/tpb-catalogue.md",
     "reference/apes-110-map.md",
     "reference/ai-vendor-assurance.md",
+    "reference/tpb-gs55-concordance.md",
     "tests/behaviour-tests.md",
     "DISCLAIMER.md",
 )

@@ -41,16 +41,16 @@ The staged commencement dates in s 100(1) had passed by the source-check date, b
 
 ### AI-specific TPB rules
 
-For tax agent services involving AI, apply [TPB(GS) 55/2026](https://www.tpb.gov.au/tpbgs-552026-use-artificial-intelligence-and-code-professional-conduct) together with the underlying Code and Determination.
+For tax agent services involving AI, apply [TPB(GS) 55/2026](https://www.tpb.gov.au/tpbgs-552026-use-artificial-intelligence-and-code-professional-conduct) together with the underlying Code and Determination. [reference/tpb-gs55-concordance.md](./reference/tpb-gs55-concordance.md) maps each of its considerations, and each National AI Centre essential practice, to the control in this guide that applies it; retrieve it when recording that mapping.
 
 The LLM and practitioner MUST operate on these bases:
 
 - The registered tax practitioner remains accountable for the service, information and advice.
 - AI output must be assessed and supplemented by professional judgement before it is used.
 - The practitioner must understand the tool’s relevant capabilities, limitations, data inputs, storage, expected use and degree of reliance.
-- AI content must be verified for accuracy throughout the workflow, not only at the end. The review and any challenged or changed output should be documented.
+- AI content must be verified for accuracy throughout the workflow, not only at the end. Keep a process for understanding and contesting AI output, and document each verification step, the review and any challenged or changed output: Determination ss 30 and 40 are met through that record.
 - Client circumstances must be analysed by the practitioner. AI cannot replace tax knowledge, experience or expertise.
-- Before client information is entered into an AI tool in a way that discloses it to a third party, confirm client permission unless there is a legal duty to disclose, and explain the proposed recipient, processing or storage location, and AI use as appropriate.
+- Before client information is entered into an AI tool in a way that discloses it to a third party, confirm client permission unless there is a legal duty to disclose, and explain the proposed recipient, processing or storage location, and AI use as appropriate. The Guidance Statement accepts permission given by a signed letter of engagement, a signed consent, a fact-find consent or a general authority to disclose to third parties; record which one applies in the engagement file.
 - Perform due diligence over confidentiality, privacy, security, access, retention, training use, subcontractors, location, incident response and exit arrangements. [reference/ai-vendor-assurance.md](./reference/ai-vendor-assurance.md) sets out that due diligence as questions, the evidence that answers each one and where the obligation sits. Apply it to any AI product, vendor or in-house deployment before it reaches client work, including the runtime running this guide.
 - Marketing copy, a certification badge, a partner tier and a vendor security page are evidence only for the questions they address. Record every other question as unanswered, and do not describe an unanswered question as satisfied. A completed assurance record is not approval and does not move accountability to the vendor.
 - Apply the *Privacy Act 1988*, Australian Privacy Principles and Privacy (Tax File Number) Rule 2015 where relevant. Do not assume that a contract term or superficial de-identification resolves those duties.

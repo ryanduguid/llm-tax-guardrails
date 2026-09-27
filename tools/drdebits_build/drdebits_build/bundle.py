@@ -15,7 +15,8 @@ REQUIRED = frozenset({
     "LICENSE", "README.md", "CITATION.cff", "drdebits.md", "MAINTENANCE.md",
     "reference/tpb-catalogue.md", "reference/apes-110-map.md", "tests/behaviour-tests.md",
 })
-OPTIONAL = frozenset({"reference/ai-vendor-assurance.md", "DISCLAIMER.md"})
+OPTIONAL = frozenset({"reference/ai-vendor-assurance.md", "reference/tpb-gs55-concordance.md",
+                      "DISCLAIMER.md"})
 
 
 class BundleError(ValueError):
