@@ -9,6 +9,7 @@ from drdebits_build.build import (
     build_apes_md,
     build_behaviour_md,
     build_catalogue_md,
+    build_concordance_md,
     build_guide,
     build_sha256sums,
     build_vendor_assurance_md,
@@ -139,6 +140,26 @@ def make_repo(tmp_path: Path) -> Path:
             obligation: "o2"
             if_absent: "a2"
     """), encoding="utf-8", newline="\n")
+    (tmp_path / "src" / "data" / "gs55-concordance.yaml").write_text(textwrap.dedent("""\
+        issued: "2026-07-22"
+        checked: "2026-01-01"
+        sections:
+          - "Alpha"
+          - "Beta"
+        entries:
+          - id: "CC-01"
+            section: "Alpha"
+            source: "Paragraph 1"
+            consideration: "c1"
+            control: "k1"
+            note: "n1"
+          - id: "CC-02"
+            section: "Beta"
+            source: "Practice 1"
+            consideration: "c2"
+            control: "k2"
+            note: "n2"
+    """), encoding="utf-8", newline="\n")
     (tmp_path / "src" / "data" / "changelog.yaml").write_text(textwrap.dedent("""\
         entries:
           - version: "0.9.9-test"
@@ -218,6 +239,20 @@ def test_vendor_assurance_md_renders_one_table_per_declared_section(tmp_path):
     # Sections render in the declared order, and the file ends with one newline.
     assert out.index("## First") < out.index("## Second")
     assert out.endswith("| VA-02 | q2 | e2 | o2 | a2 |\n")
+
+
+def test_concordance_md_renders_dates_and_one_table_per_section(tmp_path):
+    s = load_sources(make_repo(tmp_path))
+    out = build_concordance_md(s)
+    assert out.count("0.9.9-test") == 1
+    assert out.startswith("# TPB(GS) 55/2026 concordance\n")
+    assert "issued on 22 July 2026 and last read for this file on 1 January 2026" in out
+    assert out.count("| ID | Source | Consideration | DrDebits control | Note |") == 2
+    assert "## Alpha" in out and "## Beta" in out
+    assert out.index("## Alpha") < out.index("## Beta")
+    assert "| CC-01 | Paragraph 1 | c1 | k1 | n1 |" in out
+    assert out.endswith("| CC-02 | Practice 1 | c2 | k2 | n2 |\n")
+    assert "reference/tpb-gs55-concordance.md" in GENERATED
 
 
 def test_vendor_assurance_md_puts_each_row_under_its_own_section(tmp_path):

@@ -78,10 +78,11 @@ The diagram summarises the guide's own gate, classification, workflow and decisi
 | [reference/tpb-catalogue.md](./reference/tpb-catalogue.md) | The live TPB Guidance Statement catalogue, GS01 to GS55. Complete for the checked live Guidance Statement category, which is what the catalogue's own header says it covers, not every product the TPB has published |
 | [reference/apes-110-map.md](./reference/apes-110-map.md) | Primary APES 110 reference map |
 | [reference/ai-vendor-assurance.md](./reference/ai-vendor-assurance.md) | AI tool and vendor assurance checklist: the question, the evidence that answers it and where the obligation sits |
+| [reference/tpb-gs55-concordance.md](./reference/tpb-gs55-concordance.md) | TPB(GS) 55/2026 concordance: each of the Guidance Statement's considerations and each National AI Centre essential practice, with the guide control that applies it |
 | [AGENTS.md](./AGENTS.md) | Routing instructions for autonomous coding agents |
 | [DISCLAIMER.md](./DISCLAIMER.md) | General disclaimer: no advice, no agent-client relationship, human responsibility |
 | [MAINTENANCE.md](./MAINTENANCE.md) | Release and source-check protocol |
-| [SHA256SUMS](./SHA256SUMS) | Digests of the ten files in the verified guide bundle |
+| [SHA256SUMS](./SHA256SUMS) | Digests of the eleven files in the verified guide bundle |
 
 ## Integrity
 

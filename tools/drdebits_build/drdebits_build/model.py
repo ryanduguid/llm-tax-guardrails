@@ -22,6 +22,10 @@ CATALOGUE_ID_RE = re.compile(r"GS(\d+)\Z")
 # of silently renumbering what a firm recorded against last quarter.
 VENDOR_ID_RE = re.compile(r"VA-(\d+)\Z")
 
+# A concordance id carries the same invariant: a quality-management record that
+# cites CC-12 has to keep meaning that row after the next revision.
+CONCORDANCE_ID_RE = re.compile(r"CC-(\d+)\Z")
+
 ALLOWED_STATUSES = frozenset({
     "HARD_STOP", "ESCALATE", "NEEDS_FACTS", "PROCEED_DRAFT_ONLY",
     "Low impact — proportionate answer",
@@ -320,19 +324,8 @@ def load_apes_map(path):
 VENDOR_FIELDS = ("id", "section", "question", "evidence", "obligation", "if_absent")
 
 
-def load_vendor_assurance(path):
-    """Load the AI vendor assurance checklist: declared sections, then rows.
-
-    The builder renders one heading and one table per declared section, in the
-    declared order, and picks each table's rows by matching the section field.
-    That render is only faithful if the rows carry the grouping it assumes, so
-    the checks below make the 2 agree at load: every row names a declared
-    section, a section's rows sit together, and every declared section has
-    rows. Without them a row could drift under a heading that does not
-    describe it, or a section could render as a bare heading with no table,
-    and the rebuild would reproduce either one byte for byte.
-    """
-    data = _read(path)
+def _sectioned_rows(path, data, fields, id_re, id_word):
+    """Declared sections, then numbered rows grouped by section, in order."""
     titles = data.get("sections")
     if not isinstance(titles, list) or not titles:
         raise ModelError(f"{path}: 'sections' must be a non-empty list")
@@ -347,15 +340,15 @@ def load_vendor_assurance(path):
     if len(declared) != len(set(declared)):
         raise ModelError(f"{path}: duplicate section titles")
 
-    rows = _rows(path, data, "entries", VENDOR_FIELDS, table_safe=True)
+    rows = _rows(path, data, "entries", fields, table_safe=True)
     _unique_ids(path, rows)
     previous = None
     order: list[str] = []
     for r in rows:
-        match = VENDOR_ID_RE.match(r["id"])
+        match = id_re.match(r["id"])
         if match is None:
             raise ModelError(
-                f"{path}: id {r['id']!r} must be a checklist id (VA- followed by digits)")
+                f"{path}: id {r['id']!r} must be a {id_word}")
         number = int(match.group(1))
         if previous is not None and number <= previous[0]:
             raise ModelError(
@@ -379,6 +372,47 @@ def load_vendor_assurance(path):
             f"{path}: sections with entries {order} do not match the declared order "
             f"{declared}; sections without entries: {missing}")
     return {"sections": declared, "entries": rows}
+
+
+def load_vendor_assurance(path):
+    """Load the AI vendor assurance checklist: declared sections, then rows.
+
+    The builder renders one heading and one table per declared section, in the
+    declared order, and picks each table's rows by matching the section field.
+    That render is only faithful if the rows carry the grouping it assumes, so
+    the checks below make the 2 agree at load: every row names a declared
+    section, a section's rows sit together, and every declared section has
+    rows. Without them a row could drift under a heading that does not
+    describe it, or a section could render as a bare heading with no table,
+    and the rebuild would reproduce either one byte for byte.
+    """
+    return _sectioned_rows(path, _read(path), VENDOR_FIELDS, VENDOR_ID_RE,
+                           "checklist id (VA- followed by digits)")
+
+
+CONCORDANCE_FIELDS = ("id", "section", "source", "consideration", "control", "note")
+CONCORDANCE_DATES = ("issued", "checked")
+
+
+def load_concordance(path):
+    """Load the TPB(GS) 55/2026 concordance: the dates the file is pinned to, then
+    sections and rows with the same shape and checks as the vendor checklist.
+
+    The issue date names the Guidance Statement revision the rows were written
+    against and the check date says when it was last read, so a later TPB
+    revision is a visible source-currency event rather than a silent drift.
+    """
+    data = _read(path)
+    out = _sectioned_rows(path, data, CONCORDANCE_FIELDS, CONCORDANCE_ID_RE,
+                          "concordance id (CC- followed by digits)")
+    for key in CONCORDANCE_DATES:
+        value = _require_str(path, key, data.get(key))
+        try:
+            date.fromisoformat(value)
+        except ValueError as exc:
+            raise ModelError(f"{path}: {key} must be an ISO date, got {value!r}") from exc
+        out[key] = value
+    return out
 
 
 # Every key the builders and verifier dereference unconditionally. A missing

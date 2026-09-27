@@ -74,6 +74,7 @@ class Sources:
     whole_response: dict
     apes: dict
     vendor: dict
+    concordance: dict
     changelog: list
 
 
@@ -100,6 +101,7 @@ def load_sources(root):
         whole_response=model.load_whole_response(data / "behaviour-tests.yaml"),
         apes=model.load_apes_map(data / "apes-110-map.yaml"),
         vendor=model.load_vendor_assurance(data / "ai-vendor-assurance.yaml"),
+        concordance=model.load_concordance(data / "gs55-concordance.yaml"),
         changelog=model.load_changelog(data / "changelog.yaml"),
     )
 
@@ -193,12 +195,31 @@ def build_vendor_assurance_md(s):
     return "".join(parts).rstrip("\n") + "\n"
 
 
+CONCORDANCE_HEADER_TEMPLATE = '# TPB(GS) 55/2026 concordance\n\nPart of [DrDebits](../drdebits.md) `{version}`. Retrieve this file when recording how AI-assisted work meets TPB(GS) 55/2026 (linked from the guide) or the National AI Centre’s essential practices, for example in a quality-management or engagement record; verify it against `SHA256SUMS` in the release.\n\n\nThe Guidance Statement was issued on {issued} and last read for this file on {checked}. Paragraph numbers are its own. Each row names the DrDebits control that applies a consideration; the control text in the guide governs, and this file adds no obligation. A row that names a reference file points at material retrieved on demand, not at guide text. A revised Guidance Statement is a source-currency event: re-read it, move the check date and revise the rows before the next release.\n\n'
+CONCORDANCE_HEADERS = ["ID", "Source", "Consideration", "DrDebits control", "Note"]
+
+
+def build_concordance_md(s):
+    parts = [CONCORDANCE_HEADER_TEMPLATE.format(
+        version=s.meta["guide_version"],
+        issued=_render_checked_date(s.concordance["issued"]),
+        checked=_render_checked_date(s.concordance["checked"]))]
+    for title in s.concordance["sections"]:
+        rows = [[r["id"], r["source"], r["consideration"], r["control"], r["note"]]
+                for r in s.concordance["entries"] if r["section"] == title]
+        parts.append(f"## {title}\n\n")
+        parts.append(render_table(CONCORDANCE_HEADERS, ["---"] * len(CONCORDANCE_HEADERS), rows))
+        parts.append("\n")
+    return "".join(parts).rstrip("\n") + "\n"
+
+
 GENERATED = {
     "drdebits.md": build_guide,
     "reference/tpb-catalogue.md": build_catalogue_md,
     "tests/behaviour-tests.md": build_behaviour_md,
     "reference/apes-110-map.md": build_apes_md,
     "reference/ai-vendor-assurance.md": build_vendor_assurance_md,
+    "reference/tpb-gs55-concordance.md": build_concordance_md,
     evals.CASES_FILE: evals.build_cases,
 }
 
