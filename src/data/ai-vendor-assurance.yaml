@@ -218,4 +218,4 @@ entries:
     question: "Can the vendor change its terms, privacy policy or data-use clauses by posting a new version, and how is the firm told before a change applies?"
     evidence: "The variation clause and the notice it requires, with a dated copy of each document version the firm last reviewed. A web page summary that differs from the contract is recorded as a difference, not as an answer."
     obligation: "TASA Code item 6 (confidentiality); TPB(GS) 55/2026 (understand the tool’s capabilities and limitations); Guidance for AI Adoption (National AI Centre, October 2025), practice 5 (test and monitor)."
-    if_absent: "Assume the terms can change without notice, and recheck VA-05 to VA-11 and VA-34 against the posted versions before each renewal."
+    if_absent: "Keep client data out of the product until the variation clause and its notice are known. Where the vendor can change terms just by posting them, recheck VA-05 to VA-11 and VA-34 whenever a posted version changes, not only at renewal, and pause client use until each change is reviewed."
