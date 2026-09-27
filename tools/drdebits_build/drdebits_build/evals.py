@@ -29,7 +29,6 @@ RESULTS_DIR = "evals/results"
 OBSERVATIONS_DIR = "evals/observations"
 HUMAN_CONFIRMED = "human-confirmed"
 MODEL_PROPOSED = "model-proposed"
-VERDICT_BASES = (HUMAN_CONFIRMED, MODEL_PROPOSED)
 DIRECTORY_BASIS = {RESULTS_DIR: HUMAN_CONFIRMED, OBSERVATIONS_DIR: MODEL_PROPOSED}
 # `violation` records a response that met its own case rubric and still broke
 # another guide control, an unsolicited safe-harbour conclusion for instance.
