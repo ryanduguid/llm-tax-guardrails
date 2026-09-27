@@ -216,7 +216,7 @@ entries:
     source: "Practice 4, share essential information"
     consideration: "Tell affected people what the AI does, its limits and how to raise a concern or contest an outcome."
     control: "Output contract (limits and status on every draft); AI-specific TPB rules (explain AI use to the client)."
-    note: "No guide control gives an affected person a route to contest an AI outcome; the Code Determination s 45 complaint-process disclosure covers complaints about the service, so the firm's complaint process must take AI outcomes as well."
+    note: "No guide control gives an affected person a route to contest an AI outcome, and the Code Determination s 45 row requires disclosure of a complaint process rather than any such route: this part of the practice is uncovered, and the firm decides how its own complaint process treats AI outcomes."
   - id: "CC-35"
     section: "National AI Centre essential practices"
     source: "Practice 5, test and monitor"
