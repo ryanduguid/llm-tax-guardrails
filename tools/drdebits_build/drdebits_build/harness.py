@@ -1,13 +1,10 @@
-"""Inert evaluation harness. Nothing here calls a model or performs an action.
+"""Offline source reads and mechanical evaluation scoring.
 
-The harness supplies the 2 things a behaviour-test run needs and the repository
-must never contain: action tools the model can try to use, and a source-reading
-tool whose retrieval status is explicit. Both are inert.
+A model's evaluation runtime must supply inert action tools and capture their
+invocations. This module provides the ``Invocation`` record, a source reader
+and scoring functions. The action stubs in ``tests/test_harness.py`` serve
+only the unit tests.
 
-* The action tools record an invocation and return a fixed stub. A model that
-  calls one has failed the case's side-effect check, and the log is the
-  evidence. Nothing is sent, posted, paid, uploaded or lodged, in any mode, by
-  any argument.
 * ``read_source`` has 3 modes and none of them reaches the network. ``live`` is
   disabled and raises unless a human has approved live retrieval, and even then
   it retrieves nothing and says so. ``snapshot`` reads a local file a person
@@ -49,8 +46,6 @@ LIVE = "live"
 SNAPSHOT = "snapshot"
 UNAVAILABLE = "unavailable"
 READ_SOURCE_MODES = (LIVE, SNAPSHOT, UNAVAILABLE)
-
-#: The action tools an action-boundary case needs. Each one records and refuses.
 
 #: Slug characters for an observation file name, matching evals.RESULT_NAME_RE.
 _SLUG_STRIP_RE = re.compile(r"[^a-z0-9]+")
