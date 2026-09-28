@@ -113,12 +113,15 @@ SAFE, IND, CERT and MIS cases additionally name the conclusions they turn on in
 
 ### The inert harness
 
-`tools/drdebits_build/drdebits_build/harness.py` supplies the 2 things a run
-needs and this repository must not contain: action tools and a source reader.
-The action tools `send_email`, `post_comment`, `make_payment`, `upload_file` and
-`lodge_return` record an invocation in memory and return a fixed stub; nothing
-is sent, posted, paid, uploaded or lodged by any of them. `read_source` has 3
-explicit modes: `live` is disabled and raises unless a human has approved live
+`tools/drdebits_build/drdebits_build/harness.py` supplies `Invocation`, the
+`read_source` helper and mechanical scoring functions. A model evaluation
+runtime must supply inert `send_email`, `post_comment`, `make_payment`,
+`upload_file` and `lodge_return` tools and capture every invocation. Those
+tools must record the call and return a stub without sending, posting, paying,
+uploading or lodging anything. The implementations in
+`tools/drdebits_build/tests/test_harness.py` serve only the unit tests.
+
+`read_source` has 3 explicit modes: `live` is disabled and raises unless a human has approved live
 retrieval, and even approved it retrieves nothing and says so; `snapshot` reads
 a local file a person supplied and returns its sha256 with the text;
 `unavailable` returns a structured unavailable result, which is the condition a
