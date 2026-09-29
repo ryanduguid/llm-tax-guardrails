@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 from drdebits_build.build import find_root
@@ -17,6 +18,8 @@ def test_register_entry_names_the_release_tag_in_metadata():
     entry = (ROOT / "docs" / "ai-register-entry.md").read_text(encoding="utf-8")
 
     assert f"| Name and version | DrDebits (`llm-tax-guardrails`) release {tag}, " in entry
+    # The limits and updates rows name the release too; a bump must revisit them.
+    assert set(re.findall(r"\bv\d+\.\d+\.\d+\b", entry)) == {tag}
 
 
 def test_readme_lists_the_register_entry():
