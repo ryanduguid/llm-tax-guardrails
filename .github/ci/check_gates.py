@@ -13,6 +13,7 @@ the merge commit checked out with its parents (fetch-depth: 2). It fails when:
   the pull request body has no line "removed-jobs: WORKFLOW#JOB" for it;
 - a line at job-key indentation in the jobs block is not a job key it can read.
 """
+
 import json
 import os
 import string
@@ -26,14 +27,14 @@ ID_CHARS = ID_START | set(string.digits + "-")
 def job_key(text: str) -> str | None:
     """Return the job id a line (without its indentation) declares, or None if it is not a plain key."""
     quote = text[0] if text[:1] in ("'", '"') else ""
-    rest = text[len(quote):]
+    rest = text[len(quote) :]
     length = 0
     while length < len(rest) and rest[length] in ID_CHARS:
         length += 1
     name, rest = rest[:length], rest[length:]
     if not name or name[0] not in ID_START or not rest.startswith(quote):
         return None
-    rest = rest[len(quote):].lstrip(" \t")
+    rest = rest[len(quote) :].lstrip(" \t")
     if not rest.startswith(":") or rest[1:2] not in ("", " ", "\t"):
         return None
     return name
@@ -57,12 +58,14 @@ def job_ids(text: str) -> set[str]:
 
 
 def workflow_file(argument: str) -> str:
-    """Resolve WORKFLOW, which must name a file in this repository's .github/workflows."""
-    root = os.path.normpath(os.path.join(os.getcwd(), ".github", "workflows"))
-    path = os.path.normpath(os.path.join(os.getcwd(), argument))
-    if not path.startswith(root + os.sep):
+    """Return the path of WORKFLOW, which must name a file directly in .github/workflows."""
+    # The path comes from the directory listing, never from the argument itself.
+    prefix = ".github/workflows/"
+    listing = {entry.name: entry.path for entry in os.scandir(prefix) if entry.is_file()}
+    name = argument[len(prefix) :] if argument.startswith(prefix) else ""
+    if name not in listing:
         sys.exit(f"{argument} is not a file in .github/workflows")
-    return path
+    return listing[name]
 
 
 def git(*args: str) -> str:
@@ -74,7 +77,7 @@ def main(argv: list[str]) -> None:
     exempt: set[str] = set()
     if "--exempt" in args:
         index = args.index("--exempt")
-        args, exempt = args[:index], set(args[index + 1:])
+        args, exempt = args[:index], set(args[index + 1 :])
     workflow, gate = args
     results = json.loads(os.environ["RESULTS"])
 
@@ -94,18 +97,25 @@ def main(argv: list[str]) -> None:
     # On a pull request HEAD is the merge commit, whose first parent is the base
     # the merge was made against. A workflow new in this pull request has no base
     # copy, and a missing parent fails the check rather than skipping it.
-    if os.environ.get("GITHUB_EVENT_NAME") == "pull_request" and git(
-        "ls-tree", "--name-only", "HEAD^1", "--", workflow
-    ).strip():
+    if (
+        os.environ.get("GITHUB_EVENT_NAME") == "pull_request"
+        and git("ls-tree", "--name-only", "HEAD^1", "--", workflow).strip()
+    ):
         removed = job_ids(git("show", f"HEAD^1:{workflow}")) - jobs
         prefix = "removed-jobs:"
         body = os.environ.get("PR_BODY", "")
-        declared = {line[len(prefix):].strip() for line in body.splitlines() if line.startswith(prefix)}
+        declared = {
+            line[len(prefix) :].strip() for line in body.splitlines() if line.startswith(prefix)
+        }
         undeclared = sorted(job for job in removed if f"{workflow}#{job}" not in declared)
         if undeclared:
             sys.exit(
-                "These jobs were removed from " + workflow + ": " + ", ".join(undeclared)
-                + ". If that is intended, add a line 'removed-jobs: " + workflow
+                "These jobs were removed from "
+                + workflow
+                + ": "
+                + ", ".join(undeclared)
+                + ". If that is intended, add a line 'removed-jobs: "
+                + workflow
                 + "#<job>' for each to the pull request description, then push again."
             )
 
