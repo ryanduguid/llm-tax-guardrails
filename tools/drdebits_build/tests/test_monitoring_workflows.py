@@ -74,3 +74,15 @@ CHECK_EXIT_CODE=2
         assert len(operations) == 1
         assert operations[0].startswith("issue create ")
     assert all("issue close 98 " not in operation for operation in operations)
+
+
+@pytest.mark.skipif(not BASH, reason="workflow integration needs Bash")
+@pytest.mark.parametrize("code,passes", [("0", True), ("3", True), ("1", False), ("2", False), ("", False)])
+def test_link_check_fails_unless_every_reachable_link_was_verified(tmp_path, code, passes):
+    document = yaml.safe_load((ROOT / ".github/workflows/link-check.yml").read_text())
+    final = next(iter(document["jobs"].values()))["steps"][-1]
+    assert final.get("if") == "always()"
+    script = tmp_path / "gate.sh"
+    script.write_text(final["run"] + "\n", encoding="utf-8", newline="\n")
+    result = subprocess.run([BASH, str(script)], env={"CHECK_EXIT_CODE": code}, capture_output=True)
+    assert (result.returncode == 0) is passes
