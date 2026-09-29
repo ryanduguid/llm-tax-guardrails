@@ -35,6 +35,21 @@ DEAD_GAI_ERRNOS = frozenset(
     if hasattr(socket, name)
 )
 
+# Hosts that time out on GitHub's runners because they block cloud address
+# ranges, and one ATO page that answers the runners 403 while the rest of its
+# host answers. From a residential connection on 29 September 2026 every one of
+# these links resolved (issue 113). An unreachable link here is listed for
+# checking by hand instead of making the check incomplete; a dead answer still
+# fails.
+MANUAL_HOSTS = frozenset({"www.tpb.gov.au", "www.austrac.gov.au"})
+MANUAL_URLS = frozenset({
+    "https://www.ato.gov.au/law/view/document?docid=PSR%2FPS20125%2FNAT%2FATO%2F00001",
+})
+
+
+def needs_manual_check(url):
+    return url in MANUAL_URLS or urllib.parse.urlsplit(url).hostname in MANUAL_HOSTS
+
 
 def collect_urls(root):
     root = Path(root)
@@ -232,7 +247,7 @@ def main(argv=None):
     args = parser.parse_args(argv)
     root = Path(args.root) if args.root else find_root(Path.cwd())
     urls = collect_urls(root)
-    ok = dead = unreachable = 0
+    ok = dead = unreachable = manual = 0
     with ThreadPoolExecutor(max_workers=10) as executor:
         results = executor.map(partial(check, timeout=args.timeout), urls)
         for url, (kind, detail) in zip(urls, results):
@@ -241,13 +256,20 @@ def main(argv=None):
             elif kind == "dead":
                 dead += 1
                 print(f"DEAD {detail} {url}")
+            elif needs_manual_check(url):
+                manual += 1
+                print(f"MANUAL {detail} {url}")
             else:
                 unreachable += 1
                 print(f"UNREACHABLE {detail} {url}")
-    print(f"checked {ok + dead + unreachable}: ok {ok}, dead {dead}, unreachable {unreachable}")
+    print(f"checked {ok + dead + unreachable + manual}: ok {ok}, dead {dead}, "
+          f"unreachable {unreachable}, manual {manual}")
     if dead:
         return 1
-    return 2 if unreachable or not urls else 0
+    if unreachable or not urls:
+        return 2
+    # 3: every link that could be reached is live; the MANUAL ones need a person.
+    return 3 if manual else 0
 
 
 if __name__ == "__main__":

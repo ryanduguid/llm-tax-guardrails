@@ -30,7 +30,7 @@ jobs:
           python-version: "3.14"
 
       - name: Install the locked toolchain
-        uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
           version: "0.12.0"
           enable-cache: true
@@ -47,7 +47,9 @@ jobs:
           cat link-check.txt
           printf '### Verification result: %s\n\n' "$result" >> "$GITHUB_STEP_SUMMARY"
           cat link-check.txt >> "$GITHUB_STEP_SUMMARY"
-          # 0: checked; 1: finding; 2: incomplete. Any other code is an error.
+          # 0: checked; 1: finding; 2: incomplete; 3: checked apart from the
+          # MANUAL links, whose hosts block GitHub's runners and which a person
+          # checks by hand. Any other code is an error.
           if [ "$result" -ne 0 ]; then
             echo "::warning::Verification needs review (exit $result); see the report."
           fi
@@ -63,6 +65,9 @@ jobs:
           title="Link check: review required"
           printf '%s\n\n' 'SOURCE CURRENCY NOT CONFIRMED. Review the findings or incomplete checks below. An inaccessible source does not establish that it is superseded or dead. A checker error is not a source finding. Do not advance sources_checked_at without substantive human review.' > issue-body.txt
           printf 'Checker exit code: %s\n\n' "$CHECK_EXIT_CODE" >> issue-body.txt
+          if [ "$CHECK_EXIT_CODE" = '3' ]; then
+            printf '%s\n\n' 'Every link the runner could reach is live. The MANUAL links are on hosts that block GitHub runners; check them by hand from another connection.' >> issue-body.txt
+          fi
           cat link-check.txt >> issue-body.txt
           reports="$(gh api --paginate --slurp "repos/$GITHUB_REPOSITORY/issues?state=open&per_page=100" | jq -r 'add | map(select(.pull_request == null)) | map(select(.title == "Link check: review required" or .title == "Link check: SOURCE CURRENCY NOT CONFIRMED for listed links")) | sort_by(.number) | map(.number | tostring) | join(" ")')"
           existing="${reports%% *}"
@@ -92,9 +97,10 @@ jobs:
             gh issue close "$existing" --repo "$GITHUB_REPOSITORY" --comment 'The latest automated check completed with exit 0. This closes the monitoring report, not the substantive professional review.'
           done
 
-      - name: Require complete verification
+      - name: Require verification of every link a runner can reach
         if: always()
         env:
           CHECK_EXIT_CODE: ${{ steps.check.outputs.exit_code }}
         shell: bash
-        run: test "$CHECK_EXIT_CODE" = '0'
+        # 3 passes: its MANUAL links stay listed in the open report issue.
+        run: test "$CHECK_EXIT_CODE" = '0' || test "$CHECK_EXIT_CODE" = '3'
