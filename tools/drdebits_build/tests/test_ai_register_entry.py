@@ -19,7 +19,7 @@ def test_register_entry_names_the_release_tag_in_metadata():
 
     assert f"| Name and version | DrDebits (`llm-tax-guardrails`) release {tag}, " in entry
     # The limits and updates rows name the release too; a bump must revisit them.
-    assert set(re.findall(r"\bv\d+\.\d+\.\d+\b", entry)) == {tag}
+    assert set(re.findall(r"\bv\d+\.\d+\.\d+(?:-[0-9A-Za-z]+(?:\.[0-9A-Za-z]+)*)?", entry)) == {tag}
 
 
 def test_readme_lists_the_register_entry():
