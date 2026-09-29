@@ -79,8 +79,15 @@ jobs:
         run: |
           import json, os, re
           text = open(".github/workflows/codeql.yml", encoding="utf-8").read()
-          keys = re.findall(r"(?m)^  [\"']?([A-Za-z_][\w-]*)[\"']?:", text.split("\njobs:\n", 1)[1])
-          jobs = set(keys)
+          block = re.split(r"(?m)^(?=[^\s#])", text.split("\njobs:\n", 1)[1], maxsplit=1)[0]
+          key = re.compile(r"""(["']?)([A-Za-z_][\w-]*)\1[ \t]*:(?:[ \t]|$)""")
+          jobs = set()
+          for line in block.splitlines():
+              if line.startswith("  ") and line[2:3] not in ("", " ", "#"):
+                  match = key.match(line[2:])
+                  if match is None:
+                      raise SystemExit("Cannot read the job key " + repr(line) + "; the gate check needs updating")
+                  jobs.add(match[2])
           if "codeql-gates" not in jobs:
               raise SystemExit("Could not read the job list; the gate check needs updating")
           missing = sorted(jobs - {"codeql-gates"} - set(json.loads(os.environ["RESULTS"])))
