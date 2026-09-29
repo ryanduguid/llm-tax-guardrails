@@ -79,8 +79,10 @@ def base_copy(workflow: str, gate: str) -> str | None:
     # Protection requires the gate by name, whatever file reports it, so a renamed
     # or replacement workflow is compared with the one base workflow holding GATE.
     candidates = []
-    for path in git("ls-tree", "--name-only", "HEAD^1", "--", ".github/workflows/").splitlines():
-        if path.endswith((".yml", ".yaml")):
+    listing = git("ls-tree", "-r", "--name-only", "HEAD^1", "--", ".github/workflows/")
+    for path in listing.splitlines():
+        # GitHub reads workflows only from the top level of .github/workflows.
+        if path.count("/") == 2 and path.endswith((".yml", ".yaml")):
             text = git("show", f"HEAD^1:{path}")
             parsed = parse_jobs(text)
             if parsed is not None and gate in parsed[0]:
@@ -130,6 +132,16 @@ def main(argv: list[str]) -> None:
     if missing:
         sys.exit("Add these jobs to needs: " + ", ".join(missing))
 
+    prefix = "# removed-jobs:"
+    declared: set[str] = set()
+    for line in text.splitlines():
+        if line.strip().startswith(prefix):
+            declared.update(name.strip() for name in line.strip()[len(prefix) :].split(","))
+    # A declaration naming a job that still exists would waive a later removal.
+    live = sorted(declared & jobs)
+    if live:
+        sys.exit("These removed-jobs declarations name jobs that still exist: " + ", ".join(live))
+
     # On a pull request HEAD is the merge commit, whose first parent is the base
     # the merge was made against. A missing parent fails the check rather than
     # skipping it; a workflow and gate both new in this pull request have no base.
@@ -138,11 +150,6 @@ def main(argv: list[str]) -> None:
     )
     if base is not None:
         removed = job_ids(base) - jobs
-        prefix = "# removed-jobs:"
-        declared = set()
-        for line in text.splitlines():
-            if line.strip().startswith(prefix):
-                declared.update(name.strip() for name in line.strip()[len(prefix) :].split(","))
         if removed & declared:
             print(f"Declared removals from {workflow}: {', '.join(sorted(removed & declared))}")
         undeclared = sorted(removed - declared)
