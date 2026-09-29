@@ -48,8 +48,8 @@ jobs:
   codeql-gates:
     # The one context branch protection requires from this workflow. It fails
     # unless every job it needs succeeded, when a job in this file is missing
-    # from needs, or when a pull request removes a job without a
-    # "removed-jobs: <workflow>#<job>" line in its description.
+    # from needs, or when a pull request removes a job without adding a
+    # "# removed-jobs: <job>" comment to this file.
     needs: [analyze]
     if: always()
     runs-on: ubuntu-latest
@@ -66,5 +66,4 @@ jobs:
       - name: Require every job to be listed, kept and successful
         env:
           RESULTS: ${{ toJSON(needs) }}
-          PR_BODY: ${{ github.event.pull_request.body }}
         run: python3 .github/ci/check_gates.py .github/workflows/codeql.yml codeql-gates

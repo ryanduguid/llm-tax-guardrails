@@ -3,14 +3,16 @@
 usage: python .github/ci/check_gates.py WORKFLOW GATE [--exempt JOB ...] [--no-results]
 
 Run from the repository root by the gate job of WORKFLOW, with RESULTS set to
-toJSON(needs) and, on pull requests, PR_BODY set to the pull request body and
-the merge commit checked out with its parents (fetch-depth: 2). It fails when:
+toJSON(needs) and, on pull requests, the merge commit checked out with its
+parents (fetch-depth: 2). It fails when:
 
 - a needed job did not succeed (skipped with --no-results, where the gate
   applies its own result rules);
 - a job in WORKFLOW other than GATE and the exempt jobs is missing from needs;
-- on a pull request, a job on the base branch's copy of WORKFLOW is gone, and
-  the pull request body has no line "removed-jobs: WORKFLOW#JOB" for it;
+- on a pull request, a job on the base branch's copy of WORKFLOW (or, for a new
+  or renamed file, of the one base workflow holding GATE) is gone, and WORKFLOW
+  has no comment "# removed-jobs: JOB" naming it (the declaration lives in the
+  file, so it cannot change without a new commit and a new run);
 - a line at job-key indentation in the jobs block is not a job key it can read.
 """
 
@@ -40,21 +42,54 @@ def job_key(text: str) -> str | None:
     return name
 
 
-def job_ids(text: str) -> set[str]:
-    """Return the job ids of a workflow, failing on any job-level line it cannot read."""
+def parse_jobs(text: str) -> tuple[set[str], list[str]] | None:
+    """Return a workflow's job ids and unreadable job-level lines, or None without a jobs block."""
     parts = text.split("\njobs:\n", 1)
     if len(parts) != 2:
-        sys.exit("Cannot find the jobs block; the gate check needs updating")
-    ids = set()
+        return None
+    ids: set[str] = set()
+    unreadable: list[str] = []
     for line in parts[1].splitlines():
         if line[:1] not in ("", " ", "#"):
             break  # the next top-level key ends the jobs block
         if line.startswith("  ") and line[2:3] not in ("", " ", "#"):
             name = job_key(line[2:])
             if name is None:
-                sys.exit(f"Cannot read the job key {line!r}; the gate check needs updating")
-            ids.add(name)
+                unreadable.append(line)
+            else:
+                ids.add(name)
+    return ids, unreadable
+
+
+def job_ids(text: str) -> set[str]:
+    """Return the job ids of a workflow, failing on any job-level line it cannot read."""
+    parsed = parse_jobs(text)
+    if parsed is None:
+        sys.exit("Cannot find the jobs block; the gate check needs updating")
+    ids, unreadable = parsed
+    if unreadable:
+        sys.exit(f"Cannot read the job key {unreadable[0]!r}; the gate check needs updating")
     return ids
+
+
+def base_copy(workflow: str, gate: str) -> str | None:
+    """Return the base branch's copy of WORKFLOW, or of its predecessor, or None if it is new."""
+    if git("ls-tree", "--name-only", "HEAD^1", "--", workflow).strip():
+        return git("show", f"HEAD^1:{workflow}")
+    # Protection requires the gate by name, whatever file reports it, so a renamed
+    # or replacement workflow is compared with the one base workflow holding GATE.
+    candidates = []
+    for path in git("ls-tree", "--name-only", "HEAD^1", "--", ".github/workflows/").splitlines():
+        if path.endswith((".yml", ".yaml")):
+            text = git("show", f"HEAD^1:{path}")
+            parsed = parse_jobs(text)
+            if parsed is not None and gate in parsed[0]:
+                candidates.append(text)
+    if len(candidates) > 1:
+        sys.exit(
+            f"More than one base workflow has a job named {gate}; the gate check needs updating"
+        )
+    return candidates[0] if candidates else None
 
 
 def workflow_file(argument: str) -> str:
@@ -87,7 +122,8 @@ def main(argv: list[str]) -> None:
             sys.exit("Jobs did not succeed: " + ", ".join(failed))
 
     with open(workflow_file(workflow), encoding="utf-8") as handle:
-        jobs = job_ids(handle.read())
+        text = handle.read()
+    jobs = job_ids(text)
     if gate not in jobs:
         sys.exit(f"Cannot find {gate} in {workflow}; the gate check needs updating")
     missing = sorted(jobs - {gate} - exempt - set(results))
@@ -95,28 +131,30 @@ def main(argv: list[str]) -> None:
         sys.exit("Add these jobs to needs: " + ", ".join(missing))
 
     # On a pull request HEAD is the merge commit, whose first parent is the base
-    # the merge was made against. A workflow new in this pull request has no base
-    # copy, and a missing parent fails the check rather than skipping it.
-    if (
-        os.environ.get("GITHUB_EVENT_NAME") == "pull_request"
-        and git("ls-tree", "--name-only", "HEAD^1", "--", workflow).strip()
-    ):
-        removed = job_ids(git("show", f"HEAD^1:{workflow}")) - jobs
-        prefix = "removed-jobs:"
-        body = os.environ.get("PR_BODY", "")
-        declared = {
-            line[len(prefix) :].strip() for line in body.splitlines() if line.startswith(prefix)
-        }
-        undeclared = sorted(job for job in removed if f"{workflow}#{job}" not in declared)
+    # the merge was made against. A missing parent fails the check rather than
+    # skipping it; a workflow and gate both new in this pull request have no base.
+    base = (
+        base_copy(workflow, gate) if os.environ.get("GITHUB_EVENT_NAME") == "pull_request" else None
+    )
+    if base is not None:
+        removed = job_ids(base) - jobs
+        prefix = "# removed-jobs:"
+        declared = set()
+        for line in text.splitlines():
+            if line.strip().startswith(prefix):
+                declared.update(name.strip() for name in line.strip()[len(prefix) :].split(","))
+        if removed & declared:
+            print(f"Declared removals from {workflow}: {', '.join(sorted(removed & declared))}")
+        undeclared = sorted(removed - declared)
         if undeclared:
             sys.exit(
                 "These jobs were removed from "
                 + workflow
                 + ": "
                 + ", ".join(undeclared)
-                + ". If that is intended, add a line 'removed-jobs: "
-                + workflow
-                + "#<job>' for each to the pull request description, then push again."
+                + ". If that is intended, add the comment '# removed-jobs: "
+                + ", ".join(undeclared)
+                + "' to that file."
             )
 
 
