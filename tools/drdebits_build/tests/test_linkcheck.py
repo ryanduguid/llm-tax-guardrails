@@ -198,7 +198,7 @@ def test_main_reports_dead_and_unreachable_and_exits_1_on_dead(tmp_path, monkeyp
     assert "UNREACHABLE timeout https://x.invalid/blocked" in out
     # make_repo's own fixture source contributes one more URL (x.invalid/a),
     # which also lands in the unreachable bucket via fake_check's else branch.
-    assert "checked 3: ok 0, dead 1, unreachable 2" in out
+    assert "checked 3: ok 0, dead 1, unreachable 2, manual 0" in out
 
 
 def test_main_exits_2_when_only_unreachable(tmp_path, monkeypatch, capsys):
@@ -214,7 +214,60 @@ def test_main_exits_2_when_only_unreachable(tmp_path, monkeypatch, capsys):
     assert rc == 2
     assert "UNREACHABLE 403 https://x.invalid/blocked" in out
     # make_repo's own fixture source contributes one more URL (x.invalid/a).
-    assert "checked 2: ok 0, dead 0, unreachable 2" in out
+    assert "checked 2: ok 0, dead 0, unreachable 2, manual 0" in out
+
+
+ATO_DENIED = "https://www.ato.gov.au/law/view/document?docid=PSR%2FPS20125%2FNAT%2FATO%2F00001"
+
+
+def _run_main(monkeypatch, capsys, results):
+    monkeypatch.setattr(linkcheck, "collect_urls", lambda root: list(results))
+    monkeypatch.setattr(linkcheck, "check", lambda url, timeout: results[url])
+    rc = linkcheck.main(["--root", "."])
+    return rc, capsys.readouterr().out
+
+
+def test_main_exits_3_when_only_runner_blocked_links_are_unreachable(monkeypatch, capsys):
+    rc, out = _run_main(monkeypatch, capsys, {
+        "https://www.tpb.gov.au/guidance": ("unreachable", "timeout"),
+        "https://www.austrac.gov.au/obligations": ("unreachable", "timeout"),
+        ATO_DENIED: ("unreachable", "403"),
+        "https://www.ato.gov.au/elsewhere": ("ok", "200"),
+    })
+    assert rc == 3
+    assert "MANUAL timeout https://www.tpb.gov.au/guidance" in out
+    assert f"MANUAL 403 {ATO_DENIED}" in out
+    assert "checked 4: ok 1, dead 0, unreachable 0, manual 3" in out
+
+
+def test_a_dead_link_on_a_runner_blocked_host_still_fails(monkeypatch, capsys):
+    rc, out = _run_main(monkeypatch, capsys, {
+        "https://www.tpb.gov.au/gone": ("dead", "404"),
+        "https://www.austrac.gov.au/obligations": ("unreachable", "timeout"),
+    })
+    assert rc == 1
+    assert "DEAD 404 https://www.tpb.gov.au/gone" in out
+
+
+def test_other_unreachable_links_keep_the_check_incomplete(monkeypatch, capsys):
+    rc, out = _run_main(monkeypatch, capsys, {
+        "https://www.tpb.gov.au/guidance": ("unreachable", "timeout"),
+        "https://www.ato.gov.au/elsewhere": ("unreachable", "403"),
+    })
+    assert rc == 2
+    assert "UNREACHABLE 403 https://www.ato.gov.au/elsewhere" in out
+
+
+@pytest.mark.parametrize("url,manual", [
+    ("https://www.tpb.gov.au/guidance", True),
+    ("https://www.austrac.gov.au/obligations", True),
+    (ATO_DENIED, True),
+    ("https://www.ato.gov.au/law/view/document?docid=OTHER", False),
+    ("https://tpb.gov.au.example.com/guidance", False),
+    ("https://example.com/www.tpb.gov.au", False),
+])
+def test_only_the_listed_hosts_and_page_are_manual(url, manual):
+    assert linkcheck.needs_manual_check(url) is manual
 
 
 def test_main_probes_urls_concurrently(tmp_path, monkeypatch, capsys):
@@ -246,7 +299,7 @@ def test_main_probes_urls_concurrently(tmp_path, monkeypatch, capsys):
     out = capsys.readouterr().out
 
     assert rc == 0
-    assert out == "checked 2: ok 2, dead 0, unreachable 0\n"
+    assert out == "checked 2: ok 2, dead 0, unreachable 0, manual 0\n"
 
 
 @pytest.mark.parametrize("address", ["127.0.0.1", "10.0.0.5", "169.254.169.254", "192.168.1.1", "100.64.0.1"])

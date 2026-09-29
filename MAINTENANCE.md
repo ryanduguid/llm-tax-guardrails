@@ -8,9 +8,13 @@ The scheduled source and link checks return `0` only for complete successful
 verification, `1` for a superseded compilation, a registered change that comes
 into force within 120 days, or a dead link, and `2` for
 incomplete verification (including unpinned legislation or unreachable links).
+The link check returns `3` when every link it reached is live and the rest are
+`MANUAL` links: TPB and AUSTRAC pages and one ATO legal database page, whose
+hosts block GitHub's runners. Check those by hand from another connection.
 The workflows retain the report in their logs and job summary, update one
-open report issue, and fail on every nonzero exit. A successful later check
-closes that monitoring issue; it does not complete professional source review.
+open report issue, and fail on every nonzero exit except the link check's `3`,
+which keeps the issue open without failing. A successful later check closes
+that monitoring issue; it does not complete professional source review.
 
 Keep a private source-review register with the reviewer, review date, source
 URL, compilation or issue, effective period, relevant paragraphs, affected
@@ -60,7 +64,7 @@ The behaviour tests can be run against a model by hand and the outcome recorded 
 
 For each future GitHub release:
 
-1. Start from a clean worktree. Run the complete pytest suite, builder `verify`, a deterministic second build and the reviewed link-check result. Resolve every failure or classify every unreachable link before staging a release.
+1. Start from a clean worktree. Run the complete pytest suite, builder `verify`, a deterministic second build and the reviewed link-check result. Resolve every failure, classify every unreachable link and check every `MANUAL` link by hand before staging a release.
 2. Confirm the verified guide bundle contains `LICENSE`, `README.md`, `CITATION.cff`, `drdebits.md`, `MAINTENANCE.md`, `reference/tpb-catalogue.md`, `reference/apes-110-map.md`, `reference/ai-vendor-assurance.md`, `reference/tpb-gs55-concordance.md`, `tests/behaviour-tests.md`, `DISCLAIMER.md` and the generated `SHA256SUMS` manifest. The manifest covers the first 11 files and travels with them; it does not hash itself.
 3. Create a signed release commit and a signed annotated tag that identify the approved revision.
 4. Confirm immutable releases are enabled for the repository before creating the release. Create a GitHub draft release, stage every asset, and include the checksum and verification instructions.
