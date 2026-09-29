@@ -44,3 +44,45 @@ jobs:
         uses: github/codeql-action/analyze@b96794f015dfd88f77b49b1c93e0fa7110f94c63 # v4
         with:
           category: "/language:${{ matrix.language }}"
+
+  codeql-gates:
+    # The one context branch protection requires from this workflow. It runs
+    # on every event and fails unless every job it needs succeeded, and its
+    # last step fails when a job in this file is missing from needs, so a new
+    # job or matrix leg is enforced without a protection change.
+    needs: [analyze]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Require every needed job to succeed
+        shell: python
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          import json, os
+          results = json.loads(os.environ["RESULTS"])
+          failed = [name for name, value in results.items() if value["result"] != "success"]
+          if failed:
+              raise SystemExit("Jobs did not succeed: " + ", ".join(failed))
+      - name: Check out the workflow definitions
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: .github/workflows
+      - name: Require needs to list every other job in this file
+        shell: python
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          import json, os, re
+          text = open(".github/workflows/codeql.yml", encoding="utf-8").read()
+          keys = re.findall(r"(?m)^  [\"']?([A-Za-z_][\w-]*)[\"']?:", text.split("\njobs:\n", 1)[1])
+          jobs = set(keys)
+          if "codeql-gates" not in jobs:
+              raise SystemExit("Could not read the job list; the gate check needs updating")
+          missing = sorted(jobs - {"codeql-gates"} - set(json.loads(os.environ["RESULTS"])))
+          if missing:
+              raise SystemExit("Add these jobs to needs: " + ", ".join(missing))
