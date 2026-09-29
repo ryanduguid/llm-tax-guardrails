@@ -15,11 +15,28 @@ the merge commit checked out with its parents (fetch-depth: 2). It fails when:
 """
 import json
 import os
-import re
+import string
 import subprocess
 import sys
 
-KEY = re.compile(r"""(["']?)([A-Za-z_][\w-]*)\1[ \t]*:(?:[ \t]|$)""")
+ID_START = set(string.ascii_letters + "_")
+ID_CHARS = ID_START | set(string.digits + "-")
+
+
+def job_key(text: str) -> str | None:
+    """Return the job id a line (without its indentation) declares, or None if it is not a plain key."""
+    quote = text[0] if text[:1] in ("'", '"') else ""
+    rest = text[len(quote):]
+    length = 0
+    while length < len(rest) and rest[length] in ID_CHARS:
+        length += 1
+    name, rest = rest[:length], rest[length:]
+    if not name or name[0] not in ID_START or not rest.startswith(quote):
+        return None
+    rest = rest[len(quote):].lstrip(" \t")
+    if not rest.startswith(":") or rest[1:2] not in ("", " ", "\t"):
+        return None
+    return name
 
 
 def job_ids(text: str) -> set[str]:
@@ -27,16 +44,25 @@ def job_ids(text: str) -> set[str]:
     parts = text.split("\njobs:\n", 1)
     if len(parts) != 2:
         sys.exit("Cannot find the jobs block; the gate check needs updating")
-    # The block ends at the next top-level key; column-0 comments stay inside it.
-    block = re.split(r"(?m)^(?=[^\s#])", parts[1], maxsplit=1)[0]
     ids = set()
-    for line in block.splitlines():
+    for line in parts[1].splitlines():
+        if line[:1] not in ("", " ", "#"):
+            break  # the next top-level key ends the jobs block
         if line.startswith("  ") and line[2:3] not in ("", " ", "#"):
-            match = KEY.match(line[2:])
-            if match is None:
+            name = job_key(line[2:])
+            if name is None:
                 sys.exit(f"Cannot read the job key {line!r}; the gate check needs updating")
-            ids.add(match[2])
+            ids.add(name)
     return ids
+
+
+def workflow_file(argument: str) -> str:
+    """Resolve WORKFLOW, which must name a file in this repository's .github/workflows."""
+    root = os.path.normpath(os.path.join(os.getcwd(), ".github", "workflows"))
+    path = os.path.normpath(os.path.join(os.getcwd(), argument))
+    if not path.startswith(root + os.sep):
+        sys.exit(f"{argument} is not a file in .github/workflows")
+    return path
 
 
 def git(*args: str) -> str:
@@ -57,7 +83,7 @@ def main(argv: list[str]) -> None:
         if failed:
             sys.exit("Jobs did not succeed: " + ", ".join(failed))
 
-    with open(workflow, encoding="utf-8") as handle:
+    with open(workflow_file(workflow), encoding="utf-8") as handle:
         jobs = job_ids(handle.read())
     if gate not in jobs:
         sys.exit(f"Cannot find {gate} in {workflow}; the gate check needs updating")
@@ -72,8 +98,9 @@ def main(argv: list[str]) -> None:
         "ls-tree", "--name-only", "HEAD^1", "--", workflow
     ).strip():
         removed = job_ids(git("show", f"HEAD^1:{workflow}")) - jobs
+        prefix = "removed-jobs:"
         body = os.environ.get("PR_BODY", "")
-        declared = set(re.findall(r"(?m)^removed-jobs:[ \t]*(\S+)[ \t]*$", body))
+        declared = {line[len(prefix):].strip() for line in body.splitlines() if line.startswith(prefix)}
         undeclared = sorted(job for job in removed if f"{workflow}#{job}" not in declared)
         if undeclared:
             sys.exit(
