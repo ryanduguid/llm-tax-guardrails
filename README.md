@@ -81,6 +81,7 @@ The diagram summarises the guide's own gate, classification, workflow and decisi
 | [reference/tpb-gs55-concordance.md](./reference/tpb-gs55-concordance.md) | TPB(GS) 55/2026 concordance: each of the Guidance Statement's considerations and each National AI Centre essential practice, with the guide control that applies it |
 | [AGENTS.md](./AGENTS.md) | Routing instructions for autonomous coding agents |
 | [DISCLAIMER.md](./DISCLAIMER.md) | General disclaimer: no advice, no agent-client relationship, human responsibility |
+| [docs/ai-register-entry.md](./docs/ai-register-entry.md) | Supplier information for a firm's AI register and risk assessment, and how it relates to ISO/IEC 42001. Not in the bundle. |
 | [MAINTENANCE.md](./MAINTENANCE.md) | Release and source-check protocol |
 | [SHA256SUMS](./SHA256SUMS) | Digests of the eleven files in the verified guide bundle |
 
