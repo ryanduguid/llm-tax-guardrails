@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "deny": [
+      "Edit(/drdebits.md)",
+      "Write(/drdebits.md)",
+      "Edit(/reference/tpb-catalogue.md)",
+      "Write(/reference/tpb-catalogue.md)",
+      "Edit(/reference/apes-110-map.md)",
+      "Write(/reference/apes-110-map.md)",
+      "Edit(/reference/ai-vendor-assurance.md)",
+      "Write(/reference/ai-vendor-assurance.md)",
+      "Edit(/reference/tpb-gs55-concordance.md)",
+      "Write(/reference/tpb-gs55-concordance.md)",
+      "Edit(/tests/behaviour-tests.md)",
+      "Write(/tests/behaviour-tests.md)",
+      "Edit(/evals/cases.json)",
+      "Write(/evals/cases.json)",
+      "Edit(/SHA256SUMS)",
+      "Write(/SHA256SUMS)"
+    ]
+  }
+}
