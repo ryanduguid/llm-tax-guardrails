@@ -102,6 +102,12 @@ class Finding(NamedTuple):
     detail: str
 
 
+class IncompleteCurrent(NamedTuple):
+    """Fetched current metadata that supplies no comparable compilation ID."""
+
+    start: str
+
+
 def clean(name: str) -> str:
     """Strip the Markdown emphasis the table uses around statute titles."""
     return name.replace("*", "").strip()
@@ -125,8 +131,8 @@ def parse_pins(text: str) -> list[Pin]:
     return pins
 
 
-def current_version(title_id: str, timeout: int = TIMEOUT) -> dict[str, str] | None:
-    """Return the Register's current version of one title, or None.
+def current_version(title_id: str, timeout: int = TIMEOUT) -> dict[str, str] | IncompleteCurrent | None:
+    """Return comparable or incomplete current metadata, or None for an unusable result.
 
     `$filter` with `isCurrent eq true` is the documented way to resolve this;
     key lookup and a `/latest/` path are not aliases for it.
@@ -149,6 +155,14 @@ def current_version(title_id: str, timeout: int = TIMEOUT) -> dict[str, str] | N
     # it is refused rather than compared.
     if version.get("titleId") not in (None, title_id):
         return None
+    if (version.get("titleId") == title_id
+            and "registerId" in version and version["registerId"] is None
+            and "compilationNumber" in version and version["compilationNumber"] is None):
+        try:
+            start = date.fromisoformat(str(version.get("start") or "")[:10]).isoformat()
+        except ValueError:
+            start = "unavailable"
+        return IncompleteCurrent(start)
     if not isinstance(version.get("registerId"), str) or not re.fullmatch(
             TITLE_ID, version["registerId"]):
         return None
@@ -225,9 +239,16 @@ def upcoming(pin: Pin, versions: list[dict[str, object]] | None, today: date,
     return [finding for _, finding in sorted(findings, key=lambda item: item[0])]
 
 
-def classify(pin: Pin, version: dict[str, str] | None) -> Finding:
+def classify(pin: Pin, version: dict[str, str] | IncompleteCurrent | None) -> Finding:
     if version is None:
-        return Finding(pin, UNREACHABLE, "the Register did not answer for this title")
+        return Finding(pin, UNREACHABLE, "the Register did not provide a usable current-version result")
+    if isinstance(version, IncompleteCurrent):
+        return Finding(
+            pin, UNREACHABLE,
+            f"verification incomplete: the current-version query returned a record for {pin.title_id} "
+            "with registerId=null and compilationNumber=null; "
+            f"API-reported start={version.start}. This response provides no compilation ID "
+            "to compare with the guide's pin. Future versions were not checked.")
     live = f"{version['registerId']}, Compilation No {version['compilationNumber']}"
     served = f" (in force from {version['start'][:10]})" if version["start"] else ""
     if not pin.pinned:
@@ -251,8 +272,8 @@ def check(root: Path, timeout: int = TIMEOUT) -> tuple[int, list[Finding]]:
     for pin in pins:
         version = current_version(pin.title_id, timeout)
         findings.append(classify(pin, version))
-        # A title the Register did not answer is already reported unreachable.
-        if version is not None:
+        # Unusable or incomplete current metadata is already reported unreachable.
+        if isinstance(version, dict):
             findings.extend(upcoming(pin, registered_versions(pin.title_id, today, timeout), today))
     return len(pins), findings
 
