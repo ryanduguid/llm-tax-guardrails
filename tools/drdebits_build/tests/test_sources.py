@@ -2,10 +2,13 @@
 from __future__ import annotations
 
 import io
+import json
+import urllib.error
 import urllib.parse
 from datetime import date, datetime, timezone
 from pathlib import Path
 
+import pytest
 from drdebits_build import sources
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -75,6 +78,97 @@ def test_no_answer_is_unreachable_and_never_superseded():
     """Checking from a blocked network must not read as a currency failure."""
     pin = sources.Pin("Example Act 2009", "C2009A00013", "C2025C00107", "26")
     assert sources.classify(pin, None).outcome == sources.UNREACHABLE
+
+
+@pytest.mark.parametrize("pinned", [True, False])
+def test_current_null_metadata_reports_the_fetched_record(monkeypatch, pinned):
+    payload = {"value": [{"titleId": "C2009A00013", "registerId": None,
+                          "compilationNumber": None, "start": "2026-10-01T00:00:00"}]}
+    requested = []
+
+    def fake_urlopen(request, timeout):
+        requested.append((request, timeout))
+        return io.BytesIO(json.dumps(payload).encode())
+
+    monkeypatch.setattr(sources.urllib.request, "urlopen", fake_urlopen)
+    pin = sources.Pin("Example Act 2009", "C2009A00013", "C2025C00107" if pinned else "", "26" if pinned else "")
+    finding = sources.classify(pin, sources.current_version(pin.title_id, timeout=7))
+    assert finding.outcome == sources.UNREACHABLE
+    assert "verification incomplete" in finding.detail
+    assert "registerId=null and compilationNumber=null" in finding.detail
+    assert "2026-10-01" in finding.detail
+    assert "did not answer" not in finding.detail
+    assert "SUPERSEDED" not in finding.detail
+    assert len(requested) == 1
+    request, timeout = requested[0]
+    assert timeout == 7
+    query = urllib.parse.parse_qs(urllib.parse.urlsplit(request.full_url).query)
+    assert query == {"$top": ["1"], "$filter": ["titleId eq 'C2009A00013' and isCurrent eq true"], "$select": [sources.SELECT]}
+    assert request.get_header("User-agent") == sources.UA
+
+
+@pytest.mark.parametrize("payload", [
+    None, [], {}, {"value": []}, {"value": [None]},
+    {"value": [{"titleId": "C1953A00001", "registerId": None, "compilationNumber": None}]},
+    {"value": [{"titleId": "C2009A00013", "registerId": None}]},
+    {"value": [{"titleId": "C2009A00013", "registerId": "", "compilationNumber": None}]},
+    {"value": [{"titleId": "C2009A00013", "registerId": "wrong", "compilationNumber": None}]},
+])
+def test_unusable_current_records_remain_rejected(monkeypatch, payload):
+    monkeypatch.setattr(sources.urllib.request, "urlopen", lambda *args, **kwargs: io.BytesIO(json.dumps(payload).encode()))
+    assert sources.current_version("C2009A00013") is None
+
+
+@pytest.mark.parametrize("error", [urllib.error.URLError("unavailable"), TimeoutError(), OSError()])
+def test_transport_failure_does_not_claim_fetched_metadata(monkeypatch, error):
+    def fail(*args, **kwargs):
+        raise error
+
+    monkeypatch.setattr(sources.urllib.request, "urlopen", fail)
+    assert sources.current_version("C2009A00013") is None
+
+
+@pytest.mark.parametrize("title_id", [None, "C2009A00013"])
+def test_a_comparable_id_keeps_legacy_missing_title_and_number_handling(monkeypatch, title_id):
+    payload = {"value": [{"titleId": title_id, "registerId": "C2025C00107", "compilationNumber": None}]}
+    monkeypatch.setattr(sources.urllib.request, "urlopen", lambda *args, **kwargs: io.BytesIO(json.dumps(payload).encode()))
+    version = sources.current_version("C2009A00013")
+    assert version == {"registerId": "C2025C00107", "compilationNumber": "", "start": ""}
+    assert sources.classify(sources.Pin("Example", "C2009A00013", "C2025C00107", "26"), version).outcome == sources.CURRENT
+
+
+def test_null_current_metadata_keeps_future_queries_skipped(monkeypatch, tmp_path):
+    table = tmp_path / sources.SOURCE_STATUS
+    table.parent.mkdir(parents=True)
+    table.write_text(TABLE, encoding="utf-8")
+    payload = {"value": [{"titleId": "C2009A00013", "registerId": None, "compilationNumber": None, "start": "2026-10-01T00:00:00"}]}
+    monkeypatch.setattr(sources.urllib.request, "urlopen", lambda *args, **kwargs: io.BytesIO(json.dumps(payload).encode()))
+
+    def unexpected(*args, **kwargs):
+        pytest.fail("Future versions should not be queried without a comparable current ID")
+
+    monkeypatch.setattr(sources, "registered_versions", unexpected)
+    before = table.read_bytes()
+    checked, findings = sources.check(tmp_path)
+    assert checked == 2
+    assert all(f.outcome == sources.UNREACHABLE for f in findings)
+    assert table.read_bytes() == before
+
+
+@pytest.mark.parametrize(("outcomes", "expected"), [
+    ([sources.CURRENT] + [sources.UNREACHABLE] * 4, 2),
+    ([sources.CURRENT] * 5, 0),
+    ([sources.UNPINNED], 2),
+    ([sources.SUPERSEDED, sources.UNREACHABLE], 1),
+    ([sources.UPCOMING, sources.UNREACHABLE], 1),
+    ([], 1),
+])
+def test_cli_exit_precedence_is_unchanged(monkeypatch, tmp_path, capsys, outcomes, expected):
+    pin = sources.Pin("Example", "C2009A00013", "C2025C00107", "26")
+    monkeypatch.setattr(sources, "check", lambda *args: (len(outcomes), [sources.Finding(pin, outcome, "fixture") for outcome in outcomes]))
+    assert sources.main(["--root", str(tmp_path)]) == expected
+    if len(outcomes) == 5:
+        assert "checked 5" in capsys.readouterr().out
 
 
 def test_an_unpinned_row_reports_the_current_compilation_to_pin():
