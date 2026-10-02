@@ -1,7 +1,7 @@
 # Regulatory and professional disclaimer
 
 ## 1. Statutory context and scope
-DrDebits is an independent, open-source technical operating guide for large language models (LLMs) assisting with Australian accounting, tax, and BAS workflows. It converts the Tax Practitioners Board framework, APES 110, APES 220, and the sector's AML/CTF obligations into controls for drafting, research, calculations, and review.
+DrDebits is an independent, open source technical operating guide for large language models (LLMs) assisting with Australian accounting, tax, and BAS workflows. It converts the Tax Practitioners Board framework, APES 110, APES 220, and the sector's AML/CTF obligations into controls for drafting, research, calculations, and review.
 
 ## 2. No tax or legal advice
 The content, guidance rules, and catalogues contained within DrDebits:
