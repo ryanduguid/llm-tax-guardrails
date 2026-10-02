@@ -1,15 +1,28 @@
 # DrDebits - tax ethics and LLM guardrails
 
+> Versioned, primary-source-grounded instructions and operating guardrails for LLM-assisted Australian accounting and tax work, built on the APES 110 Code of Ethics, the TPB Code of Professional Conduct under the Tax Agent Services Act 2009 and AML/CTF obligations. The guide is normative; this file is an index that routes into it.
+
 Version: `0.3.3`
 Sources last checked: 2026-08-16
 
-## Package overview
-- **Repository**: https://github.com/ryanduguid/llm-tax-guardrails
-- **Domain**: Versioned, primary-source-grounded ethical instructions and operational safety guardrails for LLM-assisted Australian accounting and taxation work.
-- **Regulatory Frameworks**: *APES 110 Code of Ethics for Professional Accountants* (including Independence, Integrity, Objectivity, Professional Competence and Due Care, Confidentiality, and Professional Behaviour), *Tax Agent Services Act 2009 (TASA)* TPB Code of Professional Conduct.
+- Repository: https://github.com/ryanduguid/llm-tax-guardrails
+- The guide does not make anyone a registered tax or BAS agent and is not advice. Conclusions stay with the registered practitioner.
 
 ## Instructions to the model
-1. **Ground every statutory assertion** per the guide's Source status and Authority and conflicts sections. Source types carry different authority and the guide sets out which binds whom.
-2. **Stay inside the professional boundary**: assist with computational validation and initial synthesis, and leave every professional service, judgement and consequential action to the competent, appropriately authorised human who remains responsible for it.
 
-The guide (drdebits.md) is normative; this file is an index and routes into it.
+1. Ground every statutory assertion per the guide's Source status and Authority and conflicts sections. Source types carry different authority, and the guide sets out which binds whom.
+2. Stay inside the professional boundary: assist with computational validation and initial synthesis, and leave every professional service, judgement and consequential action to the competent, appropriately authorised human who remains responsible for it.
+
+## Docs
+
+- [DrDebits guide](https://github.com/ryanduguid/llm-tax-guardrails/blob/main/drdebits.md): the normative guide, covering deployment and authority, source status, the data gate and intake, the mandatory workflow and stops, the TPB, APES 110 and AML/CTF control sets, and the output and workpaper contract.
+- [README](https://github.com/ryanduguid/llm-tax-guardrails/blob/main/README.md): what the guide covers and how to install and load the approved bundle in Claude Code.
+- [Behaviour tests](https://github.com/ryanduguid/llm-tax-guardrails/blob/main/tests/behaviour-tests.md)
+- [Disclaimer](https://github.com/ryanduguid/llm-tax-guardrails/blob/main/DISCLAIMER.md)
+
+## Optional
+
+- [Live TPB Guidance Statement catalogue](https://github.com/ryanduguid/llm-tax-guardrails/blob/main/reference/tpb-catalogue.md)
+- [APES 110 reference map](https://github.com/ryanduguid/llm-tax-guardrails/blob/main/reference/apes-110-map.md)
+- [AI tool and vendor assurance checklist](https://github.com/ryanduguid/llm-tax-guardrails/blob/main/reference/ai-vendor-assurance.md)
+- [Evaluation notes](https://github.com/ryanduguid/llm-tax-guardrails/blob/main/EVALUATION-NOTES.md)
