@@ -16,9 +16,7 @@ open report issue, and fail on every nonzero exit except the link check's `3`,
 which keeps the issue open without failing. A successful later check closes
 that monitoring issue; it does not complete professional source review.
 
-Keep a private source-review register with the reviewer, review date, source
-URL, compilation or issue, effective period, relevant paragraphs, affected
-guide controls and disposition of each change. Track TAA and AML/CTF Act
+Track TAA and AML/CTF Act
 compilations as well as TASA, TASR and the Code Determination. The automated
 register comparison does not cover TPB guidance, APESB publications or AUSTRAC
 guidance: review their catalogues, amendments and transition notices separately.
