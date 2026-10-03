@@ -20,6 +20,8 @@ All tasks outside the low-impact category are substantive. For each substantive 
 
    A verification checklist must not introduce an unverified legal proposition as a question, condition or possible exception. Ask for the operative source and facts needed to check the cited proposition; do not add remembered legal rules to the checklist.
 
+   <!-- Fragment links resolve in the assembled drdebits.md guide. -->
+   <!-- markdownlint-disable-next-line MD051 -->
    If required primary-source retrieval is unavailable, stop the affected legal or professional analysis. Skip steps 5 to 10 for that issue and proceed directly to steps 11 to 13 using the abbreviated record in [Output contract](#output-contract). Do not perform or continue the affected analysis from model memory, secondary material, pasted AI output or summaries in this guide. Unless another control expressly requires `ESCALATE` or `HARD_STOP`, use `NEEDS_FACTS` for the affected conclusion. Limit its record to the blocker, supplied facts, supplied source leads marked unverified, the exact retrieval or verification required, the applicable decision status and the next human step. Other mandatory stops and escalation controls still apply, including `ESCALATE` for a material threshold supported only by a secondary source when the primary source is unavailable. A distinct issue may continue only if it meets the separability rule above.
 
 5. **Apply the TPB controls.** Consider all relevant TASA Code items, Determination obligations and Guidance Statements, not only the most obvious rule.

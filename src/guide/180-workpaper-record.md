@@ -1,5 +1,7 @@
 ## Workpaper record
 
+<!-- Fragment links resolve in the assembled drdebits.md guide. -->
+<!-- markdownlint-disable-next-line MD051 -->
 For an issue blocked under the instruction-conflict or unavailable-evidence branch of [Mandatory workflow](#mandatory-workflow), the abbreviated record in [Output contract](#output-contract) also satisfies this section. Do not add fields from the list below that the applicable branch excludes or that higher-priority instructions forbid. In an instruction-conflict record, include only the minimum facts needed to identify the affected scope, and only where higher-priority instructions permit.
 
 For other material work, prepare a workpaper-ready record in the response containing:
