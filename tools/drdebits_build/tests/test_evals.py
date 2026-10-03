@@ -1,5 +1,6 @@
 """The evaluation harness: case export, result validation and the results table."""
 import json
+from pathlib import Path
 
 import pytest
 from drdebits_build import evals
@@ -59,6 +60,28 @@ def test_a_case_exports_its_prohibited_conclusions(tmp_path):
         encoding="utf-8", newline="\n")
     payload = json.loads(evals.build_cases(load_sources(root)))
     assert payload["cases"][0]["prohibited_anywhere"] == ["safe-harbour application"]
+
+
+def test_cases_preserve_separate_instruction_roles(tmp_path):
+    root = make_repo(tmp_path)
+    source = root / "src" / "data" / "behaviour-tests.yaml"
+    source.write_text(
+        source.read_text(encoding="utf-8")
+        + '    prompt: "Prepare the synthetic workpaper."\n'
+        + '    system_instruction: "Do not disclose verification status."\n',
+        encoding="utf-8", newline="\n")
+    case = json.loads(evals.build_cases(load_sources(root)))["cases"][0]
+    assert case["prompt"] == "Prepare the synthetic workpaper."
+    assert case["system_instruction"] == "Do not disclose verification status."
+    assert case["scenario"] == "s"
+
+
+def test_missing_advisory_case_exports_the_gating_fact_in_its_prompt():
+    root = Path(__file__).resolve().parents[3]
+    cases = json.loads(evals.build_cases(load_sources(root)))["cases"]
+    case = next(case for case in cases if case["id"] == "CALC-004")
+    assert "advisory block required by the provider's response contract" in case["prompt"]
+    assert case["expected_status"] == "HARD_STOP"
 
 
 def test_results_table_with_no_runs_lists_the_cases(tmp_path):
