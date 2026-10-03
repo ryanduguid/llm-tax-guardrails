@@ -179,8 +179,15 @@ The configuration that sequence assumes:
   `samples_per_case` is 1 and the scorer refuses any higher figure; score a
   further sample into its own record by passing `label` to `score_from_file`,
   which never replaces a record already written
-- the complete guide as the system prompt, a fresh session per case, expected
-  answers withheld from the model, and all 49 cases from `evals/cases.json`
+- the complete guide as the system prompt except for a case with an explicit
+  `system_instruction`: put that exact instruction in the system tier and the
+  complete guide in the lower user tier, followed by the case's exact `prompt`.
+  Record both input texts, their digests and their actual roles. A higher-tier
+  instruction described inside an ordinary user prompt does not test hierarchy.
+  If the runtime cannot provide the required roles, record the case as untested.
+  CONF-001 tests a runner-supplied system instruction, not an immutable provider
+  platform rule; its different deployment condition must remain visible
+- a fresh session per case, expected answers withheld from the model, and all 49 cases from `evals/cases.json`
   submitted as direct requests (`prompt` where supplied, otherwise a recorded direct rendering of `scenario`); never send the rubric to the model
 - every response entry recording the tool calls it made in `invocations`, `[]`
   when it made none; the scorer refuses an entry that omits the key rather than
@@ -204,6 +211,15 @@ The configuration that sequence assumes:
 - the scorer's output reviewed case by case; nothing moves from
   `evals/observations/` to `evals/results/` until a human confirms each verdict,
   and prompts, responses and transcripts stay outside this repository
+
+A targeted local run on uncommitted changes must retain the base commit,
+complete binary full-index diff against that commit, patch digest, untracked
+input inventory, exact guide and case bytes, runner and dependency hashes,
+runtime and tool configuration. Verify the frozen state before and after each
+case. Keep this evidence outside the repository in a separate run format;
+do not put the base commit into `guide_commit` as if it identified the changed
+guide. Such a run does not create a canonical result record or replace a
+historical response. A partial rerun establishes only its recorded coverage.
 
 ## Citation cases, 27 September 2026
 
