@@ -219,6 +219,8 @@ def _attempt(url, timeout):
         if not str(final).startswith("https://"):
             return "unreachable", "non-https-redirect"
     except Exception as exc:  # any failure is a finding, described not raised
+        if isinstance(exc, urllib.error.HTTPError):
+            exc.close()  # it carries the open response; only its status is used
         return _classify_exception(exc)
     if 200 <= status < 400:
         return "ok", str(status)

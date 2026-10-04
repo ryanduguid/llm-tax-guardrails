@@ -1,6 +1,7 @@
 """URL collection and outcome classification are tested offline with a
 monkeypatched urllib - no live network calls. Liveness is CI/local-only."""
 import importlib
+import io
 import socket
 import threading
 import urllib.error
@@ -65,6 +66,22 @@ def test_check_404_is_dead_and_not_retried(monkeypatch):
     kind, detail = linkcheck.check("https://x.invalid/gone", 5)
     assert (kind, detail) == ("dead", "404")
     assert len(calls) == 1  # definitive death: no retry
+
+
+def test_check_closes_each_http_error_response(monkeypatch):
+    # Holding each error stops its finaliser closing the body, so only an
+    # explicit close in the checker passes.
+    raised = []
+
+    def fake_urlopen(req, timeout):
+        body = io.BytesIO(b"synthetic error page")
+        raised.append((urllib.error.HTTPError(req.full_url, 503, "Service Unavailable", None, body), body))
+        raise raised[-1][0]
+
+    monkeypatch.setattr(linkcheck, "_open", fake_urlopen)
+    assert linkcheck.check("https://x.invalid/busy", 5) == ("unreachable", "503")
+    assert len(raised) == 2  # the retry fails too
+    assert all(body.closed for _, body in raised)
 
 
 def test_check_403_is_unreachable_after_one_retry(monkeypatch):
