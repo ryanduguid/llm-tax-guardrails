@@ -47,8 +47,8 @@ approvals and human review in the host before client work.
 ## Ethical routing and boundary architecture
 
 ```mermaid
-%%{init: {"themeVariables": {"lineColor": "#B1AFAD"}}}%%
 flowchart TD
+%%{init: {"theme": "base", "themeVariables": {"background": "#000000", "primaryColor": "#7851A9", "primaryTextColor": "#FFFFF0", "primaryBorderColor": "#FFFFF0", "lineColor": "#7851A9", "textColor": "#FFFFF0", "edgeLabelBackground": "#000000", "clusterBkg": "#000000", "clusterBorder": "#7851A9", "titleColor": "#FFFFF0"}}}%%
     Prompt["Accounting or tax prompt"] --> Gate["Intake gate<br/><i>scope, facts, sources, authority, confidentiality, interests, consequences</i>"]
     Gate --> Risk{"Risk classification"}
 
@@ -60,10 +60,10 @@ flowchart TD
     Status -->|"NEEDS_FACTS"| Facts["Focused questions back to the human"]
     Status -->|"ESCALATE or HARD_STOP"| Stop["No autonomous resolution<br/><i>responsibility stays with the authorised human</i>"]
 
-    style Prop fill:#140E24,stroke:#4F485E,stroke-width:2px,color:#FFFFFF
-    style Flow fill:#1E1236,stroke:#5C2D91,stroke-width:2px,color:#FFFFFF
-    style Draft fill:#2D184E,stroke:#8A4AC7,stroke-width:2px,color:#FFFFFF
-    style Stop fill:#2A0A12,stroke:#C02B0A,stroke-width:2px,color:#FFFFFF
+    style Prop fill:#7851A9,stroke:#FFFFF0,stroke-width:2px,color:#FFFFF0
+    style Flow fill:#7851A9,stroke:#FFFFF0,stroke-width:2px,color:#FFFFF0
+    style Draft fill:#7851A9,stroke:#FFFFF0,stroke-width:2px,color:#FFFFF0
+    style Stop fill:#000000,stroke:#7851A9,stroke-width:3px,color:#FFFFF0
 ```
 
 The diagram summarises the guide's own gate, classification, workflow and decision statuses; the guide text controls.
