@@ -47,8 +47,9 @@ repos:
         pass_filenames: false
 
       - id: whitespace
-        name: git diff --check
-        entry: git diff --check
+        name: git diff --cached --check
+        # Pre-commit stashes unstaged changes; inspect the index being committed.
+        entry: git diff --cached --check
         language: system
         pass_filenames: false
 

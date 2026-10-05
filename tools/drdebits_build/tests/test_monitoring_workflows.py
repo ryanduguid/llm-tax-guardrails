@@ -3,13 +3,22 @@ import json
 import shlex
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
 import yaml
 
 ROOT = Path(__file__).resolve().parents[3]
-BASH = shutil.which("bash")
+if sys.platform == "win32":
+    # The WindowsApps Bash alias can invoke WSL; use Git's native Bash here.
+    GIT = shutil.which("git")
+    BASH = (
+        shutil.which("bash", path=str(Path(GIT).resolve().parent.parent / "bin"))
+        if GIT else None
+    )
+else:
+    BASH = shutil.which("bash")
 JQ = shutil.which("jq")
 
 
