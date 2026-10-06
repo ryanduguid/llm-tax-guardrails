@@ -20,7 +20,7 @@ jobs:
   analyze:
     timeout-minutes: 15
     name: Analyze (${{ matrix.language }})
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     permissions:
       contents: read
       security-events: write # Upload CodeQL results for this job only.
@@ -52,7 +52,7 @@ jobs:
     # "# removed-jobs: <job>" comment to this file.
     needs: [analyze]
     if: always()
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 5
     permissions:
       contents: read

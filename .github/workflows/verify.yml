@@ -23,7 +23,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
+          - os: ubuntu-26.04
             python: "3.14"
             name: build parity and structural checks
           - os: windows-latest
@@ -64,7 +64,7 @@ jobs:
 
   secrets:
     name: secret and client-identifier scan
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 10
     steps:
       - name: Check out full history
@@ -88,7 +88,7 @@ jobs:
     # "# removed-jobs: <job>" comment to this file.
     needs: [verify, secrets]
     if: always()
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 5
     permissions:
       contents: read
