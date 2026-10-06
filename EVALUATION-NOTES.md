@@ -298,3 +298,23 @@ claiming one inside a user prompt does not test that boundary. Supported
 workpaper cases must deliver the requested arithmetic as well as preserve
 stops and exceptions. No live host, model rerun or professional source review
 is established by the builder tests.
+
+## Offline quotation evidence
+
+`drdebits_build.quotecheck.assess_quote(source_text, quote, characters_used=None,
+source_complete=True)` checks supplied text without retrieval, model calls or
+file writes. Set `source_complete=False` for an excerpt, and record
+`characters_used` when only a prefix reached the model. Both the supplied and
+visible text digests accompany the result.
+
+`EXACT_MATCH` includes original character offsets. `NORMALISED_MATCH` means
+Unicode compatibility or whitespace normalisation produced a match; it is a
+review lead, not a verbatim quotation. `NOT_FOUND` applies only to complete
+coverage of the supplied text. Otherwise absence is `UNVERIFIED`. These results
+establish neither claim support, current law nor applicability. Keep the source
+identity, version and stated page or provision in the private review record.
+
+The helper adapts the quotation and coverage patterns inspected in
+[citefact](https://github.com/hearthresearch/citefact/tree/469bb993e4047b5f3679877bdd4c710485e4e316).
+It is independently written and uses the standard library. No source corpus,
+provider integration or model verdict cache is imported.
