@@ -318,3 +318,69 @@ The helper adapts the quotation and coverage patterns inspected in
 [citefact](https://github.com/hearthresearch/citefact/tree/469bb993e4047b5f3679877bdd4c710485e4e316).
 It is independently written and uses the standard library. No source corpus,
 provider integration or model verdict cache is imported.
+
+## Comparing recorded runs
+
+Compare two retained records with the local command below. Paths are relative
+to `--root`; both files must be in `evals/results/` or `evals/observations/`.
+Replace the example filenames with the records being compared.
+
+```sh
+uv run --project tools/drdebits_build --locked python -m drdebits_build.compare evals/results/YYYY-MM-DD-baseline.json evals/results/YYYY-MM-DD-candidate.json --root .
+```
+
+The JSON report lists every case in either run as unchanged, changed, fixed,
+regressed, baseline only or candidate only. Missing cases are not failures.
+The pass delta uses only shared cases. Fixed/regressed labels and the pass
+delta require identical recorded case digests and conditions, including
+runtime, tools, effort and sample count, with human-confirmed verdicts in both
+runs. Otherwise the report shows the raw verdict changes and explains the
+comparison limits. A `review` observation remains unconfirmed.
+
+Changes to the guide, model, dates and other metadata are reported separately.
+An equal digest identifies the recorded input bytes; it does not prove what a
+runner loaded or that its verdict is correct. `matches_current_inputs` checks
+the guide and cases against the current source tree. Comparisons of older
+inputs remain historical evidence. Without `--check`, exit zero means the
+records were read and compared. The command does not call a model or modify a
+record.
+
+Add `--check` to use the comparison as a regression check. It returns `0` for
+no new recorded regression, `1` for a recorded regression and `2` for invalid
+or incomplete evidence. The JSON `regression_check` gives the status, affected
+case IDs and limitations. A successful check requires comparable human-confirmed
+records, a candidate matching both current digests, every current case assessed
+and no baseline case omitted. A dropped case is incomplete evidence, not an
+invented failure verdict.
+
+Each previously passing case that becomes `fail` or `violation` fails the check,
+even if other fixes leave the total pass count unchanged. A newly assessed
+nonpass or a new `violation`, including `fail` becoming `violation`, also fails.
+An existing unchanged nonpass does not fail a regression check, and all candidate
+nonpasses remain listed. Exit zero therefore does not mean every case passed,
+that the guide is professionally correct or that a release is approved. Changed
+models or guide text remain visible in the metadata; the check does not establish
+which change caused a verdict.
+
+The approach follows the per-case comparison described in
+[AsAt](https://github.com/Aldiharley/asat/blob/34bfd63a220c3ba55ba82d27188870fb8c586543/services/research/src/asat_research/eval_compare.py).
+The implementation uses this repository's existing record validator and
+verdict rules; no AsAt code is included.
+
+## Source evidence regression coverage
+
+`tools/drdebits_build/tests/test_source_evidence.py` contains synthetic
+counterexamples for an unknown source identifier, a trivial quotation, matching
+words under the wrong authority, the wrong version, missing application dates
+and omitted qualifications. It also checks that changed bytes at the same
+snapshot path produce a different digest. The mock responses deliberately
+contain unsupported claims after a correct decision token. These tests check
+that the mechanical scorer still requires semantic review. They do not
+establish that a model would detect or refuse those claims.
+
+Judge source identity and quotation integrity separately from authority,
+historical applicability and relevance to the question. Inspect a refusal's
+quotation in context before calling a marker hit a violation, and check that
+permitted work was completed. Existing CITE, HIST, SRC and proportionality cases
+supply the model-evaluation rubrics; the 49-case export and historical verdicts
+have not changed. No new model run or human adjudication is claimed.
