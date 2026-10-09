@@ -60,9 +60,9 @@ flowchart TD
     Status -->|"NEEDS_FACTS"| Facts["Focused questions back to the human"]
     Status -->|"ESCALATE or HARD_STOP"| Stop["No autonomous resolution<br/><i>responsibility stays with the authorised human</i>"]
 
-    style Prop fill:#7851A9,stroke:#FFFFF0,stroke-width:2px,color:#FFFFF0
-    style Flow fill:#7851A9,stroke:#FFFFF0,stroke-width:2px,color:#FFFFF0
-    style Draft fill:#7851A9,stroke:#FFFFF0,stroke-width:2px,color:#FFFFF0
+    style Prop fill:#990024,stroke:#FFFFF0,stroke-width:2px,color:#FFFFF0
+    style Flow fill:#990024,stroke:#FFFFF0,stroke-width:2px,color:#FFFFF0
+    style Draft fill:#990024,stroke:#FFFFF0,stroke-width:2px,color:#FFFFF0
     style Stop fill:#000000,stroke:#FFFFF0,stroke-width:3px,color:#FFFFF0
 ```
 
