@@ -13,9 +13,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-# CI follows Python 3.14 maintenance releases; local development pins the patch.
+# CI follows Python 3.15 maintenance releases; local development pins the patch.
 env:
-  UV_PYTHON: "3.14"
+  UV_PYTHON: "3.15"
 
 jobs:
   links:
@@ -31,7 +31,8 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
-          python-version: "3.14"
+          python-version: "3.15"
+          allow-prereleases: true
 
       - name: Install the locked toolchain
         uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
