@@ -11,8 +11,10 @@
 
 This is an unreleased revision of the 0.3.3 guide. The published evaluation
 records describe the earlier release; fresh model verification of these changes
-is pending. Identify this working revision by its Git commit as well as the
-base guide version.
+is pending. Identify a committed revision by its Git commit and base guide
+version. For an uncommitted review, retain the base commit, complete diff and
+diff digest as well as the guide version; the base commit alone does not identify
+the changed guide.
 
 DrDebits is an independent, source-linked operating guide for large language models (LLMs) assisting with Australian accounting, tax and BAS work. It converts the Tax Practitioners Board (TPB) framework, APES 110, APES 220 and the sector’s AML/CTF obligations into practical controls for drafting, research, calculations and review.
 

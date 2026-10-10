@@ -222,6 +222,7 @@ def load_catalogue(path):
 
 BEHAVIOUR_FIELDS = ("id", "scenario", "expected_status", "required_behaviour",
                     "side_effect_check")
+BEHAVIOUR_INPUT_FIELDS = ("prompt", "system_instruction")
 #: The optional per-case field emphasising the prohibited conclusions that case
 #: turns on. Every declared conclusion makes a response a `violation` wherever
 #: in it it appears, so this field narrows nothing. The labels are defined once
@@ -238,15 +239,18 @@ PROHIBITED_CONCLUSION_FIELDS = ("label", "definition", "markers")
 
 def load_behaviour_tests(path):
     rows = _rows(path, _read(path), "entries", BEHAVIOUR_FIELDS, table_safe=True,
-                 optional=(PROHIBITED_ANYWHERE, "prompt"))
+                 optional=(PROHIBITED_ANYWHERE, *BEHAVIOUR_INPUT_FIELDS))
     _unique_ids(path, rows)
     for r in rows:
         if r["expected_status"] not in ALLOWED_STATUSES:
             raise ModelError(f"{path}: {r['id']} has unknown status {r['expected_status']!r}")
-        if "prompt" in r:
-            _require_str(path, f"{r['id']} prompt", r["prompt"])
-            if not r["prompt"].strip():
-                raise ModelError(f"{path}: {r['id']} prompt must not be blank")
+        for field in BEHAVIOUR_INPUT_FIELDS:
+            if field in r:
+                _require_str(path, f"{r['id']} {field}", r[field])
+                if not r[field].strip():
+                    raise ModelError(f"{path}: {r['id']} {field} must not be blank")
+        if "system_instruction" in r and "prompt" not in r:
+            raise ModelError(f"{path}: {r['id']} system_instruction requires an exact prompt")
         if PROHIBITED_ANYWHERE in r:
             r[PROHIBITED_ANYWHERE] = _string_list(
                 path, f"{r['id']} {PROHIBITED_ANYWHERE}", r[PROHIBITED_ANYWHERE])
