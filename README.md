@@ -4,6 +4,7 @@
 [![CodeQL](https://github.com/ryanduguid/llm-tax-guardrails/actions/workflows/codeql.yml/badge.svg)](https://github.com/ryanduguid/llm-tax-guardrails/actions/workflows/codeql.yml)
 [![release](https://img.shields.io/github/v/release/ryanduguid/llm-tax-guardrails?color=5C2D91&labelColor=04001F)](https://github.com/ryanduguid/llm-tax-guardrails/releases/latest)
 [![licence: CC BY 4.0](https://img.shields.io/badge/licence-CC%20BY%204.0-5C2D91.svg?labelColor=04001F)](LICENSE)
+[![Codacy code quality](https://app.codacy.com/project/badge/Grade/aa06cf4e42c14a59b22c8825bfa180d3?branch=main)](https://app.codacy.com/gh/ryanduguid/llm-tax-guardrails/dashboard)
 
 Guardrails, not advice. A competent, authorised human remains responsible for every professional service, judgement and consequential action.
 
@@ -47,8 +48,8 @@ approvals and human review in the host before client work.
 ## Ethical routing and boundary architecture
 
 ```mermaid
-%%{init: {"themeVariables": {"lineColor": "#B1AFAD"}}}%%
 flowchart TD
+%%{init: {"theme": "base", "look": "classic", "themeVariables": {"background": "#000000", "primaryColor": "#66023C", "primaryTextColor": "#FFFFF0", "primaryBorderColor": "#FFFFF0", "lineColor": "#000000", "textColor": "#FFFFF0", "edgeLabelBackground": "#000000", "clusterBkg": "#000000", "clusterBorder": "#FFFFF0", "titleColor": "#FFFFF0"}, "themeCSS": ".flowchart-link, .relationshipLine, marker path { filter: drop-shadow(0px 1px 0px #FFFFF0) drop-shadow(0px -1px 0px #FFFFF0) drop-shadow(1px 0px 0px #FFFFF0) drop-shadow(-1px 0px 0px #FFFFF0); }"}}%%
     Prompt["Accounting or tax prompt"] --> Gate["Intake gate<br/><i>scope, facts, sources, authority, confidentiality, interests, consequences</i>"]
     Gate --> Risk{"Risk classification"}
 
@@ -60,10 +61,10 @@ flowchart TD
     Status -->|"NEEDS_FACTS"| Facts["Focused questions back to the human"]
     Status -->|"ESCALATE or HARD_STOP"| Stop["No autonomous resolution<br/><i>responsibility stays with the authorised human</i>"]
 
-    style Prop fill:#140E24,stroke:#4F485E,stroke-width:2px,color:#FFFFFF
-    style Flow fill:#1E1236,stroke:#5C2D91,stroke-width:2px,color:#FFFFFF
-    style Draft fill:#2D184E,stroke:#8A4AC7,stroke-width:2px,color:#FFFFFF
-    style Stop fill:#2A0A12,stroke:#C02B0A,stroke-width:2px,color:#FFFFFF
+    style Prop fill:#990024,stroke:#FFFFF0,stroke-width:2px,color:#FFFFF0
+    style Flow fill:#990024,stroke:#FFFFF0,stroke-width:2px,color:#FFFFF0
+    style Draft fill:#990024,stroke:#FFFFF0,stroke-width:2px,color:#FFFFF0
+    style Stop fill:#000000,stroke:#FFFFF0,stroke-width:3px,color:#FFFFF0
 ```
 
 The diagram summarises the guide's own gate, classification, workflow and decision statuses; the guide text controls.
