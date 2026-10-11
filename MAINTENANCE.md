@@ -7,7 +7,8 @@ A source-check date does not guarantee continuing currency. Before professional 
 The scheduled source and link checks return `0` only for complete successful
 verification, `1` for a superseded compilation, a registered change that comes
 into force within 120 days, or a dead link, and `2` for
-incomplete verification (including unpinned legislation or unreachable links).
+incomplete verification (including unpinned legislation, unreachable links, and
+Register records that carry no compilation ID, reported as `INCOMPLETE`).
 The link check returns `3` when every link it reached is live and the rest are
 `MANUAL` links: TPB and AUSTRAC pages and one ATO legal database page, whose
 hosts block GitHub's runners. Check those by hand from another connection.
