@@ -93,7 +93,7 @@ def test_current_null_metadata_reports_the_fetched_record(monkeypatch, pinned):
     monkeypatch.setattr(sources.urllib.request, "urlopen", fake_urlopen)
     pin = sources.Pin("Example Act 2009", "C2009A00013", "C2025C00107" if pinned else "", "26" if pinned else "")
     finding = sources.classify(pin, sources.current_version(pin.title_id, timeout=7))
-    assert finding.outcome == sources.UNREACHABLE
+    assert finding.outcome == sources.INCOMPLETE
     assert "verification incomplete" in finding.detail
     assert "registerId=null and compilationNumber=null" in finding.detail
     assert "2026-10-01" in finding.detail
@@ -151,12 +151,15 @@ def test_null_current_metadata_keeps_future_queries_skipped(monkeypatch, tmp_pat
     before = table.read_bytes()
     checked, findings = sources.check(tmp_path)
     assert checked == 2
-    assert all(f.outcome == sources.UNREACHABLE for f in findings)
+    # The second pin gets another title's record back, which is refused outright.
+    assert [f.outcome for f in findings] == [sources.INCOMPLETE, sources.UNREACHABLE]
     assert table.read_bytes() == before
 
 
 @pytest.mark.parametrize(("outcomes", "expected"), [
     ([sources.CURRENT] + [sources.UNREACHABLE] * 4, 2),
+    ([sources.CURRENT] * 2 + [sources.INCOMPLETE] * 3, 2),
+    ([sources.SUPERSEDED, sources.INCOMPLETE], 1),
     ([sources.CURRENT] * 5, 0),
     ([sources.UNPINNED], 2),
     ([sources.SUPERSEDED, sources.UNREACHABLE], 1),
@@ -262,3 +265,13 @@ def test_the_real_source_status_table_still_parses():
     assert len(pins) >= 5, "the source-status table lists at least 5 Register sources"
     assert len({pin.title_id for pin in pins}) == len(pins), "no title is pinned twice"
     assert any(pin.pinned for pin in pins), "at least one source pins a compilation"
+
+
+def test_summary_counts_incomplete_records_separately(monkeypatch, tmp_path, capsys):
+    pin = sources.Pin("Example", "C2009A00013", "C2025C00107", "26")
+    outcomes = [sources.CURRENT, sources.INCOMPLETE, sources.UNREACHABLE]
+    monkeypatch.setattr(sources, "check", lambda *args: (3, [sources.Finding(pin, outcome, "fixture") for outcome in outcomes]))
+    assert sources.main(["--root", str(tmp_path)]) == 2
+    out = capsys.readouterr().out
+    assert "INCOMPLETE  Example: fixture" in out
+    assert "current 1, superseded 0, unpinned 0, incomplete 1, unreachable 1," in out
