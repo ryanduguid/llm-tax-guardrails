@@ -63,11 +63,15 @@ jobs:
 
       - name: Run the build package tests with branch coverage
         if: matrix.os == 'ubuntu-latest'
-        run: uv run --project tools/drdebits_build --locked --extra dev coverage run --branch --source=tools/drdebits_build/drdebits_build -m pytest tools/drdebits_build/tests -q  # NOSONAR: the builder environment installs from uv.lock wheels
+        run: uv run --project tools/drdebits_build --locked --extra dev coverage run --rcfile=tools/drdebits_build/pyproject.toml --branch --source=tools/drdebits_build/drdebits_build -m pytest tools/drdebits_build/tests -q  # NOSONAR: the builder environment installs from uv.lock wheels
+
+      - name: Require complete builder coverage
+        if: matrix.os == 'ubuntu-latest'
+        run: uv run --project tools/drdebits_build --locked --extra dev coverage report --rcfile=tools/drdebits_build/pyproject.toml --fail-under=100  # NOSONAR: reads the coverage data only
 
       - name: Write builder coverage for Codecov
         if: matrix.os == 'ubuntu-latest'
-        run: uv run --project tools/drdebits_build --locked --extra dev coverage xml -o coverage-codecov.xml  # NOSONAR: reads the coverage data only
+        run: uv run --project tools/drdebits_build --locked --extra dev coverage xml --rcfile=tools/drdebits_build/pyproject.toml -o coverage-codecov.xml  # NOSONAR: reads the coverage data only
 
       - name: Keep the coverage report for the Codecov upload
         if: matrix.os == 'ubuntu-latest'
