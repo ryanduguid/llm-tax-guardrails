@@ -32,8 +32,9 @@ concurrency:
 jobs:
   test:
     name: Snyk open source test
-    # Pull requests from forks receive no secrets.
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    # Pull requests from forks, and Dependabot's (which get Dependabot secrets
+    # only), receive no SNYK_TOKEN; the weekly run on main scans their changes.
+    if: github.event_name != 'pull_request' || (github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.user.login != 'dependabot[bot]')
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -74,8 +75,10 @@ jobs:
             work=$(mktemp -d)
             case "$kind" in
               uv) uv export --project "$target" --frozen --no-hashes --no-emit-project --no-emit-workspace \
-                    --all-packages --all-extras --no-header --output-file "$work/requirements.txt" > /dev/null ;;
-              pip) cp "$target" "$work/requirements.txt" ;;
+                    --all-packages --all-extras --no-header --output-file "$work/requirements.txt" > /dev/null \
+                    || { echo "::error::uv export failed for $target"; status=1; continue; } ;;
+              pip) cp "$target" "$work/requirements.txt" \
+                    || { echo "::error::Cannot read $target"; status=1; continue; } ;;
               *) echo "::error::Unknown dependency set $kind:$target"; status=1; continue ;;
             esac
             # A standard-library project exports no packages, which Snyk
