@@ -178,7 +178,7 @@ def run_verify(root, today=None):
     # all. (src/guide/040-source-status.md carries 2 further prose copies
     # that this check does not cover; MAINTENANCE step 8 owns those.)
     checked_date = s.meta.get("sources_checked_at", "")[:10]
-    if checked_date:
+    if checked_date:  # pragma: no branch - load_metadata requires a valid sources_checked_at
         # Substring, not whole-line: the real header line carries a timezone
         # suffix after the backticked date.
         guide_line = f"> Sources last checked: `{checked_date}`"

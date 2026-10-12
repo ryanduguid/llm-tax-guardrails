@@ -28,7 +28,7 @@ def _read(root: Path, relative: str) -> bytes:
     if not path.resolve().is_relative_to(root.resolve()):
         raise BundleError(f"bundle path escapes source: {relative}")
     # Reject redirected files and directories even when they point inside root.
-    for part in (path, *path.parents):
+    for part in (path, *path.parents):  # pragma: no branch - the walk always reaches root
         if part == root:
             break
         if part.is_symlink() or part.is_junction():
