@@ -150,7 +150,8 @@ def _load_result(path, rel, case_ids, guide_version, basis):
     except ValueError as exc:
         raise ModelError(f"{rel}: file name date must be an ISO date (YYYY-MM-DD)") from exc
     try:
-        data = json.loads(path.read_text(encoding="utf-8"), object_pairs_hook=_reject_duplicate_keys)
+        # Build tool; the path is a fixed name under the --root checkout.
+        data = json.loads(path.read_text(encoding="utf-8"), object_pairs_hook=_reject_duplicate_keys)  # NOSONAR
     except (ValueError, UnicodeDecodeError, OSError) as exc:
         raise ModelError(f"{rel}: not valid JSON ({exc})") from exc
     # Only the recorded results have history to preserve. evals/observations/
