@@ -275,3 +275,42 @@ def test_summary_counts_incomplete_records_separately(monkeypatch, tmp_path, cap
     out = capsys.readouterr().out
     assert "INCOMPLETE  Example: fixture" in out
     assert "current 1, superseded 0, unpinned 0, incomplete 1, unreachable 1," in out
+
+
+def test_null_current_metadata_with_an_unreadable_start_is_still_incomplete(monkeypatch):
+    payload = {"value": [{"titleId": "C2009A00013", "registerId": None,
+                          "compilationNumber": None, "start": "not a date"}]}
+    monkeypatch.setattr(sources.urllib.request, "urlopen", lambda *args, **kwargs: io.BytesIO(json.dumps(payload).encode()))
+    assert sources.current_version("C2009A00013") == sources.IncompleteCurrent("unavailable")
+
+
+@pytest.mark.parametrize("payload", [
+    {"value": "not a list"},
+    {"value": [{"titleId": "C2009A00013"}, "not a record"]},
+    {"value": [{"titleId": "C1953A00001", "start": "2027-01-01"}]},
+])
+def test_unusable_future_version_answers_are_no_answer(monkeypatch, payload):
+    monkeypatch.setattr(sources.urllib.request, "urlopen", lambda *args, **kwargs: io.BytesIO(json.dumps(payload).encode()))
+    assert sources.registered_versions("C2009A00013", date(2026, 2, 1)) is None
+
+
+def test_future_version_transport_failure_is_no_answer(monkeypatch):
+    def fail(*args, **kwargs):
+        raise urllib.error.URLError("unavailable")
+
+    monkeypatch.setattr(sources.urllib.request, "urlopen", fail)
+    assert sources.registered_versions("C2009A00013", date(2026, 2, 1)) is None
+
+
+def test_a_comparable_current_version_also_checks_upcoming_versions(monkeypatch, tmp_path):
+    table = tmp_path / sources.SOURCE_STATUS
+    table.parent.mkdir(parents=True)
+    table.write_text(TABLE, encoding="utf-8")
+    current = {"registerId": "C2025C00107", "compilationNumber": "26", "start": "2025-01-01"}
+    asked = []
+    monkeypatch.setattr(sources, "current_version", lambda title_id, timeout: current)
+    monkeypatch.setattr(sources, "registered_versions",
+                        lambda title_id, today, timeout: asked.append(title_id) or [])
+    checked, findings = sources.check(tmp_path)
+    assert checked == 2
+    assert asked == [pin.title_id for pin in sources.parse_pins(TABLE)]

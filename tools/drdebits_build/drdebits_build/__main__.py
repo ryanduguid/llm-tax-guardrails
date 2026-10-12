@@ -79,7 +79,8 @@ def main(argv=None):
             for rel in STAMPED_FILES:
                 p = root / rel
                 if p.is_file():
-                    p.write_bytes(stamp_version(p.read_text(encoding="utf-8"), s.meta["guide_version"]).encode("utf-8"))
+                    # Build tool; the path is a fixed name under the --root checkout.
+                    p.write_bytes(stamp_version(p.read_text(encoding="utf-8"), s.meta["guide_version"]).encode("utf-8"))  # NOSONAR
                     print(f"stamped {rel}")
             for rel in write_outputs(root, root, s):
                 print(f"wrote {rel}")

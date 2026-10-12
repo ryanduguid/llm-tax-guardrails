@@ -131,7 +131,7 @@ def decision_statuses(response: str) -> list[str]:
     awaiting = False
     found_field = False
     for line in lines:
-        field = re.match(r"^(?:Primary )?Decision status\b\s*:?(.*)$", line, re.I)
+        field = re.match(r"^(?:Primary )?Decision status\b\s*+:?(.*)$", line, re.I)
         if field:
             found_field = True
             if awaiting:
