@@ -146,14 +146,17 @@ def _load_result(path, rel, case_ids, guide_version, basis):
     if not match:
         raise ModelError(f"{rel}: file name must be YYYY-MM-DD-<slug>.json")
     try:
+        file_date = date.fromisoformat(match.group(1))
+    except ValueError as exc:
+        raise ModelError(f"{rel}: file name date must be an ISO date (YYYY-MM-DD)") from exc
+    try:
         data = json.loads(path.read_text(encoding="utf-8"), object_pairs_hook=_reject_duplicate_keys)
     except (ValueError, UnicodeDecodeError, OSError) as exc:
         raise ModelError(f"{rel}: not valid JSON ({exc})") from exc
     # Only the recorded results have history to preserve. evals/observations/
     # is new, so every record there carries the current schema whatever date it
     # names, and a pre-cutoff date cannot be used to shed the identity fields.
-    legacy = (basis == HUMAN_CONFIRMED
-              and date.fromisoformat(match.group(1)) < BINDING_REQUIRED_FROM)
+    legacy = basis == HUMAN_CONFIRMED and file_date < BINDING_REQUIRED_FROM
     expected = LEGACY_RESULT_KEYS if legacy else RESULT_KEYS
     if not isinstance(data, dict) or sorted(data) != sorted(expected):
         raise ModelError(

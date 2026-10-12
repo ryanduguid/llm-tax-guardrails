@@ -126,6 +126,8 @@ def test_a_partial_or_older_run_is_shown_without_editing_history(tmp_path):
     ("2026-02-01-example-model.json", {"results": {"A-001": "PASS"}}, "must be pass, fail or violation"),
     ("2026-02-01-example-model.json", {"model": " "}, "model must be a non-empty string"),
     ("2026-02-01-example-model.json", {"run_date": "1 Feb 2026"}, "ISO date"),
+    ("2026-99-99-example-model.json", {}, "file name date must be an ISO date"),
+    ("2026-02-30-example-model.json", {}, "file name date must be an ISO date"),
     ("2026-02-02-example-model.json", {}, "file name date 2026-02-02 != run_date"),
     ("notes.json", {}, "YYYY-MM-DD-<slug>.json"),
 ])
@@ -134,6 +136,13 @@ def test_malformed_results_are_rejected(tmp_path, name, overrides, message):
     write_result(root, name=name, **overrides)
     with pytest.raises(ModelError, match=message):
         evals.load_results(root, load_sources(root))
+
+
+def test_impossible_observation_file_date_is_rejected(tmp_path):
+    root = make_repo(tmp_path)
+    write_observation(root, name="2026-99-99-example-model.json")
+    with pytest.raises(ModelError, match="file name date must be an ISO date"):
+        evals.load_observations(root, load_sources(root))
 
 
 def test_invalid_json_duplicate_keys_and_stray_entries_are_rejected(tmp_path):

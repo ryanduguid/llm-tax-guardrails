@@ -50,6 +50,22 @@ def test_verify_failure_exit_code(tmp_path):
     assert main(["verify", "--root", str(root)]) == 1
 
 
+def test_impossible_evaluation_date_is_a_finding_for_build_and_verify(tmp_path, capsys):
+    from tests.test_evals import write_result
+
+    root = make_repo(tmp_path)
+    assert main(["build", "--root", str(root)]) == 0
+    capsys.readouterr()
+    write_result(root, name="2026-99-99-example-model.json")
+    before = {path: path.read_bytes() for path in root.rglob("*") if path.is_file()}
+    for command in ("build", "verify"):
+        assert main([command, "--root", str(root)]) == 1
+        error = capsys.readouterr().err
+        assert "evals/results/2026-99-99-example-model.json" in error
+        assert "file name date must be an ISO date" in error
+        assert {path: path.read_bytes() for path in before} == before
+
+
 def test_missing_root_reports_cleanly_for_both_commands(tmp_path, capsys, monkeypatch):
     """Running outside a DrDebits tree is the likeliest error path, so it must
     print the module's clean message rather than a traceback.
