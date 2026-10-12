@@ -169,3 +169,20 @@ def test_invalid_bytes_in_a_source_file_report_the_path(tmp_path, capsys):
 
     assert main(["build", "--root", str(root)]) == 1
     assert "Traceback" not in capsys.readouterr().err
+
+
+def test_build_skips_a_stamped_file_the_tree_does_not_have(tmp_path, capsys):
+    root = make_repo(tmp_path)
+    (root / "llms.txt").unlink()
+    assert main(["build", "--root", str(root)]) == 0
+    out = capsys.readouterr().out
+    assert "stamped README.md" in out
+    assert "stamped llms.txt" not in out
+
+
+def test_digests_reports_an_unbuildable_tree(tmp_path, capsys):
+    root = make_repo(tmp_path)
+    for fragment in (root / "src" / "guide").glob("*.md"):
+        fragment.unlink()
+    assert main(["digests", "--root", str(root)]) == 1
+    assert capsys.readouterr().err == "digests: src/guide/ has no fragments\n"
