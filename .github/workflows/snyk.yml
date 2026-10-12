@@ -1,0 +1,92 @@
+name: Snyk
+
+# Snyk's free plan cannot read uv.lock, so each locked environment is exported
+# to a requirements file, installed into its own virtual environment and
+# tested through Snyk's pip support. It runs weekly and when a dependency file
+# changes, which keeps it inside the free plan's monthly test allowance.
+on:
+  schedule:
+    - cron: "23 4 * * 1"
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "**/uv.lock"
+      - "**/requirements*.txt"
+      - "**/package-lock.json"
+      - ".github/workflows/snyk.yml"
+  pull_request:
+    paths:
+      - "**/uv.lock"
+      - "**/requirements*.txt"
+      - "**/package-lock.json"
+      - ".github/workflows/snyk.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Snyk open source test
+    # Pull requests from forks receive no secrets.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      # One dependency set per line: uv:<project directory>,
+      # pip:<requirements file> or npm:<package-lock.json>.
+      SNYK_TARGETS: |
+        uv:tools/drdebits_build
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.14"
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          version: "0.12.5"
+          enable-cache: false
+      - uses: snyk/actions/setup@9adf32b1121593767fc3c057af55b55db032dc04 # v1.0.0
+      - name: Test each dependency set
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: |
+          set -uo pipefail
+          # Without the token every set is still exported and installed, so a
+          # broken lock shows up, but the job fails because nothing was scanned.
+          if [ -z "$SNYK_TOKEN" ]; then
+            echo "::error::The SNYK_TOKEN repository secret is not set, so nothing was scanned."
+          fi
+          status=0
+          seen=""
+          while IFS=: read -r kind target; do
+            [ -n "$kind" ] || continue
+            if [ "$kind" = npm ]; then
+              [ -z "$SNYK_TOKEN" ] || snyk test --file="$target" --project-name="$target" || status=1
+              continue
+            fi
+            work=$(mktemp -d)
+            case "$kind" in
+              uv) uv export --project "$target" --frozen --no-hashes --no-emit-project --no-emit-workspace \
+                    --all-packages --all-extras --no-header --output-file "$work/requirements.txt" > /dev/null ;;
+              pip) cp "$target" "$work/requirements.txt" ;;
+              *) echo "::error::Unknown dependency set $kind:$target"; status=1; continue ;;
+            esac
+            # Workspace members export the shared lock; test each set once.
+            digest=$(sha256sum "$work/requirements.txt" | cut -d' ' -f1)
+            case " $seen " in *" $digest "*) echo "$kind:$target repeats an earlier set"; continue ;; esac
+            seen="$seen $digest"
+            python -m venv "$work/venv"
+            "$work/venv/bin/python" -m pip install --quiet --disable-pip-version-check --no-deps \
+              --only-binary=:all: --requirement "$work/requirements.txt" || { status=1; continue; }
+            [ -z "$SNYK_TOKEN" ] || snyk test --file="$work/requirements.txt" --package-manager=pip --skip-unresolved \
+              --command="$work/venv/bin/python" --project-name="$kind:$target" || status=1
+          done <<< "$SNYK_TARGETS"
+          [ -n "$SNYK_TOKEN" ] || exit 1
+          exit "$status"
