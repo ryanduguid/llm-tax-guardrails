@@ -55,14 +55,14 @@ jobs:
           enable-cache: true
 
       - name: Lint the builder
-        run: uv run --project tools/drdebits_build --locked --extra dev ruff check tools/drdebits_build/drdebits_build tools/drdebits_build/tests
+        run: uv run --project tools/drdebits_build --locked --extra dev ruff check tools/drdebits_build/drdebits_build tools/drdebits_build/tests  # NOSONAR: unprivileged job; pyyaml 6.0.3 has no Python 3.15 wheel, and uv installs the hash-locked set
 
       - name: Typecheck the builder
-        run: uv run --project tools/drdebits_build --locked --extra dev mypy --config-file tools/drdebits_build/pyproject.toml tools/drdebits_build/drdebits_build
+        run: uv run --project tools/drdebits_build --locked --extra dev mypy --config-file tools/drdebits_build/pyproject.toml tools/drdebits_build/drdebits_build  # NOSONAR: unprivileged job; pyyaml 6.0.3 has no Python 3.15 wheel, and uv installs the hash-locked set
 
       - name: Run the build package tests
         if: matrix.os != 'ubuntu-latest'
-        run: uv run --project tools/drdebits_build --locked --extra dev pytest tools/drdebits_build/tests -q
+        run: uv run --project tools/drdebits_build --locked --extra dev pytest tools/drdebits_build/tests -q  # NOSONAR: unprivileged job; pyyaml 6.0.3 has no Python 3.15 wheel, and uv installs the hash-locked set
 
       - name: Run the build package tests with branch coverage
         if: matrix.os == 'ubuntu-latest'
@@ -85,7 +85,7 @@ jobs:
           retention-days: 1
 
       - name: Verify committed outputs against sources
-        run: uv run --project tools/drdebits_build --locked python -m drdebits_build verify --root .
+        run: uv run --project tools/drdebits_build --locked python -m drdebits_build verify --root .  # NOSONAR: unprivileged job; pyyaml 6.0.3 has no Python 3.15 wheel, and uv installs the hash-locked set
 
   secrets:
     name: secret and client-identifier scan

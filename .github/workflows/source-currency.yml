@@ -57,7 +57,7 @@ jobs:
         shell: bash
         run: |
           set +e
-          uv run --project tools/drdebits_build --locked python -m drdebits_build.sources --root . > source-currency.txt 2>&1
+          uv run --project tools/drdebits_build --locked python -m drdebits_build.sources --root . > source-currency.txt 2>&1  # NOSONAR: unprivileged job; pyyaml 6.0.3 has no Python 3.15 wheel, and uv installs the hash-locked set
           result=$?
           set -e
           echo "exit_code=$result" >> "$GITHUB_OUTPUT"

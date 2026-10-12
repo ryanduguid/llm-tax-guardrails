@@ -58,7 +58,8 @@ def collect_urls(root):
     for rel in ("README.md", "MAINTENANCE.md"):
         p = root / rel
         if p.is_file():
-            texts.append(p.read_text(encoding="utf-8"))
+            # Build tool; the path is a fixed name under the --root checkout.
+            texts.append(p.read_text(encoding="utf-8"))  # NOSONAR
     seen, out = set(), []
     for text in texts:
         for m in URL_RE.finditer(text):

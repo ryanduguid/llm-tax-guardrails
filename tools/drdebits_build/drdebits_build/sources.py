@@ -267,7 +267,8 @@ def classify(pin: Pin, version: dict[str, str] | IncompleteCurrent | None) -> Fi
 
 def check(root: Path, timeout: int = TIMEOUT) -> tuple[int, list[Finding]]:
     """Return the number of sources checked and every finding for them."""
-    text = (root / SOURCE_STATUS).read_text(encoding="utf-8")
+    # Build tool; the path is a fixed name under the --root checkout.
+    text = (root / SOURCE_STATUS).read_text(encoding="utf-8")  # NOSONAR
     today = register_today()
     pins = parse_pins(text)
     findings: list[Finding] = []
