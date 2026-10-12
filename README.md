@@ -1,6 +1,7 @@
 # DrDebits: stop the model concluding what only a practitioner may
 
 [![verify](https://github.com/ryanduguid/llm-tax-guardrails/actions/workflows/verify.yml/badge.svg)](https://github.com/ryanduguid/llm-tax-guardrails/actions/workflows/verify.yml)
+[![Codecov](https://codecov.io/gh/ryanduguid/llm-tax-guardrails/graph/badge.svg)](https://codecov.io/gh/ryanduguid/llm-tax-guardrails)
 [![CodeQL](https://github.com/ryanduguid/llm-tax-guardrails/actions/workflows/codeql.yml/badge.svg)](https://github.com/ryanduguid/llm-tax-guardrails/actions/workflows/codeql.yml)
 [![Snyk](https://github.com/ryanduguid/llm-tax-guardrails/actions/workflows/snyk.yml/badge.svg?branch=main)](https://github.com/ryanduguid/llm-tax-guardrails/actions/workflows/snyk.yml)
 [![release](https://img.shields.io/github/v/release/ryanduguid/llm-tax-guardrails?color=66023C&labelColor=000000)](https://github.com/ryanduguid/llm-tax-guardrails/releases/latest)
