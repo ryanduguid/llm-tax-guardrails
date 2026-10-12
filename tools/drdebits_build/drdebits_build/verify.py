@@ -21,7 +21,8 @@ from .model import ModelError
 # in outside the generated catalogue header: a bare id range, and a count
 # introducing one. Check (h) compares every match against the sources.
 GS_RANGE_RE = re.compile(r"GS\d+ to GS\d+")
-GS_COUNT_RE = re.compile(r"(?<!\d)(\d++) (?:indexed statements|live Guidance Statements)")
+# Linear: the lookbehind and possessive quantifier stop backtracking; the scanner does not model them.
+GS_COUNT_RE = re.compile(r"(?<!\d)(\d++) (?:indexed statements|live Guidance Statements)")  # NOSONAR
 
 # How many copies of each shape each file must carry. Comparing only the text
 # the patterns above happen to match lets check (h) pass vacuously: a copy that
