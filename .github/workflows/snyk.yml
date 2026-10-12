@@ -78,6 +78,12 @@ jobs:
               pip) cp "$target" "$work/requirements.txt" ;;
               *) echo "::error::Unknown dependency set $kind:$target"; status=1; continue ;;
             esac
+            # A standard-library project exports no packages, which Snyk
+            # rejects as an empty manifest.
+            if ! grep -q '^[A-Za-z0-9]' "$work/requirements.txt"; then
+              echo "$kind:$target has no third-party dependencies"
+              continue
+            fi
             # Workspace members export the shared lock; test each set once.
             digest=$(sha256sum "$work/requirements.txt" | cut -d' ' -f1)
             case " $seen " in *" $digest "*) echo "$kind:$target repeats an earlier set"; continue ;; esac
