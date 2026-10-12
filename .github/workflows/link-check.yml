@@ -15,7 +15,7 @@ concurrency:
 
 # CI follows Python 3.15 maintenance releases; local development pins the patch.
 env:
-  UV_PYTHON: "3.15"
+  UV_PYTHON: "3.14"
 
 jobs:
   links:
@@ -31,8 +31,8 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
-          python-version: "3.15"
-          allow-prereleases: true
+          # 3.14: pyyaml 6.0.3, the locked runtime dependency, has no 3.15 wheel yet.
+          python-version: "3.14"
 
       - name: Install the locked toolchain
         uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
@@ -40,12 +40,17 @@ jobs:
           version: "0.12.0"
           enable-cache: true
 
+      # This job can write issues, so nothing it installs may run a build script.
+      # The tool runs from source; only its locked dependencies are installed, as wheels.
+      - name: Install the locked dependencies
+        run: uv sync --project tools/drdebits_build --locked --no-build --no-install-project
+
       - name: Check and retain the report
         id: check
         shell: bash
         run: |
           set +e
-          uv run --project tools/drdebits_build --locked python -m drdebits_build.linkcheck --root . > link-check.txt 2>&1  # NOSONAR: unprivileged job; pyyaml 6.0.3 has no Python 3.15 wheel, and uv installs the hash-locked set
+          PYTHONPATH=tools/drdebits_build uv run --project tools/drdebits_build --no-sync --no-build python -m drdebits_build.linkcheck --root . > link-check.txt 2>&1
           result=$?
           set -e
           echo "exit_code=$result" >> "$GITHUB_OUTPUT"
