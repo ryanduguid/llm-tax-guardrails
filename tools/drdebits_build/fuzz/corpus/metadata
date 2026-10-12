@@ -1,0 +1,67 @@
+fields:
+  - key: title
+    value: "DrDebits"
+  - key: guide_version
+    value: "0.3.3"
+  - key: status
+    value: "unreleased revision"
+  - key: jurisdiction
+    value: "AU"
+  - key: owner
+    value: "Ryan Duguid"
+  - key: canonical_repository
+    value: "https://github.com/ryanduguid/llm-tax-guardrails"
+  - key: release_tag
+    value: "v0.3.3"
+  - key: sources_checked_at
+    value: "2026-08-16T00:00:00+10:00"
+  - key: review_due
+    value: "2026-11-16"
+  - key: tasa_compilation
+    value: "C2026C00441"
+  - key: tasr_compilation
+    value: "F2024C00896"
+  - key: code_determination_compilation
+    value: "F2026C00953"
+  - key: apes_110_compilation
+    value: "July 2025"
+  - key: apes_110_pdf_filename
+    value: "Compiled_APES_110_July_25.pdf"
+  - key: apes_110_compilation_details_filename
+    value: "Compilation_Details_APES_110_July_25.pdf"
+  - key: apes_110_pdf_sha256
+    value: "B6937B93B0A6F7F3F32667CFE8880F8F60CBD7777BCE0C2D57F2DD6F13D3A300"
+  - key: apesb_root_url
+    value: "https://apesb.org.au/"
+  - key: apesb_locator_rechecked_at
+    value: "2026-08-20"
+  - key: apes_110_navigation
+    value: "Standards & Guidance > Current Pronouncements > Compilation of APES 110 Standard (Jul 2025)"
+  - key: apes_220_issued
+    value: "January 2025"
+  - key: apes_220_effective
+    value: "2025-07-01"
+  - key: apes_220_navigation
+    value: "Standards & Guidance > Specialist Pronouncements > Taxation Services > APES 220 Taxation Services (2025) - effective from 1 July 2025"
+  - key: apes_220_pdf_filename
+    value: "APES_220_Jan_2025.pdf"
+  - key: apes_220_technical_update
+    value: "2025/5 - APESB issues revised APES 220 Taxation Services"
+  - key: apes_220_technical_update_date
+    value: "2025-01-31"
+  - key: apes_ai_alert_navigation
+    value: "Home > Interest Areas > The ethical use of artificial intelligence by professional accountants"
+  - key: apes_ai_alert_title
+    value: "The ethical use of artificial intelligence by professional accountants"
+  - key: apes_ai_alert_label
+    value: "Technical Alert"
+  - key: apes_ai_alert_date
+    value: "2025-10-31"
+  - key: tpb_guidance_statement_count
+    value: "55"
+  - key: tpb_library_index_count
+    value: "55"
+  - key: guide_end_marker
+    value: "DRDEBITS-END-v0.3.3"
+  - key: checksum_files
+    value: "LICENSE|README.md|CITATION.cff|drdebits.md|MAINTENANCE.md|reference/tpb-catalogue.md|reference/apes-110-map.md|reference/ai-vendor-assurance.md|reference/tpb-gs55-concordance.md|tests/behaviour-tests.md|DISCLAIMER.md"

@@ -400,3 +400,86 @@ def test_concordance_ids_and_dates_are_validated(tmp_path):
     with pytest.raises(ModelError, match="not declared"):
         load_concordance(write(tmp_path, "u.yaml", CONCORDANCE_SOURCE.replace(
             'section: "Practices"', 'section: "Other"', 1)))
+
+
+BEHAVIOUR_ROW = """\
+    entries:
+      - id: "AUTH-001"
+        scenario: "s"
+        expected_status: "HARD_STOP"
+        required_behaviour: "r"
+        side_effect_check: "c"
+"""
+WHOLE_RESPONSE = """\
+    whole_response:
+      verdict: "violation"
+      rule: "r"
+    prohibited_conclusions:
+      - label: "a"
+        definition: "d"
+        markers: ["m"]
+"""
+
+
+@pytest.mark.parametrize("content,message", [
+    ("- a\n", "top level must be a mapping"),
+    ("!!map [a, b]\n", "expected a mapping node"),
+    ("fields:\n  - x\n", "entry 0 must have exactly fields"),
+    ('fields:\n  - {key: "a", value: "1"}\n  - {key: "a", value: "2"}\n', "duplicate metadata keys"),
+])
+def test_metadata_shape_errors_are_model_errors(tmp_path, content, message):
+    with pytest.raises(ModelError, match=message):
+        load_metadata(write(tmp_path, "m.yaml", content))
+
+
+@pytest.mark.parametrize("extra,message", [
+    ('        prohibited_anywhere: "x"\n', "must be a non-empty list of strings"),
+    ('        prohibited_anywhere: ["a | b"]\n', "item 0 must be one line with no '|'"),
+    ('        prohibited_anywhere: ["a", "a"]\n', "repeats a value"),
+    ('        prompt: "   "\n', "prompt must not be blank"),
+])
+def test_behaviour_optional_fields_are_checked(tmp_path, extra, message):
+    with pytest.raises(ModelError, match=message):
+        load_behaviour_tests(write(tmp_path, "b.yaml", BEHAVIOUR_ROW + extra))
+
+
+def test_behaviour_ids_must_be_unique(tmp_path):
+    second = BEHAVIOUR_ROW.split("\n", 1)[1]
+    with pytest.raises(ModelError, match="duplicate ids"):
+        load_behaviour_tests(write(tmp_path, "b.yaml", BEHAVIOUR_ROW + second))
+
+
+@pytest.mark.parametrize("old,new,message", [
+    ('      verdict: "violation"\n      rule: "r"\n', '      verdict: "violation"\n',
+     "'whole_response' must be a mapping"),
+    ('rule: "r"', 'rule: "a | b"', "whole_response field 'rule' must be one line"),
+    ('    prohibited_conclusions:\n      - label: "a"\n        definition: "d"\n        markers: ["m"]\n',
+     "    prohibited_conclusions: []\n", "'prohibited_conclusions' must be a non-empty list"),
+    ('        markers: ["m"]\n', "", "prohibited conclusion 0 must have exactly fields"),
+    ('definition: "d"', 'definition: "a | b"', "prohibited conclusion 0 field 'definition' must be one line"),
+])
+def test_whole_response_shape_errors_are_model_errors(tmp_path, old, new, message):
+    content = WHOLE_RESPONSE.replace(old, new)
+    assert content != WHOLE_RESPONSE
+    with pytest.raises(ModelError, match=message):
+        load_whole_response(write(tmp_path, "w.yaml", content))
+
+
+def test_prohibited_conclusion_labels_are_defined_once(tmp_path):
+    repeated = WHOLE_RESPONSE + """\
+      - label: "a"
+        definition: "e"
+        markers: ["n"]
+"""
+    with pytest.raises(ModelError, match="duplicate prohibited-conclusion label"):
+        load_whole_response(write(tmp_path, "w.yaml", repeated))
+
+
+def test_vendor_assurance_needs_declared_sections(tmp_path):
+    with pytest.raises(ModelError, match="'sections' must be a non-empty list"):
+        load_vendor_assurance(write(tmp_path, "v.yaml", "sections: []\nentries: []\n"))
+
+
+def test_deeply_nested_yaml_is_a_model_error_not_a_crash(tmp_path):
+    with pytest.raises(ModelError, match="is nested too deeply to read"):
+        load_metadata(write(tmp_path, "m.yaml", "fields: " + "[" * 2000 + "]" * 2000 + "\n"))
