@@ -478,3 +478,8 @@ def test_prohibited_conclusion_labels_are_defined_once(tmp_path):
 def test_vendor_assurance_needs_declared_sections(tmp_path):
     with pytest.raises(ModelError, match="'sections' must be a non-empty list"):
         load_vendor_assurance(write(tmp_path, "v.yaml", "sections: []\nentries: []\n"))
+
+
+def test_deeply_nested_yaml_is_a_model_error_not_a_crash(tmp_path):
+    with pytest.raises(ModelError, match="is nested too deeply to read"):
+        load_metadata(write(tmp_path, "m.yaml", "fields: " + "[" * 2000 + "]" * 2000 + "\n"))
