@@ -5,6 +5,7 @@
 [![release](https://img.shields.io/github/v/release/ryanduguid/llm-tax-guardrails?color=5C2D91&labelColor=04001F)](https://github.com/ryanduguid/llm-tax-guardrails/releases/latest)
 [![licence: CC BY 4.0](https://img.shields.io/badge/licence-CC%20BY%204.0-5C2D91.svg?labelColor=04001F)](LICENSE)
 [![Codacy code quality](https://app.codacy.com/project/badge/Grade/aa06cf4e42c14a59b22c8825bfa180d3?branch=main)](https://app.codacy.com/gh/ryanduguid/llm-tax-guardrails/dashboard)
+[![SonarCloud](https://img.shields.io/sonar/quality_gate/ryanduguid_llm-tax-guardrails?server=https%3A%2F%2Fsonarcloud.io&label=SonarCloud&labelColor=000000)](https://sonarcloud.io/summary/new_code?id=ryanduguid_llm-tax-guardrails)
 
 Guardrails, not advice. A competent, authorised human remains responsible for every professional service, judgement and consequential action.
 
