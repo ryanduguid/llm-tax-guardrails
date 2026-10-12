@@ -83,3 +83,33 @@ def test_checked_in_bundle_installs_and_cli_verifies(tmp_path):
     assert bundle.main(["install", "--source", str(source), "--destination", str(target),
                         "--manifest-sha256", digest]) == 0
     assert bundle.main(["verify", "--source", str(target), "--manifest-sha256", digest]) == 0
+
+
+def test_member_resolving_outside_the_source_is_rejected(tmp_path, monkeypatch):
+    source, digest = make_bundle(tmp_path)
+    original = Path.is_relative_to
+    monkeypatch.setattr(Path, "is_relative_to", lambda p, other: p.name != "drdebits.md" and original(p, other))
+    with pytest.raises(bundle.BundleError, match="escapes source: drdebits.md"):
+        bundle.verified_files(source, digest)
+
+
+def test_approved_digest_must_be_lower_case_hex(tmp_path):
+    source, digest = make_bundle(tmp_path)
+    with pytest.raises(bundle.BundleError, match="64 lower-case hex"):
+        bundle.verified_files(source, digest.upper())
+
+
+def test_malformed_checksum_line_is_rejected(tmp_path):
+    source, _ = make_bundle(tmp_path)
+    manifest = source / "SHA256SUMS"
+    manifest.write_bytes(manifest.read_bytes() + b"not a checksum line\n")
+    with pytest.raises(bundle.BundleError, match="malformed checksum entry"):
+        bundle.verified_files(source, hashlib.sha256(manifest.read_bytes()).hexdigest())
+
+
+def test_install_without_destination_is_a_usage_error(tmp_path, capsys):
+    source, digest = make_bundle(tmp_path)
+    with pytest.raises(SystemExit) as exited:
+        bundle.main(["install", "--source", str(source), "--manifest-sha256", digest])
+    assert exited.value.code == 2
+    assert "install requires --destination" in capsys.readouterr().err

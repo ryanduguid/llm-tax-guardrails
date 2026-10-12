@@ -1,10 +1,15 @@
 # DrDebits: stop the model concluding what only a practitioner may
 
-[![verify](https://github.com/ryanduguid/llm-tax-guardrails/actions/workflows/verify.yml/badge.svg)](https://github.com/ryanduguid/llm-tax-guardrails/actions/workflows/verify.yml)
-[![CodeQL](https://github.com/ryanduguid/llm-tax-guardrails/actions/workflows/codeql.yml/badge.svg)](https://github.com/ryanduguid/llm-tax-guardrails/actions/workflows/codeql.yml)
-[![release](https://img.shields.io/github/v/release/ryanduguid/llm-tax-guardrails?color=5C2D91&labelColor=04001F)](https://github.com/ryanduguid/llm-tax-guardrails/releases/latest)
-[![licence: CC BY 4.0](https://img.shields.io/badge/licence-CC%20BY%204.0-5C2D91.svg?labelColor=04001F)](LICENSE)
-[![Codacy code quality](https://app.codacy.com/project/badge/Grade/aa06cf4e42c14a59b22c8825bfa180d3?branch=main)](https://app.codacy.com/gh/ryanduguid/llm-tax-guardrails/dashboard)
+[![verify](https://img.shields.io/github/actions/workflow/status/ryanduguid/llm-tax-guardrails/verify.yml?branch=main&label=verify&labelColor=000000&style=flat-square)](https://github.com/ryanduguid/llm-tax-guardrails/actions/workflows/verify.yml)
+[![Codecov](https://img.shields.io/codecov/c/github/ryanduguid/llm-tax-guardrails?label=coverage&labelColor=000000&style=flat-square)](https://codecov.io/gh/ryanduguid/llm-tax-guardrails)
+[![CodeQL](https://img.shields.io/github/actions/workflow/status/ryanduguid/llm-tax-guardrails/codeql.yml?branch=main&label=CodeQL&labelColor=000000&style=flat-square)](https://github.com/ryanduguid/llm-tax-guardrails/actions/workflows/codeql.yml)
+[![Snyk](https://img.shields.io/github/actions/workflow/status/ryanduguid/llm-tax-guardrails/snyk.yml?branch=main&label=Snyk&labelColor=000000&style=flat-square)](https://github.com/ryanduguid/llm-tax-guardrails/actions/workflows/snyk.yml)
+[![SonarCloud](https://img.shields.io/sonar/quality_gate/ryanduguid_llm-tax-guardrails?server=https%3A%2F%2Fsonarcloud.io&label=SonarCloud&labelColor=000000&style=flat-square)](https://sonarcloud.io/summary/new_code?id=ryanduguid_llm-tax-guardrails)
+[![Codacy code quality](https://img.shields.io/codacy/grade/aa06cf4e42c14a59b22c8825bfa180d3?label=Codacy&labelColor=000000&style=flat-square)](https://app.codacy.com/gh/ryanduguid/llm-tax-guardrails/dashboard)<br>
+[![OpenSSF Scorecard](https://img.shields.io/ossf-scorecard/github.com/ryanduguid/llm-tax-guardrails?label=Scorecard&labelColor=000000&style=flat-square)](https://scorecard.dev/viewer/?uri=github.com/ryanduguid/llm-tax-guardrails)
+[![VirusTotal](https://img.shields.io/badge/VirusTotal-scanned-990024?labelColor=000000&style=flat-square&logo=virustotal&logoColor=FFFFF0)](https://github.com/ryanduguid/llm-tax-guardrails/releases/latest)<br>
+[![release](https://img.shields.io/github/v/release/ryanduguid/llm-tax-guardrails?color=66023C&labelColor=000000&style=flat-square)](https://github.com/ryanduguid/llm-tax-guardrails/releases/latest)
+[![licence: CC BY 4.0](https://img.shields.io/badge/licence-CC%20BY%204.0-66023C?labelColor=000000&style=flat-square)](LICENSE)
 
 Guardrails, not advice. A competent, authorised human remains responsible for every professional service, judgement and consequential action.
 
@@ -49,7 +54,7 @@ approvals and human review in the host before client work.
 
 ```mermaid
 flowchart TD
-%%{init: {"theme": "base", "look": "classic", "themeVariables": {"background": "#000000", "primaryColor": "#66023C", "primaryTextColor": "#FFFFF0", "primaryBorderColor": "#FFFFF0", "lineColor": "#000000", "textColor": "#FFFFF0", "edgeLabelBackground": "#000000", "clusterBkg": "#000000", "clusterBorder": "#FFFFF0", "titleColor": "#FFFFF0"}, "themeCSS": ".flowchart-link, .relationshipLine, marker path { filter: drop-shadow(0px 1px 0px #FFFFF0) drop-shadow(0px -1px 0px #FFFFF0) drop-shadow(1px 0px 0px #FFFFF0) drop-shadow(-1px 0px 0px #FFFFF0); }"}}%%
+%%{init: {"theme": "base", "look": "classic", "themeVariables": {"background": "#000000", "primaryColor": "#66023C", "primaryTextColor": "#FFFFF0", "primaryBorderColor": "#FFFFF0", "lineColor": "#E5E4E2", "textColor": "#FFFFF0", "edgeLabelBackground": "#000000", "clusterBkg": "#000000", "clusterBorder": "#E5E4E2", "titleColor": "#E5E4E2"}}}%%
     Prompt["Accounting or tax prompt"] --> Gate["Intake gate<br/><i>scope, facts, sources, authority, confidentiality, interests, consequences</i>"]
     Gate --> Risk{"Risk classification"}
 
@@ -65,6 +70,8 @@ flowchart TD
     style Flow fill:#990024,stroke:#FFFFF0,stroke-width:2px,color:#FFFFF0
     style Draft fill:#990024,stroke:#FFFFF0,stroke-width:2px,color:#FFFFF0
     style Stop fill:#000000,stroke:#FFFFF0,stroke-width:3px,color:#FFFFF0
+    classDef external fill:#E5E4E2,stroke:#E5E4E2,stroke-width:2px,color:#000000
+    class Prompt external
 ```
 
 The diagram summarises the guide's own gate, classification, workflow and decision statuses; the guide text controls.

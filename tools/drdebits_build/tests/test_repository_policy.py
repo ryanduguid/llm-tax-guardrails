@@ -185,6 +185,8 @@ SUPPORTED_VERSIONS_POLICY = (
     "security fixes are applied to the latest version on the default branch."
 )
 REPORTING_POLICY = (
+    "report privately at "
+    "<https://github.com/ryanduguid/llm-tax-guardrails/security/advisories/new>. "
     "please use this repository's private vulnerability reporting feature. "
     "do not open a public issue or pull request for a suspected security "
     "vulnerability. include a clear description, reproduction steps, impact, "
