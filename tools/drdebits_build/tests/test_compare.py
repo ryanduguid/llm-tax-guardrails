@@ -206,3 +206,12 @@ def test_cli_check_legacy_records_are_incomplete(tmp_path, capsys):
     record = "evals/results/2026-02-01-example-model.json"
     assert compare.main([record, record, "--root", str(root), "--check"]) == 2
     assert json.loads(capsys.readouterr().out)["regression_check"]["status"] == "incomplete"
+
+
+def test_check_flags_candidate_cases_outside_the_current_suite(tmp_path):
+    sources = load_sources(make_repo(tmp_path))
+    before = {**BOUND, **build_digests(sources), "results": {"A-001": "pass"}}
+    after = {**before, "results": {"A-001": "pass", "Z-9": "pass"}}
+    out = compare.check_regressions(compare.compare_records(before, after), after, sources)
+    assert out["status"] == "incomplete"
+    assert "candidate has cases outside the current suite" in out["limitations"]

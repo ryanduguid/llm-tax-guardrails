@@ -461,3 +461,19 @@ def test_a_prohibited_conclusion_label_the_sources_do_not_define(tmp_path):
     assert verify(root) == [
         "behaviour test A-001: prohibited_anywhere names 'invented label', which "
         "src/data/behaviour-tests.yaml does not define under prohibited_conclusions"]
+
+
+def test_verification_reads_the_real_clock_by_default():
+    from drdebits_build import verify as verify_module
+
+    assert verify_module._verification_date() == date.today()
+
+
+def test_a_missing_committed_guide_is_reported_once(tmp_path):
+    root = make_repo(tmp_path)
+    sync(root)
+    (root / "drdebits.md").unlink()
+    failures = verify(root)
+    assert "drdebits.md: missing committed file" in failures
+    # The guide's own content checks skip a file that is not there.
+    assert not any(f.startswith("end marker") or "header" in f for f in failures)

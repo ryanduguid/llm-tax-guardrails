@@ -42,3 +42,7 @@ disable_error_code = ["import-untyped"]
 pretty = true
 check_untyped_defs = true
 
+
+[tool.coverage.report]
+# A module's entry guard only calls main(), which the tests call directly.
+exclude_also = ['if __name__ == "__main__":']

@@ -413,3 +413,58 @@ def test_an_environment_proxy_is_not_used(monkeypatch):
     finally:
         monkeypatch.undo()
         importlib.reload(linkcheck)
+
+
+def test_collect_urls_reads_only_the_hand_written_files_present(tmp_path):
+    root = make_repo(tmp_path)
+    (root / "README.md").write_text("See https://x.invalid/readme\n", encoding="utf-8", newline="\n")
+    (root / "MAINTENANCE.md").unlink()
+    write_outputs(root, root)
+    assert "https://x.invalid/readme" in collect_urls(root)
+
+
+def test_url_error_with_a_text_reason_is_unreachable_by_class_name(monkeypatch):
+    def fake_urlopen(req, timeout):
+        raise urllib.error.URLError("no route")
+
+    monkeypatch.setattr(linkcheck, "_open", fake_urlopen)
+    assert linkcheck.check("https://x.invalid/a", 5) == ("unreachable", "URLError")
+
+
+@pytest.mark.parametrize("url,detail", [
+    ("https://x.invalid:notaport/", "unparsable-url"),
+    ("https:///no-host", "no-host"),
+])
+def test_malformed_https_urls_are_never_requested(monkeypatch, url, detail):
+    monkeypatch.setattr(linkcheck, "_open", lambda req, timeout: pytest.fail("requested"))
+    assert linkcheck.check(url, 5) == ("unreachable", detail)
+
+
+def test_a_name_that_does_not_resolve_is_left_to_the_request(monkeypatch):
+    def no_answer(*args, **kwargs):
+        raise socket.gaierror(socket.EAI_NONAME, "no answer")
+
+    monkeypatch.setattr(linkcheck.socket, "getaddrinfo", no_answer)
+    monkeypatch.setattr(linkcheck, "_open", lambda req, timeout: _FakeResponse(200))
+    assert linkcheck.check("https://x.invalid/a", 5) == ("ok", "200")
+
+
+def test_redirect_to_a_public_https_destination_is_followed():
+    handler = linkcheck._ValidatingRedirectHandler()
+    req = urllib.request.Request("https://x.invalid/a")
+    followed = handler.redirect_request(req, None, 302, "Found", {}, "https://y.invalid/b")
+    assert followed.full_url == "https://y.invalid/b"
+
+
+def test_a_response_that_ends_on_plain_http_is_unreachable(monkeypatch):
+    class _PlainHttp(_FakeResponse):
+        def geturl(self):
+            return "http://x.invalid/"
+
+    monkeypatch.setattr(linkcheck, "_open", lambda req, timeout: _PlainHttp(200))
+    assert linkcheck.check("https://x.invalid/a", 5) == ("unreachable", "non-https-redirect")
+
+
+def test_an_error_status_returned_without_an_exception_is_unreachable(monkeypatch):
+    monkeypatch.setattr(linkcheck, "_open", lambda req, timeout: _FakeResponse(503))
+    assert linkcheck.check("https://x.invalid/a", 5) == ("unreachable", "503")

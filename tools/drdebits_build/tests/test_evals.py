@@ -279,3 +279,12 @@ def test_build_writes_and_verify_checks_the_eval_outputs(tmp_path, monkeypatch):
     assert any(evals.RESULTS_FILE in f and "differs" in f for f in run_verify(root))
     write_result(root, results={"A-001": "maybe"})
     assert any("cannot rebuild" in f for f in run_verify(root))
+
+
+def test_result_loader_rejects_a_name_outside_the_pattern(tmp_path):
+    # load_results filters names first; the loader keeps its own check because
+    # it reads the run date from the name.
+    path = tmp_path / "notes.json"
+    path.write_text("{}", encoding="utf-8")
+    with pytest.raises(ModelError, match="file name must be YYYY-MM-DD-<slug>.json"):
+        evals._load_result(path, "evals/results/notes.json", ["A-001"], "0.9.9-test", "human-confirmed")
