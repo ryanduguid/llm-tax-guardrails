@@ -390,3 +390,44 @@ def test_an_undefined_prohibited_label_is_reported_not_scored():
     with pytest.raises(harness.HarnessError, match="the sources do not define"):
         harness.score_response("HARD_STOP", {**CASE, "prohibited_anywhere": ["invented"]},
                                CONCLUSIONS)
+
+
+def test_read_source_snapshot_needs_a_readable_path(tmp_path):
+    with pytest.raises(harness.HarnessError, match="needs a local file path"):
+        harness.read_source(harness.SNAPSHOT)
+    with pytest.raises(harness.HarnessError, match="cannot read snapshot"):
+        harness.read_source(harness.SNAPSHOT, tmp_path / "missing.txt")
+
+
+def test_an_empty_decision_field_is_recorded_as_unreadable():
+    # An empty field followed by another field, and an empty field at the end,
+    # each count as a decision with no status.
+    assert harness.decision_statuses("Decision status:\nDecision status: HARD_STOP") == ["", "HARD_STOP"]
+    assert harness.decision_statuses("Some prose.\nDecision status:") == [""]
+
+
+def _responses_with(tmp_path, **changes):
+    path = write_responses(tmp_path, {"A-001": {"text": "HARD_STOP.", "invocations": []}})
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    payload.update(changes)
+    path.write_text(json.dumps(payload), encoding="utf-8", newline="\n")
+    return path
+
+
+def test_a_label_with_no_file_name_characters_is_refused(tmp_path):
+    root = make_repo(tmp_path)
+    responses = _responses_with(tmp_path)
+    with pytest.raises(harness.HarnessError, match="cannot build a file-name slug from '!!!'"):
+        harness.score_from_file(root, responses, label="!!!")
+    assert not any((root / "evals" / "observations").glob("*.json"))
+
+
+def test_responses_file_must_be_an_object_with_an_iso_run_date(tmp_path):
+    root = make_repo(tmp_path)
+    array = tmp_path / "array.json"
+    array.write_text("[]", encoding="utf-8")
+    with pytest.raises(harness.HarnessError, match="top level must be an object"):
+        harness.score_from_file(root, array)
+    with pytest.raises(harness.HarnessError, match="run_date must be an ISO date"):
+        harness.score_from_file(root, _responses_with(tmp_path, run_date="20 Sep 2026"))
+    assert not (root / "evals" / "observations").exists()

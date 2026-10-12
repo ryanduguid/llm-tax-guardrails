@@ -67,8 +67,12 @@ def _construct_unique_mapping(loader, node, deep=False):
     than resolving silently. No source uses anchors, and a file that is the
     authority for a generated control should say what it means once.
     """
-    if isinstance(node, yaml.nodes.MappingNode):
-        loader.flatten_mapping(node)
+    if not isinstance(node, yaml.nodes.MappingNode):
+        # An explicit !!map tag on a sequence or scalar reaches this constructor;
+        # SafeConstructor rejects it the same way.
+        raise yaml.constructor.ConstructorError(
+            None, None, f"expected a mapping node, but found {node.id}", node.start_mark)
+    loader.flatten_mapping(node)
     mapping = {}
     for key_node, value_node in node.value:
         key = loader.construct_object(key_node, deep=deep)
