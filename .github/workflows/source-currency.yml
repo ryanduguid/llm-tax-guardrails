@@ -52,15 +52,18 @@ jobs:
           version: "0.12.0"
           enable-cache: true
 
-      - name: Check and retain the report
+      # The check runs on a single-line step so SonarCloud reads the NOSONAR
+      # marker as a YAML comment; inside a block scalar it is shell text.
+      - name: Check
         id: check
         shell: bash
+        run: uv run --project tools/drdebits_build --locked python -m drdebits_build.sources --root . > source-currency.txt 2>&1 || result=$?; echo "exit_code=${result:-0}" >> "$GITHUB_OUTPUT"  # NOSONAR: unprivileged job; pyyaml 6.0.3 has no Python 3.15 wheel, and uv installs the hash-locked set
+
+      - name: Retain the report
+        env:
+          result: ${{ steps.check.outputs.exit_code }}
+        shell: bash
         run: |
-          set +e
-          uv run --project tools/drdebits_build --locked python -m drdebits_build.sources --root . > source-currency.txt 2>&1  # NOSONAR: unprivileged job; pyyaml 6.0.3 has no Python 3.15 wheel, and uv installs the hash-locked set
-          result=$?
-          set -e
-          echo "exit_code=$result" >> "$GITHUB_OUTPUT"
           cat source-currency.txt
           printf '### Verification result: %s\n\n' "$result" >> "$GITHUB_STEP_SUMMARY"
           cat source-currency.txt >> "$GITHUB_STEP_SUMMARY"
