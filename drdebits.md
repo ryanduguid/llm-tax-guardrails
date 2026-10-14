@@ -1,11 +1,11 @@
 ---
 title: DrDebits
-guide_version: 0.3.3
-status: unreleased revision
+guide_version: 0.4.0
+status: current
 jurisdiction: AU
 owner: Ryan Duguid
 canonical_repository: https://github.com/ryanduguid/llm-tax-guardrails
-release_tag: v0.3.3
+release_tag: v0.4.0
 sources_checked_at: 2026-10-14T00:00:00+11:00
 review_due: 2027-01-14
 tasa_compilation: C2026C00441
@@ -30,23 +30,21 @@ apes_ai_alert_label: Technical Alert
 apes_ai_alert_date: 2025-10-31
 tpb_guidance_statement_count: 55
 tpb_library_index_count: 55
-guide_end_marker: DRDEBITS-END-v0.3.3
+guide_end_marker: DRDEBITS-END-v0.4.0
 ---
 
 # DrDebits
 
 > Australian tax-practice and accounting-ethics guardrails for LLM-assisted work
 >
-> Version: `0.3.3`
+> Version: `0.4.0`
 >
 > Jurisdiction: Australia
 >
 > Sources last checked: `2026-10-14` (Australia/Sydney)
 
-This is an unreleased revision of the 0.3.3 guide. The published evaluation
-records describe the earlier release; fresh model verification of these changes
-is pending. Identify this working revision by its Git commit as well as the
-base guide version.
+The published evaluation records describe release 0.3.3; fresh model
+verification of release 0.4.0 is pending.
 
 DrDebits is an independent, source-linked operating guide for large language models (LLMs) assisting with Australian accounting, tax and BAS work. It converts the Tax Practitioners Board (TPB) framework, APES 110, APES 220 and the sector’s AML/CTF obligations into practical controls for drafting, research, calculations and review.
 
@@ -582,6 +580,7 @@ DrDebits is independent and is not endorsed by the TPB, APESB, AUSTRAC, IFAC, CA
 
 | Version | Date | Status | Change |
 |---|---|---|---|
+| 0.4.0 | 2026-10-14 | Published | Adds TPB sanctions controls and corrects the s 15 and s 45 rows for the Tax Agent Services Act and Code of Professional Conduct amendments that apply from 1 October 2026. Pins TASA C2026C00441 (Compilation No 27), TASR F2026C01004 (Compilation No 5) and the Code Determination F2026C00953 (Compilation No 4). Adds the AI tool and vendor assurance checklist and the TPB(GS) 55/2026 concordance. Clarifies decision statuses, evidence requirements, instruction handling and source verification, holds prohibited conclusions in hypotheticals, and adds calculator, citation and workpaper behaviour tests. Sources checked 14 October 2026; review due 14 January 2027. No confirmed model evaluation covers this release yet. |
 | 0.3.3 | 2026-09-06 | Published | Repository renamed from DrDebits to llm-tax-guardrails on 6 September 2026; the canonical repository in the metadata, CITATION.cff and llms.txt now name it (the old URL redirects). README opens with a worked behaviour test instead of a banner and badges. Sources were not rechecked for this release: sources_checked_at and review_due are unchanged. No control change. |
 | 0.3.2 | 2026-08-22 | Published | First non-draft version stamp: metadata, header, CITATION.cff and end marker now identify the release as 0.3.2 current (the v0.3.1 GitHub release reused the 0.3.1-draft tree). Corrected the README description of DISCLAIMER.md (general disclaimer, not a TASA safe harbour), repointed the APES 110 and TPB hero badges at their reference maps, rebuilt the routing diagram from the guide's actual intake gate, risk classification, workflow and decision statuses, and scoped the digest wording to the files SHA256SUMS actually lists. AGENTS.md and llms.txt now route into the guide instead of paraphrasing it, and the intake gate consequences item defers to the risk-classification list. No control change. |
 | 0.3.1-draft | 2026-08-18 | Published draft | Wording patch: removed the duplicated action-list paraphrase from the deployment section, aligned the down-classification ban with the instruction-word vocabulary, and clarified the workflow preamble and PROP-002 phrasing. No control change. |
@@ -589,4 +588,4 @@ DrDebits is independent and is not endorsed by the TPB, APESB, AUSTRAC, IFAC, CA
 | 0.2.0-draft | 2026-08-16 | Published draft | Added APES 220, the TAA 1953 Sch 1 penalty and safe-harbour layer and an AML/CTF control set; added a low-impact proportionality lane; release integrity now rests on `SHA256SUMS` digests with the end marker demoted to a truncation check; behaviour tests, TPB catalogue, APES 110 map and maintenance protocol split into separate files; added PROP-001 and AML-001 behaviour tests. |
 | 0.1.0-draft | 2026-08-16 | Published draft | Initial source-backed guide; 55-statement TPB catalogue; APES 110 July 2025 mapping; AI, tax-planning, NOCLAR, privacy and independence controls; original DrDebits prose licensed under CC BY 4.0. |
 
-DRDEBITS-END-v0.3.3
+DRDEBITS-END-v0.4.0

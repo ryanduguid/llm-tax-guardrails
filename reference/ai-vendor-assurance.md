@@ -1,6 +1,6 @@
 # AI tool and vendor assurance checklist
 
-Part of [DrDebits](../drdebits.md) `0.3.3`. Retrieve this file when a firm is assessing an AI product, vendor or in-house deployment before it reaches client work; verify it against `SHA256SUMS` in the release.
+Part of [DrDebits](../drdebits.md) `0.4.0`. Retrieve this file when a firm is assessing an AI product, vendor or in-house deployment before it reaches client work; verify it against `SHA256SUMS` in the release.
 
 
 The AI-specific TPB rules in the guide require due diligence over confidentiality, privacy, security, access, retention, training use, subcontractors, location, incident response and exit arrangements. This checklist turns that requirement into questions a firm can send, with the evidence that answers each one, where the underlying obligation sits, and what follows when nobody answers.
