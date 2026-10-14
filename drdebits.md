@@ -6,8 +6,8 @@ jurisdiction: AU
 owner: Ryan Duguid
 canonical_repository: https://github.com/ryanduguid/llm-tax-guardrails
 release_tag: v0.3.3
-sources_checked_at: 2026-08-16T00:00:00+10:00
-review_due: 2026-11-16
+sources_checked_at: 2026-10-14T00:00:00+11:00
+review_due: 2027-01-14
 tasa_compilation: C2026C00441
 tasr_compilation: F2026C01004
 code_determination_compilation: F2026C00953
@@ -16,7 +16,7 @@ apes_110_pdf_filename: Compiled_APES_110_July_25.pdf
 apes_110_compilation_details_filename: Compilation_Details_APES_110_July_25.pdf
 apes_110_pdf_sha256: B6937B93B0A6F7F3F32667CFE8880F8F60CBD7777BCE0C2D57F2DD6F13D3A300
 apesb_root_url: https://apesb.org.au/
-apesb_locator_rechecked_at: 2026-08-20
+apesb_locator_rechecked_at: 2026-10-14
 apes_110_navigation: Standards & Guidance > Current Pronouncements > Compilation of APES 110 Standard (Jul 2025)
 apes_220_issued: January 2025
 apes_220_effective: 2025-07-01
@@ -41,7 +41,7 @@ guide_end_marker: DRDEBITS-END-v0.3.3
 >
 > Jurisdiction: Australia
 >
-> Sources last checked: `2026-08-16` (Australia/Sydney)
+> Sources last checked: `2026-10-14` (Australia/Sydney)
 
 This is an unreleased revision of the 0.3.3 guide. The published evaluation
 records describe the earlier release; fresh model verification of these changes
@@ -101,7 +101,7 @@ Apply DrDebits to this task. Classify the service, role, period and applicable s
 
 ## Source status
 
-| Source | Version checked | Status at 2026-08-16 unless a later confirmation is stated | Role in DrDebits |
+| Source | Version checked | Status at 2026-10-14 unless a later confirmation is stated | Role in DrDebits |
 |---|---|---|---|
 | [*Tax Agent Services Act 2009*](https://www.legislation.gov.au/C2009A00013/latest) | `C2026C00441`, Compilation No 27, 1 October 2026 | In force; completion of substantive human review confirmed on 8 October 2026 | Primary statutory TPB framework, including the Code in s 30-10 |
 | [*Tax Agent Services Regulations 2022*](https://www.legislation.gov.au/F2022L00238/latest) | `F2026C01004`, Compilation No 5, 1 October 2026 | In force; completion of substantive human review confirmed on 11 October 2026 | Registration, association and related regulatory detail |
@@ -113,7 +113,7 @@ Apply DrDebits to this task. Classify the service, role, period and applicable s
 | [APES 220 Taxation Services (locate via APESB)](https://apesb.org.au/) | Issued January 2025; effective 1 July 2025 | Current | Service-level professional standard for Members providing taxation services, alongside APES 110 |
 | [*Taxation Administration Act 1953*](https://www.legislation.gov.au/C1953A00001/latest) | Landing page checked; compilation ID not pinned this release | In force | Sch 1 penalty framework: s 284-15 reasonably arguable position; s 284-75(6) agent safe harbour |
 | [*Anti-Money Laundering and Counter-Terrorism Financing Act 2006*](https://www.legislation.gov.au/C2006A00169/latest) | Landing page checked; compilation ID not pinned this release | In force; tranche-2 professional services regulated from 1 July 2026 | AML/CTF designated-service obligations; reformed tipping-off offence (s 123) effective 31 March 2025 |
-| [AUSTRAC accountant guidance](https://www.austrac.gov.au/industry-and-business/your-industry/accountants) | Checked 2026-08-16 at its former address | Regulator guidance; AUSTRAC’s professional designated services guidance was updated on 25 September 2026, after that check, and is `SOURCE CURRENCY NOT CONFIRMED` until reviewed | Enrolment, AML/CTF program, compliance officer and reporting obligations for the sector |
+| [AUSTRAC accountant guidance](https://www.austrac.gov.au/industry-and-business/your-industry/accountants) | Checked 2026-10-14 | Regulator guidance, including AUSTRAC’s professional designated services guidance updated on 25 September 2026 | Enrolment, AML/CTF program, compliance officer and reporting obligations for the sector |
 
 At the source-check date, the filtered TPB library index exposed 55 live Guidance Statements, GS01 to GS55, across 3 result pages. This count and every statement’s status must be rechecked rather than assumed to continue.
 
@@ -407,7 +407,7 @@ Explicitly challenge automation, anchoring, availability, confirmation, groupthi
 
 Apply the technology revisions with their engagement-specific effective dates. At the [APESB website](https://apesb.org.au/), follow `Interest Areas` → `The ethical use of artificial intelligence by professional accountants`; confirm that it is labelled `Technical Alert` and dated 31 October 2025.
 
-Publisher navigation and document identifiers were rechecked on 20 August 2026; the complete substantive source review remains 16 August 2026.
+Publisher navigation, document identifiers and the complete substantive source review were last checked on 14 October 2026.
 
 - The responsible member or Sustainability Assurance Practitioner remains responsible for analysis, professional judgement and outcomes within the applicable scope.
 - Verify AI-generated information with suitable primary evidence and independent calculation or review where material.

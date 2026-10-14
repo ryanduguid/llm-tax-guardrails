@@ -17,7 +17,7 @@ GUIDE_SOURCE = ROOT / "src" / "guide" / "150-apes-110-control-set.md"
 
 LOCATOR_METADATA = {
     "apesb_root_url": "https://apesb.org.au/",
-    "apesb_locator_rechecked_at": "2026-08-20",
+    "apesb_locator_rechecked_at": "2026-10-14",
     "apes_110_navigation": (
         "Standards & Guidance > Current Pronouncements > "
         "Compilation of APES 110 Standard (Jul 2025)"
@@ -93,9 +93,8 @@ CANONICAL_GUIDE_LOCATOR_SECTIONS = {
         "Areas` → `The ethical use of artificial intelligence by professional "
         "accountants`; confirm that it is labelled `Technical Alert` and dated "
         "31 October 2025.\n\n"
-        "Publisher navigation and document identifiers were rechecked on 20 "
-        "August 2026; the complete substantive source review remains 16 August "
-        "2026.\n\n"
+        "Publisher navigation, document identifiers and the complete substantive "
+        "source review were last checked on 14 October 2026.\n\n"
         "- The responsible member or Sustainability Assurance Practitioner "
         "remains responsible for analysis, professional judgement and outcomes "
         "within the applicable scope.\n"
@@ -320,7 +319,7 @@ def _assert_release_checklist(text: str) -> None:
 
 def test_locator_metadata_is_exact_without_advancing_full_review_date():
     metadata = load_metadata(ROOT / "src" / "data" / "metadata.yaml")
-    assert metadata["sources_checked_at"] == "2026-08-16T00:00:00+10:00"
+    assert metadata["sources_checked_at"] == "2026-10-14T00:00:00+11:00"
     assert {
         key: metadata[key]
         for key in (

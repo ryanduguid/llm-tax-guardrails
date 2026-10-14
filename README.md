@@ -28,7 +28,7 @@ Forty-nine such cases are in [tests/behaviour-tests.md](./tests/behaviour-tests.
 
 > Australian tax-practice and accounting-ethics guardrails for LLM-assisted work
 >
-> Version: `0.3.3` · Jurisdiction: Australia · Sources last checked: 2026-08-16
+> Version: `0.3.3` · Jurisdiction: Australia · Sources last checked: 2026-10-14
 
 DrDebits is an independent, source-linked operating guide for large language models assisting with Australian accounting, tax and BAS work. It converts the Tax Practitioners Board framework, APES 110, APES 220 and the sector's AML/CTF obligations into practical controls for drafting, research, calculations and review.
 

@@ -43,7 +43,7 @@ Explicitly challenge automation, anchoring, availability, confirmation, groupthi
 
 Apply the technology revisions with their engagement-specific effective dates. At the [APESB website](https://apesb.org.au/), follow `Interest Areas` → `The ethical use of artificial intelligence by professional accountants`; confirm that it is labelled `Technical Alert` and dated 31 October 2025.
 
-Publisher navigation and document identifiers were rechecked on 20 August 2026; the complete substantive source review remains 16 August 2026.
+Publisher navigation, document identifiers and the complete substantive source review were last checked on 14 October 2026.
 
 - The responsible member or Sustainability Assurance Practitioner remains responsible for analysis, professional judgement and outcomes within the applicable scope.
 - Verify AI-generated information with suitable primary evidence and independent calculation or review where material.
