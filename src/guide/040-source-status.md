@@ -1,6 +1,6 @@
 ## Source status
 
-| Source | Version checked | Status at 2026-08-16 unless a later confirmation is stated | Role in DrDebits |
+| Source | Version checked | Status at 2026-10-14 unless a later confirmation is stated | Role in DrDebits |
 |---|---|---|---|
 | [*Tax Agent Services Act 2009*](https://www.legislation.gov.au/C2009A00013/latest) | `C2026C00441`, Compilation No 27, 1 October 2026 | In force; completion of substantive human review confirmed on 8 October 2026 | Primary statutory TPB framework, including the Code in s 30-10 |
 | [*Tax Agent Services Regulations 2022*](https://www.legislation.gov.au/F2022L00238/latest) | `F2026C01004`, Compilation No 5, 1 October 2026 | In force; completion of substantive human review confirmed on 11 October 2026 | Registration, association and related regulatory detail |
@@ -12,7 +12,7 @@
 | [APES 220 Taxation Services (locate via APESB)](https://apesb.org.au/) | Issued January 2025; effective 1 July 2025 | Current | Service-level professional standard for Members providing taxation services, alongside APES 110 |
 | [*Taxation Administration Act 1953*](https://www.legislation.gov.au/C1953A00001/latest) | Landing page checked; compilation ID not pinned this release | In force | Sch 1 penalty framework: s 284-15 reasonably arguable position; s 284-75(6) agent safe harbour |
 | [*Anti-Money Laundering and Counter-Terrorism Financing Act 2006*](https://www.legislation.gov.au/C2006A00169/latest) | Landing page checked; compilation ID not pinned this release | In force; tranche-2 professional services regulated from 1 July 2026 | AML/CTF designated-service obligations; reformed tipping-off offence (s 123) effective 31 March 2025 |
-| [AUSTRAC accountant guidance](https://www.austrac.gov.au/industry-and-business/your-industry/accountants) | Checked 2026-08-16 at its former address | Regulator guidance; AUSTRAC’s professional designated services guidance was updated on 25 September 2026, after that check, and is `SOURCE CURRENCY NOT CONFIRMED` until reviewed | Enrolment, AML/CTF program, compliance officer and reporting obligations for the sector |
+| [AUSTRAC accountant guidance](https://www.austrac.gov.au/industry-and-business/your-industry/accountants) | Checked 2026-10-14 | Regulator guidance, including AUSTRAC’s professional designated services guidance updated on 25 September 2026 | Enrolment, AML/CTF program, compliance officer and reporting obligations for the sector |
 
 At the source-check date, the filtered TPB library index exposed 55 live Guidance Statements, GS01 to GS55, across 3 result pages. This count and every statement’s status must be rechecked rather than assumed to continue.
 

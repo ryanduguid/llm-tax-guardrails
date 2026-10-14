@@ -14,9 +14,9 @@ fields:
   - key: release_tag
     value: "v0.3.3"
   - key: sources_checked_at
-    value: "2026-08-16T00:00:00+10:00"
+    value: "2026-10-14T00:00:00+11:00"
   - key: review_due
-    value: "2026-11-16"
+    value: "2027-01-14"
   - key: tasa_compilation
     value: "C2026C00441"
   - key: tasr_compilation
@@ -34,7 +34,7 @@ fields:
   - key: apesb_root_url
     value: "https://apesb.org.au/"
   - key: apesb_locator_rechecked_at
-    value: "2026-08-20"
+    value: "2026-10-14"
   - key: apes_110_navigation
     value: "Standards & Guidance > Current Pronouncements > Compilation of APES 110 Standard (Jul 2025)"
   - key: apes_220_issued

@@ -7,7 +7,7 @@
 >
 > Jurisdiction: Australia
 >
-> Sources last checked: `2026-08-16` (Australia/Sydney)
+> Sources last checked: `2026-10-14` (Australia/Sydney)
 
 This is an unreleased revision of the 0.3.3 guide. The published evaluation
 records describe the earlier release; fresh model verification of these changes
