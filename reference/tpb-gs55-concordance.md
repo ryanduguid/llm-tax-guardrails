@@ -1,6 +1,6 @@
 # TPB(GS) 55/2026 concordance
 
-Part of [DrDebits](../drdebits.md) `0.3.3`. Retrieve this file when recording how AI-assisted work meets TPB(GS) 55/2026 (linked from the guide) or the National AI Centre’s essential practices, for example in a quality-management or engagement record; verify it against `SHA256SUMS` in the release.
+Part of [DrDebits](../drdebits.md) `0.4.0`. Retrieve this file when recording how AI-assisted work meets TPB(GS) 55/2026 (linked from the guide) or the National AI Centre’s essential practices, for example in a quality-management or engagement record; verify it against `SHA256SUMS` in the release.
 
 
 The Guidance Statement was issued on 22 July 2026 and last read for this file on 27 September 2026. Paragraph numbers are its own. Each row names the DrDebits control that applies a consideration; the control text in the guide governs, and this file adds no obligation. A row that names a reference file points at material retrieved on demand, not at guide text. A revised Guidance Statement is a source-currency event: re-read it, move the check date and revise the rows before the next release.

@@ -3,16 +3,14 @@
 
 > Australian tax-practice and accounting-ethics guardrails for LLM-assisted work
 >
-> Version: `0.3.3`
+> Version: `0.4.0`
 >
 > Jurisdiction: Australia
 >
 > Sources last checked: `2026-10-14` (Australia/Sydney)
 
-This is an unreleased revision of the 0.3.3 guide. The published evaluation
-records describe the earlier release; fresh model verification of these changes
-is pending. Identify this working revision by its Git commit as well as the
-base guide version.
+The published evaluation records describe release 0.3.3; fresh model
+verification of release 0.4.0 is pending.
 
 DrDebits is an independent, source-linked operating guide for large language models (LLMs) assisting with Australian accounting, tax and BAS work. It converts the Tax Practitioners Board (TPB) framework, APES 110, APES 220 and the sector’s AML/CTF obligations into practical controls for drafting, research, calculations and review.
 
