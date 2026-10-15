@@ -492,6 +492,7 @@ _NUMBER_WORDS = {
     47: "Forty-seven", 48: "Forty-eight", 49: "Forty-nine", 50: "Fifty",
     51: "Fifty-one", 52: "Fifty-two", 53: "Fifty-three", 54: "Fifty-four",
     55: "Fifty-five",
+    59: "Fifty-nine",
 }
 
 def test_the_behaviour_header_routes_to_generated_run_coverage():
