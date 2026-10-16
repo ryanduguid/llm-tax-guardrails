@@ -50,6 +50,22 @@ def test_verify_failure_exit_code(tmp_path):
     assert main(["verify", "--root", str(root)]) == 1
 
 
+def test_impossible_evaluation_date_is_a_finding_for_build_and_verify(tmp_path, capsys):
+    from tests.test_evals import write_result
+
+    root = make_repo(tmp_path)
+    assert main(["build", "--root", str(root)]) == 0
+    capsys.readouterr()
+    write_result(root, name="2026-99-99-example-model.json")
+    before = {path: path.read_bytes() for path in root.rglob("*") if path.is_file()}
+    for command in ("build", "verify"):
+        assert main([command, "--root", str(root)]) == 1
+        error = capsys.readouterr().err
+        assert "evals/results/2026-99-99-example-model.json" in error
+        assert "file name date must be an ISO date" in error
+        assert {path: path.read_bytes() for path in before} == before
+
+
 def test_missing_root_reports_cleanly_for_both_commands(tmp_path, capsys, monkeypatch):
     """Running outside a DrDebits tree is the likeliest error path, so it must
     print the module's clean message rather than a traceback.
@@ -169,3 +185,20 @@ def test_invalid_bytes_in_a_source_file_report_the_path(tmp_path, capsys):
 
     assert main(["build", "--root", str(root)]) == 1
     assert "Traceback" not in capsys.readouterr().err
+
+
+def test_build_skips_a_stamped_file_the_tree_does_not_have(tmp_path, capsys):
+    root = make_repo(tmp_path)
+    (root / "llms.txt").unlink()
+    assert main(["build", "--root", str(root)]) == 0
+    out = capsys.readouterr().out
+    assert "stamped README.md" in out
+    assert "stamped llms.txt" not in out
+
+
+def test_digests_reports_an_unbuildable_tree(tmp_path, capsys):
+    root = make_repo(tmp_path)
+    for fragment in (root / "src" / "guide").glob("*.md"):
+        fragment.unlink()
+    assert main(["digests", "--root", str(root)]) == 1
+    assert capsys.readouterr().err == "digests: src/guide/ has no fragments\n"

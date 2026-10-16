@@ -67,8 +67,12 @@ def _construct_unique_mapping(loader, node, deep=False):
     than resolving silently. No source uses anchors, and a file that is the
     authority for a generated control should say what it means once.
     """
-    if isinstance(node, yaml.nodes.MappingNode):
-        loader.flatten_mapping(node)
+    if not isinstance(node, yaml.nodes.MappingNode):
+        # An explicit !!map tag on a sequence or scalar reaches this constructor;
+        # SafeConstructor rejects it the same way.
+        raise yaml.constructor.ConstructorError(
+            None, None, f"expected a mapping node, but found {node.id}", node.start_mark)
+    loader.flatten_mapping(node)
     mapping = {}
     for key_node, value_node in node.value:
         key = loader.construct_object(key_node, deep=deep)
@@ -98,6 +102,10 @@ def _read(path):
                 loader.dispose()
     except yaml.YAMLError as e:
         raise ModelError(f"{path}: {e}") from e
+    except RecursionError as e:
+        # PyYAML composes nested collections recursively, so deep nesting
+        # exhausted the stack and escaped as a traceback.
+        raise ModelError(f"{path}: is nested too deeply to read") from e
     except UnicodeDecodeError as e:
         # A path-qualified ModelError, not a traceback: every other read failure
         # here already reports the file it could not read.

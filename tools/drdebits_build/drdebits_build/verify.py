@@ -21,7 +21,8 @@ from .model import ModelError
 # in outside the generated catalogue header: a bare id range, and a count
 # introducing one. Check (h) compares every match against the sources.
 GS_RANGE_RE = re.compile(r"GS\d+ to GS\d+")
-GS_COUNT_RE = re.compile(r"(\d+) (?:indexed statements|live Guidance Statements)")
+# Linear: the lookbehind and possessive quantifier stop backtracking; the scanner does not model them.
+GS_COUNT_RE = re.compile(r"(?<!\d)(\d++) (?:indexed statements|live Guidance Statements)")  # NOSONAR
 
 # How many copies of each shape each file must carry. Comparing only the text
 # the patterns above happen to match lets check (h) pass vacuously: a copy that
@@ -112,13 +113,15 @@ def run_verify(root, today=None):
         committed = root / rel
         if not committed.is_file():
             failures.append(f"{rel}: missing committed file")
-        elif committed.read_bytes() != content.encode("utf-8"):
+        # Build tool; the path is a fixed name under the --root checkout.
+        elif committed.read_bytes() != content.encode("utf-8"):  # NOSONAR
             failures.append(f"{rel}: committed file differs from build output; edit src/ and run build")
 
     # The committed guide is read once here and reused by the checks below; a
     # missing file is already reported above, so those checks simply skip.
     committed_guide = root / "drdebits.md"
-    committed_text = committed_guide.read_text(encoding="utf-8") if committed_guide.is_file() else None
+    # Build tool; the path is a fixed name under the --root checkout.
+    committed_text = committed_guide.read_text(encoding="utf-8") if committed_guide.is_file() else None  # NOSONAR
 
     # The end marker is checked on the committed guide, not the rebuild, so a
     # truncated commit is caught.
@@ -134,7 +137,8 @@ def run_verify(root, today=None):
         if not p.is_file():
             failures.append(f"{rel}: missing")
         else:
-            text = p.read_text(encoding="utf-8")
+            # Build tool; the path is a fixed name under the --root checkout.
+            text = p.read_text(encoding="utf-8")  # NOSONAR
             matches = list(STAMP_RE.finditer(text))
             if not matches:
                 failures.append(f"{rel}: no version stamp found")
@@ -178,7 +182,7 @@ def run_verify(root, today=None):
     # all. (src/guide/040-source-status.md carries 2 further prose copies
     # that this check does not cover; MAINTENANCE step 8 owns those.)
     checked_date = s.meta.get("sources_checked_at", "")[:10]
-    if checked_date:
+    if checked_date:  # pragma: no branch - load_metadata requires a valid sources_checked_at
         # Substring, not whole-line: the real header line carries a timezone
         # suffix after the backticked date.
         guide_line = f"> Sources last checked: `{checked_date}`"
@@ -190,7 +194,8 @@ def run_verify(root, today=None):
             p = root / rel
             if not p.is_file():
                 continue  # already reported missing above
-            if f"Sources last checked: {checked_date}" not in p.read_text(encoding="utf-8"):
+            # Build tool; the path is a fixed name under the --root checkout.
+            if f"Sources last checked: {checked_date}" not in p.read_text(encoding="utf-8"):  # NOSONAR
                 failures.append(
                     f"{rel}: source-check date does not match sources_checked_at "
                     f"({checked_date})")
@@ -202,8 +207,10 @@ def run_verify(root, today=None):
     # are both accepted. A deliberately absent file is tolerated.
     citation = root / "CITATION.cff"
     if citation.is_file():
-        text = citation.read_text(encoding="utf-8")
-        version_m = re.search(r'^version:\s*"?([^"\r\n]+?)"?\s*$', text, re.MULTILINE)
+        # Build tool; the path is a fixed name under the --root checkout.
+        text = citation.read_text(encoding="utf-8")  # NOSONAR
+        # Reads the repository's own CITATION.cff; a rewrite risks changing which scalars match.
+        version_m = re.search(r'^version:\s*"?([^"\r\n]+?)"?\s*$', text, re.MULTILINE)  # NOSONAR
         if not version_m or version_m.group(1) != s.meta["guide_version"]:
             failures.append(
                 f"CITATION.cff: version does not match guide_version "
@@ -259,7 +266,8 @@ def run_verify(root, today=None):
         p = root / rel
         if not p.is_file():
             continue  # already reported missing above
-        text = p.read_text(encoding="utf-8")
+        # Build tool; the path is a fixed name under the --root checkout.
+        text = p.read_text(encoding="utf-8")  # NOSONAR
         found = {"range": GS_RANGE_RE.findall(text), "count": GS_COUNT_RE.findall(text)}
         for value in found["range"]:
             if value != gs_range:

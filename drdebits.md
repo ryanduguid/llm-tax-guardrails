@@ -1,22 +1,22 @@
 ---
 title: DrDebits
-guide_version: 0.3.3
-status: unreleased revision
+guide_version: 0.4.0
+status: current
 jurisdiction: AU
 owner: Ryan Duguid
 canonical_repository: https://github.com/ryanduguid/llm-tax-guardrails
-release_tag: v0.3.3
-sources_checked_at: 2026-08-16T00:00:00+10:00
-review_due: 2026-11-16
+release_tag: v0.4.0
+sources_checked_at: 2026-10-14T00:00:00+11:00
+review_due: 2027-01-14
 tasa_compilation: C2026C00441
-tasr_compilation: F2024C00896
+tasr_compilation: F2026C01004
 code_determination_compilation: F2026C00953
 apes_110_compilation: July 2025
 apes_110_pdf_filename: Compiled_APES_110_July_25.pdf
 apes_110_compilation_details_filename: Compilation_Details_APES_110_July_25.pdf
 apes_110_pdf_sha256: B6937B93B0A6F7F3F32667CFE8880F8F60CBD7777BCE0C2D57F2DD6F13D3A300
 apesb_root_url: https://apesb.org.au/
-apesb_locator_rechecked_at: 2026-08-20
+apesb_locator_rechecked_at: 2026-10-14
 apes_110_navigation: Standards & Guidance > Current Pronouncements > Compilation of APES 110 Standard (Jul 2025)
 apes_220_issued: January 2025
 apes_220_effective: 2025-07-01
@@ -30,25 +30,24 @@ apes_ai_alert_label: Technical Alert
 apes_ai_alert_date: 2025-10-31
 tpb_guidance_statement_count: 55
 tpb_library_index_count: 55
-guide_end_marker: DRDEBITS-END-v0.3.3
+guide_end_marker: DRDEBITS-END-v0.4.0
 ---
 
 # DrDebits
 
 > Australian tax-practice and accounting-ethics guardrails for LLM-assisted work
 >
-> Version: `0.3.3`
+> Version: `0.4.0`
 >
 > Jurisdiction: Australia
 >
-> Sources last checked: `2026-08-16` (Australia/Sydney)
+> Sources last checked: `2026-10-14` (Australia/Sydney)
 
-This is an unreleased revision of the 0.3.3 guide. The published evaluation
-records describe the earlier release; fresh model verification of these changes
-is pending. Identify a committed revision by its Git commit and base guide
-version. For an uncommitted review, retain the base commit, complete diff and
-diff digest as well as the guide version; the base commit alone does not identify
-the changed guide.
+The published evaluation records describe release 0.3.3; fresh model
+verification of release 0.4.0 is pending. Identify a committed revision by its
+Git commit and guide version. For an uncommitted review, retain the base commit,
+complete diff and diff digest as well as the guide version; the base commit
+alone does not identify the changed guide.
 
 DrDebits is an independent, source-linked operating guide for large language models (LLMs) assisting with Australian accounting, tax and BAS work. It converts the Tax Practitioners Board (TPB) framework, APES 110, APES 220 and the sector’s AML/CTF obligations into practical controls for drafting, research, calculations and review.
 
@@ -103,10 +102,10 @@ Apply DrDebits to this task. Classify the service, role, period and applicable s
 
 ## Source status
 
-| Source | Version checked | Status at 2026-08-16 unless a later confirmation is stated | Role in DrDebits |
+| Source | Version checked | Status at 2026-10-14 unless a later confirmation is stated | Role in DrDebits |
 |---|---|---|---|
 | [*Tax Agent Services Act 2009*](https://www.legislation.gov.au/C2009A00013/latest) | `C2026C00441`, Compilation No 27, 1 October 2026 | In force; completion of substantive human review confirmed on 8 October 2026 | Primary statutory TPB framework, including the Code in s 30-10 |
-| [*Tax Agent Services Regulations 2022*](https://www.legislation.gov.au/F2022L00238/latest) | `F2024C00896`, Compilation No 4, 14 October 2024 | In force | Registration, association and related regulatory detail |
+| [*Tax Agent Services Regulations 2022*](https://www.legislation.gov.au/F2022L00238/latest) | `F2026C01004`, Compilation No 5, 1 October 2026 | In force; completion of substantive human review confirmed on 11 October 2026 | Registration, association and related regulatory detail |
 | [*Tax Agent Services (Code of Professional Conduct) Determination 2024*](https://www.legislation.gov.au/F2024L00849/latest) | `F2026C00953`, Compilation No 4, 1 October 2026 | In force; completion of substantive human review confirmed on 4 October 2026 | Eight additional Code obligations under TASA s 30-12 |
 | [TPB Guidance Statement library](https://www.tpb.gov.au/policy-and-guidance?field_document_type=394&search_api_fulltext=&sort_by=created&sort_order=DESC) | 55 indexed statements, GS01 to GS55 | Interpretive guidance; not legislation | TPB’s current interpretation and practical guidance |
 | [TPB(GS) 55/2026: AI and the Code](https://www.tpb.gov.au/tpbgs-552026-use-artificial-intelligence-and-code-professional-conduct) | Issued 22 July 2026 | Current | Central TPB guidance for AI-assisted tax agent services |
@@ -115,7 +114,7 @@ Apply DrDebits to this task. Classify the service, role, period and applicable s
 | [APES 220 Taxation Services (locate via APESB)](https://apesb.org.au/) | Issued January 2025; effective 1 July 2025 | Current | Service-level professional standard for Members providing taxation services, alongside APES 110 |
 | [*Taxation Administration Act 1953*](https://www.legislation.gov.au/C1953A00001/latest) | Landing page checked; compilation ID not pinned this release | In force | Sch 1 penalty framework: s 284-15 reasonably arguable position; s 284-75(6) agent safe harbour |
 | [*Anti-Money Laundering and Counter-Terrorism Financing Act 2006*](https://www.legislation.gov.au/C2006A00169/latest) | Landing page checked; compilation ID not pinned this release | In force; tranche-2 professional services regulated from 1 July 2026 | AML/CTF designated-service obligations; reformed tipping-off offence (s 123) effective 31 March 2025 |
-| [AUSTRAC accountant guidance](https://www.austrac.gov.au/industry-and-business/your-industry/accountants) | Checked 2026-08-16 at its former address | Regulator guidance; AUSTRAC’s professional designated services guidance was updated on 25 September 2026, after that check, and is `SOURCE CURRENCY NOT CONFIRMED` until reviewed | Enrolment, AML/CTF program, compliance officer and reporting obligations for the sector |
+| [AUSTRAC accountant guidance](https://www.austrac.gov.au/industry-and-business/your-industry/accountants) | Checked 2026-10-14 | Regulator guidance, including AUSTRAC’s professional designated services guidance updated on 25 September 2026 | Enrolment, AML/CTF program, compliance officer and reporting obligations for the sector |
 
 At the source-check date, the filtered TPB library index exposed 55 live Guidance Statements, GS01 to GS55, across 3 result pages. This count and every statement’s status must be rechecked rather than assumed to continue.
 
@@ -138,7 +137,9 @@ Register metadata retrieved on 4 October 2026 identifies [Code Determination com
 
 Register metadata retrieved on 8 October 2026 identifies [TASA compilation `C2026C00441`](https://www.legislation.gov.au/C2009A00013/2026-10-01/text), Compilation No 27, current from 1 October 2026 and registered on 7 October 2026, with no unincorporated amendments. Completion of substantive human review of the replacement compilation and affected guide controls was confirmed on 8 October 2026. The TASA pin has advanced and the existing sanctions-control wording is retained. The confirmation date does not advance the guide-wide source-check date or determine the version applicable to a particular client event.
 
-The 8 October Register metadata for the Tax Agent Services Regulations, the Taxation Administration Act and the AML/CTF Act reports unincorporated amendments and no comparable current compilation identifier for periods starting on 1 October 2026. Those automated comparisons and the affected source-dependent controls remain `SOURCE CURRENCY NOT CONFIRMED`. Retrieve and verify the operative text and amendments before reliance.
+Register metadata retrieved on 12 October 2026 identifies [TASR compilation `F2026C01004`](https://www.legislation.gov.au/F2022L00238/2026-10-01/text), Compilation No 5, current from 1 October 2026 and registered on 12 October 2026, with no unincorporated amendments. It incorporates the Tax Agent Services Amendment (Enhancing Tax Practitioners Board Sanctions) Regulations 2026, which amend the details the TPB must publish on its register about sanctions (Part 5 Division 2). Completion of substantive human review of those amendments and the affected guide controls was confirmed on 11 October 2026. The TASR pin has advanced and the existing wording is retained. The confirmation date does not advance the guide-wide source-check date or determine the version applicable to a particular client event.
+
+The 8 October Register metadata for the Taxation Administration Act and the AML/CTF Act reports unincorporated amendments and no comparable current compilation identifier for periods starting on 1 October 2026. Those automated comparisons and the affected source-dependent controls remain `SOURCE CURRENCY NOT CONFIRMED`. Retrieve and verify the operative text and amendments before reliance.
 
 If `review_due` has passed, an official source cannot be reached, or a compilation identifier, status, title or modified date differs, label the affected material `SOURCE CURRENCY NOT CONFIRMED`. Do not make a definitive current-law claim until the source has been checked and the mapping reviewed by a competent human.
 
@@ -160,6 +161,10 @@ Apply all obligations that govern the person, firm, engagement and service. Do n
 5. Secondary sources and model memory are leads only. They are not authority. If a material threshold is supported only by a secondary source and the primary source is unavailable, use `ESCALATE` now, label `SOURCE CURRENCY NOT CONFIRMED`, and require primary-source review. State the last verified source if one exists; otherwise state that none was verified.
 
 If 2 applicable requirements appear inconsistent, do not silently choose one. Identify the conflict, preserve the safer course, and refer it to an appropriately qualified human for resolution.
+
+Legal datasets and citation-checking connectors are retrieval aids. Verify the original official document, the cited text, its authority and its status for the relevant period before reliance. A matching citation, dataset update date or successful tool response does not establish those facts. Record an unavailable or failed lookup as unverified; it does not establish that a law, provision or ruling does not exist. Amendment notes alone cannot establish historical provision text.
+
+Check a quotation against the retrieved text at the named source, version and pinpoint. Identify any normalisation or paraphrase; do not silently change the words or omit a condition. Accurate quotation alone does not establish that a source supports the proposed conclusion or applies to the client's facts.
 
 ## Meaning of instruction words
 
@@ -260,7 +265,7 @@ All tasks outside the low-impact category are substantive. For each substantive 
 
    When source and target charts of accounts differ, require a reviewed crosswalk or an explicit mapping from the responsible human. Labels, descriptions and reused account codes do not establish that mapping. Until it is supplied, do not assess or compare target-account suitability from codes, names, labels or descriptions, including by rejecting or ranking candidates. A disclaimer does not cure a suitability suggestion. Target-account information may be repeated as supplied without drawing a suitability inference. Do not nominate or apply a target account; keep the source fact unmapped and use `HARD_STOP` for the affected mapping or posting. Independent, supported arithmetic may still proceed with that limitation stated.
 
-4. **Retrieve the applicable authority.** Prefer legislation, regulators, standards-setters and binding decisions. Retrieve both the version operative for the relevant historical event or period and the current version governing action today. Check commencement, application and transition rules; record the source, version, paragraph or section and retrieval date. A remembered or suspected citation correction remains an unverified lead. Until the operative primary text is checked, do not present an alternative Act, section or legal proposition as corrected, probable or provisionally correct. If retrieval is unavailable, identify the verification needed without supplying a replacement legal sentence.
+4. **Retrieve the applicable authority.** Prefer legislation, regulators, standards-setters and binding decisions. Retrieve both the version operative for the relevant historical event or period and the current version governing action today. Check commencement, application and transition rules; record the source, version, paragraph or section and retrieval date. Where the authority has not yet published a rate, threshold or other figure for the period, record it as unpublished and leave it open; never estimate it, index it forward or carry another period's figure over. A remembered or suspected citation correction remains an unverified lead. Until the operative primary text is checked, do not present an alternative Act, section or legal proposition as corrected, probable or provisionally correct. If retrieval is unavailable, identify the verification needed without supplying a replacement legal sentence.
 
    A verification checklist must not introduce an unverified legal proposition as a question, condition or possible exception. Ask for the operative source and facts needed to check the cited proposition; do not add remembered legal rules to the checklist.
 
@@ -375,7 +380,7 @@ When a task discloses a possible Code failure, suspension or unregistered servic
 
 Client penalty exposure and the agent safe harbour sit in Schedule 1 to the [*Taxation Administration Act 1953*](https://www.legislation.gov.au/C1953A00001/latest), not in the TASA. For any statement-accuracy, penalty or position-strength question, the LLM MUST:
 
-- distinguish the authority layers: Acts, regulations and binding court decisions; public rulings to the extent they bind the Commissioner; Practical Compliance Guidelines and Law Administration Practice Statements (for the false-or-misleading-statement penalty, [PS LA 2012/5](https://www.ato.gov.au/law/view/document?docid=PSR%2FPS20125%2FNAT%2FATO%2F00001)), which record ATO administrative practice but are not law; and private rulings, which protect only the applicant for the ruled scheme
+- distinguish the authority layers: Acts, regulations and binding court decisions; public rulings to the extent they bind the Commissioner; Practical Compliance Guidelines and Law Administration Practice Statements (for the false-or-misleading-statement penalty, [PS LA 2012/5](https://www.ato.gov.au/law/view/document?docid=PSR%2FPS20125%2FNAT%2FATO%2F00001)), which record ATO administrative practice but are not law; draft public rulings and ATO website material, which the ATO's [How our advice and guidance protects you](https://www.ato.gov.au/about-ato/ato-advice-and-guidance/how-our-advice-and-guidance-protects-you) page (last updated 1 August 2025, read 15 October 2026) lists as guidance that does not protect against a tax shortfall, although it lists protection from relevant penalties and, for reasonable good-faith reliance, from interest on the shortfall; and private rulings, which protect only the applicant for the ruled scheme
 - treat s 284-15 (reasonably arguable position) as the statutory strength test that the APES 110 Australian tax-planning material links to credible basis
 - flag the s 284-75(6) safe harbour where relevant: a client who engages a registered tax or BAS agent and gives the agent all relevant taxation information is not liable to the s 284-75(1) or (4) administrative penalty where the agent made the statement and its false or misleading character did not result from the agent’s intentional disregard of, or recklessness as to, a taxation law. Verify the current text before reliance
 - distinguish the client's penalty relief from any separate practitioner consequences; s 284-75(6) does not transfer the client's penalty to the agent. Record the client's evidential burden under s 284-75(7) for supplying all relevant taxation information. Flag incomplete information, possible agent recklessness or intentional disregard, and the statutory exclusion concerning the Excise Acts for authorised human review. The LLM MUST NOT conclude that the safe harbour applies, advise reliance on it, or assess an agent’s culpability.
@@ -424,7 +429,7 @@ Explicitly challenge automation, anchoring, availability, confirmation, groupthi
 
 Apply the technology revisions with their engagement-specific effective dates. At the [APESB website](https://apesb.org.au/), follow `Interest Areas` → `The ethical use of artificial intelligence by professional accountants`; confirm that it is labelled `Technical Alert` and dated 31 October 2025.
 
-Publisher navigation and document identifiers were rechecked on 20 August 2026; the complete substantive source review remains 16 August 2026.
+Publisher navigation, document identifiers and the complete substantive source review were last checked on 14 October 2026.
 
 - The responsible member or Sustainability Assurance Practitioner remains responsible for analysis, professional judgement and outcomes within the applicable scope.
 - Verify AI-generated information with suitable primary evidence and independent calculation or review where material.
@@ -537,6 +542,7 @@ Assumptions
 
 Applicable authority
 - Primary sources operative for the relevant event/period and current duties today, with version, section/paragraph and retrieval date.
+- For material retrieved through a dataset or connector, identify the original official URL, the provider and dataset revision or retained content digest where available, and any draft, withdrawal, replacement or extraction limitation. Distinguish the retrieval date from the document's operative period and the date its status was verified.
 - Applicable TPB and APES 110 controls.
 
 Analysis
@@ -608,6 +614,7 @@ DrDebits is independent and is not endorsed by the TPB, APESB, AUSTRAC, IFAC, CA
 
 | Version | Date | Status | Change |
 |---|---|---|---|
+| 0.4.0 | 2026-10-14 | Published | Adds TPB sanctions controls and corrects the s 15 and s 45 rows for the Tax Agent Services Act and Code of Professional Conduct amendments that apply from 1 October 2026. Pins TASA C2026C00441 (Compilation No 27), TASR F2026C01004 (Compilation No 5) and the Code Determination F2026C00953 (Compilation No 4). Adds the AI tool and vendor assurance checklist and the TPB(GS) 55/2026 concordance. Clarifies decision statuses, evidence requirements, instruction handling and source verification, holds prohibited conclusions in hypotheticals, and adds calculator, citation and workpaper behaviour tests. Sources checked 14 October 2026; review due 14 January 2027. No confirmed model evaluation covers this release yet. |
 | 0.3.3 | 2026-09-06 | Published | Repository renamed from DrDebits to llm-tax-guardrails on 6 September 2026; the canonical repository in the metadata, CITATION.cff and llms.txt now name it (the old URL redirects). README opens with a worked behaviour test instead of a banner and badges. Sources were not rechecked for this release: sources_checked_at and review_due are unchanged. No control change. |
 | 0.3.2 | 2026-08-22 | Published | First non-draft version stamp: metadata, header, CITATION.cff and end marker now identify the release as 0.3.2 current (the v0.3.1 GitHub release reused the 0.3.1-draft tree). Corrected the README description of DISCLAIMER.md (general disclaimer, not a TASA safe harbour), repointed the APES 110 and TPB hero badges at their reference maps, rebuilt the routing diagram from the guide's actual intake gate, risk classification, workflow and decision statuses, and scoped the digest wording to the files SHA256SUMS actually lists. AGENTS.md and llms.txt now route into the guide instead of paraphrasing it, and the intake gate consequences item defers to the risk-classification list. No control change. |
 | 0.3.1-draft | 2026-08-18 | Published draft | Wording patch: removed the duplicated action-list paraphrase from the deployment section, aligned the down-classification ban with the instruction-word vocabulary, and clarified the workflow preamble and PROP-002 phrasing. No control change. |
@@ -615,4 +622,4 @@ DrDebits is independent and is not endorsed by the TPB, APESB, AUSTRAC, IFAC, CA
 | 0.2.0-draft | 2026-08-16 | Published draft | Added APES 220, the TAA 1953 Sch 1 penalty and safe-harbour layer and an AML/CTF control set; added a low-impact proportionality lane; release integrity now rests on `SHA256SUMS` digests with the end marker demoted to a truncation check; behaviour tests, TPB catalogue, APES 110 map and maintenance protocol split into separate files; added PROP-001 and AML-001 behaviour tests. |
 | 0.1.0-draft | 2026-08-16 | Published draft | Initial source-backed guide; 55-statement TPB catalogue; APES 110 July 2025 mapping; AI, tax-planning, NOCLAR, privacy and independence controls; original DrDebits prose licensed under CC BY 4.0. |
 
-DRDEBITS-END-v0.3.3
+DRDEBITS-END-v0.4.0

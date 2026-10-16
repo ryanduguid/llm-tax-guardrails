@@ -77,6 +77,8 @@ COMPILATION_NUMBER = re.compile(r"Compilation No\s*(?P<number>\d+)", re.IGNORECA
 REASON_LINK = re.compile(r"\[(?P<name>[^\]]+)\]\(/(?P<title_id>" + TITLE_ID + r")\)")
 
 CURRENT = "current"
+# The Register answered for the title but gave no compilation to compare.
+INCOMPLETE = "incomplete"
 SUPERSEDED = "superseded"
 UNPINNED = "unpinned"
 UNREACHABLE = "unreachable"
@@ -244,7 +246,7 @@ def classify(pin: Pin, version: dict[str, str] | IncompleteCurrent | None) -> Fi
         return Finding(pin, UNREACHABLE, "the Register did not provide a usable current-version result")
     if isinstance(version, IncompleteCurrent):
         return Finding(
-            pin, UNREACHABLE,
+            pin, INCOMPLETE,
             f"verification incomplete: the current-version query returned a record for {pin.title_id} "
             "with registerId=null and compilationNumber=null; "
             f"API-reported start={version.start}. This response provides no compilation ID "
@@ -265,14 +267,15 @@ def classify(pin: Pin, version: dict[str, str] | IncompleteCurrent | None) -> Fi
 
 def check(root: Path, timeout: int = TIMEOUT) -> tuple[int, list[Finding]]:
     """Return the number of sources checked and every finding for them."""
-    text = (root / SOURCE_STATUS).read_text(encoding="utf-8")
+    # Build tool; the path is a fixed name under the --root checkout.
+    text = (root / SOURCE_STATUS).read_text(encoding="utf-8")  # NOSONAR
     today = register_today()
     pins = parse_pins(text)
     findings: list[Finding] = []
     for pin in pins:
         version = current_version(pin.title_id, timeout)
         findings.append(classify(pin, version))
-        # Unusable or incomplete current metadata is already reported unreachable.
+        # Unusable or incomplete current metadata is already reported.
         if isinstance(version, dict):
             findings.extend(upcoming(pin, registered_versions(pin.title_id, today, timeout), today))
     return len(pins), findings
@@ -294,11 +297,11 @@ def main(argv: list[str] | None = None) -> int:
         print(f"{finding.outcome.upper():<11} {finding.pin.name}: {finding.detail}")
 
     counts = {name: sum(1 for f in findings if f.outcome == name) for name in
-              (CURRENT, SUPERSEDED, UNPINNED, UNREACHABLE, UPCOMING)}
+              (CURRENT, INCOMPLETE, SUPERSEDED, UNPINNED, UNREACHABLE, UPCOMING)}
     print(
         f"checked {checked}: current {counts[CURRENT]}, "
         f"superseded {counts[SUPERSEDED]}, unpinned {counts[UNPINNED]}, "
-        f"unreachable {counts[UNREACHABLE]}, "
+        f"incomplete {counts[INCOMPLETE]}, unreachable {counts[UNREACHABLE]}, "
         f"upcoming within {HORIZON_DAYS} days {counts[UPCOMING]}"
     )
     if counts[SUPERSEDED]:
@@ -317,7 +320,7 @@ def main(argv: list[str] | None = None) -> int:
         )
     if counts[SUPERSEDED] or counts[UPCOMING]:
         return 1
-    return 2 if counts[UNREACHABLE] or counts[UNPINNED] else 0
+    return 2 if counts[INCOMPLETE] or counts[UNREACHABLE] or counts[UNPINNED] else 0
 
 
 if __name__ == "__main__":

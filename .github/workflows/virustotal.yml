@@ -1,0 +1,24 @@
+name: VirusTotal
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Published release tag to scan.
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    permissions:
+      contents: write # The reusable workflow edits the release notes in a separate job.
+    uses: ryanduguid/release-policy/.github/workflows/virustotal-release.yml@1aa75b40de319f1fb1afd5e5b12e35753f97d4da
+    with:
+      tag: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.event.release.tag_name }}
+    secrets:
+      vt-api-key: ${{ secrets.VT_API_KEY }}

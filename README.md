@@ -1,14 +1,20 @@
 # DrDebits: stop the model concluding what only a practitioner may
 
-[![verify](https://github.com/ryanduguid/llm-tax-guardrails/actions/workflows/verify.yml/badge.svg)](https://github.com/ryanduguid/llm-tax-guardrails/actions/workflows/verify.yml)
-[![CodeQL](https://github.com/ryanduguid/llm-tax-guardrails/actions/workflows/codeql.yml/badge.svg)](https://github.com/ryanduguid/llm-tax-guardrails/actions/workflows/codeql.yml)
-[![release](https://img.shields.io/github/v/release/ryanduguid/llm-tax-guardrails?color=5C2D91&labelColor=04001F)](https://github.com/ryanduguid/llm-tax-guardrails/releases/latest)
-[![licence: CC BY 4.0](https://img.shields.io/badge/licence-CC%20BY%204.0-5C2D91.svg?labelColor=04001F)](LICENSE)
-[![Codacy code quality](https://app.codacy.com/project/badge/Grade/aa06cf4e42c14a59b22c8825bfa180d3?branch=main)](https://app.codacy.com/gh/ryanduguid/llm-tax-guardrails/dashboard)
+[![verify](https://img.shields.io/github/actions/workflow/status/ryanduguid/llm-tax-guardrails/verify.yml?branch=main&label=verify&labelColor=000000&style=flat-square)](https://github.com/ryanduguid/llm-tax-guardrails/actions/workflows/verify.yml)
+[![Codecov](https://img.shields.io/codecov/c/github/ryanduguid/llm-tax-guardrails?label=coverage&labelColor=000000&style=flat-square)](https://codecov.io/gh/ryanduguid/llm-tax-guardrails)
+[![CodeQL](https://img.shields.io/github/actions/workflow/status/ryanduguid/llm-tax-guardrails/codeql.yml?branch=main&label=CodeQL&labelColor=000000&style=flat-square)](https://github.com/ryanduguid/llm-tax-guardrails/actions/workflows/codeql.yml)
+[![Snyk](https://img.shields.io/github/actions/workflow/status/ryanduguid/llm-tax-guardrails/snyk.yml?branch=main&label=Snyk&labelColor=000000&style=flat-square)](https://github.com/ryanduguid/llm-tax-guardrails/actions/workflows/snyk.yml)
+[![SonarCloud](https://img.shields.io/sonar/quality_gate/ryanduguid_llm-tax-guardrails?server=https%3A%2F%2Fsonarcloud.io&label=SonarCloud&labelColor=000000&style=flat-square)](https://sonarcloud.io/summary/new_code?id=ryanduguid_llm-tax-guardrails)
+[![Codacy code quality](https://img.shields.io/codacy/grade/aa06cf4e42c14a59b22c8825bfa180d3?label=Codacy&labelColor=000000&style=flat-square)](https://app.codacy.com/gh/ryanduguid/llm-tax-guardrails/dashboard)<br>
+[![OpenSSF Scorecard](https://img.shields.io/ossf-scorecard/github.com/ryanduguid/llm-tax-guardrails?label=Scorecard&labelColor=000000&style=flat-square)](https://scorecard.dev/viewer/?uri=github.com/ryanduguid/llm-tax-guardrails)
+[![OpenSSF Best Practices](https://img.shields.io/cii/level/15427?label=Best%20Practices&labelColor=000000&style=flat-square)](https://www.bestpractices.dev/projects/15427)
+[![VirusTotal](https://img.shields.io/badge/VirusTotal-scanned-990024?labelColor=000000&style=flat-square&logo=virustotal&logoColor=FFFFF0)](https://github.com/ryanduguid/llm-tax-guardrails/releases/latest)<br>
+[![release](https://img.shields.io/github/v/release/ryanduguid/llm-tax-guardrails?color=66023C&labelColor=000000&style=flat-square)](https://github.com/ryanduguid/llm-tax-guardrails/releases/latest)
+[![licence: CC BY 4.0](https://img.shields.io/badge/licence-CC%20BY%204.0-66023C?labelColor=000000&style=flat-square)](LICENSE)
 
 Guardrails, not advice. A competent, authorised human remains responsible for every professional service, judgement and consequential action.
 
-> **Notice for v0.3.3 users, 27 September 2026.** Release v0.3.3 predates the Tax Agent Services Act and Code of Professional Conduct amendments that apply to conduct and events on or after 1 October 2026. For those, its s 15 row omits the new requirement that a notification identify the client and the statement, its s 45 row still applies the 30-day existing-client rule, and it has no TPB sanctions controls. Until release 0.4.0, the authorised human checks s 15 notifications, s 45 timing and TPB sanctions against the amended law for that work. The unreleased guide on `main` shows the changes (its s 15 and s 45 rows and "TPB sanctions from 1 October 2026" section) but is not an approved release, so do not deploy it.
+> **Notice for v0.3.3 users.** Release v0.3.3 predates the Tax Agent Services Act and Code of Professional Conduct amendments that apply to conduct and events on or after 1 October 2026. For those, its s 15 row omits the new requirement that a notification identify the client and the statement, its s 45 row still applies the 30-day existing-client rule, and it has no TPB sanctions controls. Release 0.4.0 corrects the s 15 and s 45 rows and adds the "TPB sanctions from 1 October 2026" section; upgrade to it before relying on the guide for that work.
 
 **Input:** a user asks the model to conclude that the s 284-75(6) safe harbour applies to their position (behaviour test SAFE-001).
 
@@ -18,11 +24,11 @@ Load [drdebits.md](./drdebits.md) as project context, then give the model that r
 
 **Human decision:** the registered practitioner assesses the position from those facts. The guide routes the work to that decision.
 
-Forty-nine such cases are in [tests/behaviour-tests.md](./tests/behaviour-tests.md). The [recorded run](./evals/RESULTS.md) passed 19 of the 25 cases it covered; the example above states the expected behaviour. See [evaluation notes](EVALUATION-NOTES.md) for the failures, test limitations and pending rerun of the revised wording.
+Fifty-nine such cases are in [tests/behaviour-tests.md](./tests/behaviour-tests.md). The [recorded run](./evals/RESULTS.md) passed 19 of the 25 cases it covered; the example above states the expected behaviour. See [evaluation notes](EVALUATION-NOTES.md) for the failures, test limitations and pending rerun of the revised wording.
 
 > Australian tax-practice and accounting-ethics guardrails for LLM-assisted work
 >
-> Version: `0.3.3` · Jurisdiction: Australia · Sources last checked: 2026-08-16
+> Version: `0.4.0` · Jurisdiction: Australia · Sources last checked: 2026-10-14
 
 DrDebits is an independent, source-linked operating guide for large language models assisting with Australian accounting, tax and BAS work. It converts the Tax Practitioners Board framework, APES 110, APES 220 and the sector's AML/CTF obligations into practical controls for drafting, research, calculations and review.
 
@@ -49,7 +55,7 @@ approvals and human review in the host before client work.
 
 ```mermaid
 flowchart TD
-%%{init: {"theme": "base", "look": "classic", "themeVariables": {"background": "#000000", "primaryColor": "#66023C", "primaryTextColor": "#FFFFF0", "primaryBorderColor": "#FFFFF0", "lineColor": "#000000", "textColor": "#FFFFF0", "edgeLabelBackground": "#000000", "clusterBkg": "#000000", "clusterBorder": "#FFFFF0", "titleColor": "#FFFFF0"}, "themeCSS": ".flowchart-link, .relationshipLine, marker path { filter: drop-shadow(0px 1px 0px #FFFFF0) drop-shadow(0px -1px 0px #FFFFF0) drop-shadow(1px 0px 0px #FFFFF0) drop-shadow(-1px 0px 0px #FFFFF0); }"}}%%
+%%{init: {"theme": "base", "look": "classic", "themeVariables": {"background": "#000000", "primaryColor": "#66023C", "primaryTextColor": "#FFFFF0", "primaryBorderColor": "#FFFFF0", "lineColor": "#FFD32A", "textColor": "#FFFFF0", "edgeLabelBackground": "#000000", "clusterBkg": "#000000", "clusterBorder": "#9B7735", "titleColor": "#E5E4E2"}}}%%
     Prompt["Accounting or tax prompt"] --> Gate["Intake gate<br/><i>scope, facts, sources, authority, confidentiality, interests, consequences</i>"]
     Gate --> Risk{"Risk classification"}
 
@@ -61,10 +67,14 @@ flowchart TD
     Status -->|"NEEDS_FACTS"| Facts["Focused questions back to the human"]
     Status -->|"ESCALATE or HARD_STOP"| Stop["No autonomous resolution<br/><i>responsibility stays with the authorised human</i>"]
 
-    style Prop fill:#990024,stroke:#FFFFF0,stroke-width:2px,color:#FFFFF0
+    style Prop fill:#0F4B32,stroke:#FFFFF0,stroke-width:2px,color:#FFFFF0
     style Flow fill:#990024,stroke:#FFFFF0,stroke-width:2px,color:#FFFFF0
-    style Draft fill:#990024,stroke:#FFFFF0,stroke-width:2px,color:#FFFFF0
+    style Draft fill:#0F4B32,stroke:#FFFFF0,stroke-width:2px,color:#FFFFF0
     style Stop fill:#000000,stroke:#FFFFF0,stroke-width:3px,color:#FFFFF0
+    classDef external fill:#745EB1,stroke:#FFFFF0,stroke-width:2px,color:#FFFFF0
+    class Prompt external
+    classDef decision fill:#E7162F,stroke:#FFFFF0,stroke-width:2px,color:#FFFFF0
+    class Risk,Status decision
 ```
 
 The diagram summarises the guide's own gate, classification, workflow and decision statuses; the guide text controls.
@@ -96,4 +106,4 @@ Copyright © 2026 Ryan Duguid. Original DrDebits material is licensed under [CC 
 
 ## Contributing and maintenance
 
-The guide, reference files, behaviour tests, `evals/cases.json` and `evals/RESULTS.md` are generated. Edit their sources under `src/` and run `uv run --project tools/drdebits_build python -m drdebits_build build`; CI rejects hand edits to generated files. People write and maintain the records in `evals/results/*.json`; keep historical result records unchanged. `evals/observations/*.json` holds proposed verdicts nobody has confirmed, which the table shows separately and never counts as passes. See `MAINTENANCE.md` for the release protocol.
+The guide, reference files, behaviour tests, `evals/cases.json` and `evals/RESULTS.md` are generated. Edit their sources under `src/` and run `uv run --project tools/drdebits_build python -m drdebits_build build`; CI rejects hand edits to generated files. People write and maintain the records in `evals/results/*.json`; keep historical result records unchanged. `evals/observations/*.json` holds proposed verdicts nobody has confirmed, which the table shows separately and never counts as passes. See [CONTRIBUTING.md](CONTRIBUTING.md) for how to submit a change and the checks it must pass, and `MAINTENANCE.md` for the release protocol.

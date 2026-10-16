@@ -17,7 +17,7 @@ GUIDE_SOURCE = ROOT / "src" / "guide" / "150-apes-110-control-set.md"
 
 LOCATOR_METADATA = {
     "apesb_root_url": "https://apesb.org.au/",
-    "apesb_locator_rechecked_at": "2026-08-20",
+    "apesb_locator_rechecked_at": "2026-10-14",
     "apes_110_navigation": (
         "Standards & Guidance > Current Pronouncements > "
         "Compilation of APES 110 Standard (Jul 2025)"
@@ -93,9 +93,8 @@ CANONICAL_GUIDE_LOCATOR_SECTIONS = {
         "Areas` → `The ethical use of artificial intelligence by professional "
         "accountants`; confirm that it is labelled `Technical Alert` and dated "
         "31 October 2025.\n\n"
-        "Publisher navigation and document identifiers were rechecked on 20 "
-        "August 2026; the complete substantive source review remains 16 August "
-        "2026.\n\n"
+        "Publisher navigation, document identifiers and the complete substantive "
+        "source review were last checked on 14 October 2026.\n\n"
         "- The responsible member or Sustainability Assurance Practitioner "
         "remains responsible for analysis, professional judgement and outcomes "
         "within the applicable scope.\n"
@@ -185,6 +184,8 @@ SUPPORTED_VERSIONS_POLICY = (
     "security fixes are applied to the latest version on the default branch."
 )
 REPORTING_POLICY = (
+    "report privately at "
+    "<https://github.com/ryanduguid/llm-tax-guardrails/security/advisories/new>. "
     "please use this repository's private vulnerability reporting feature. "
     "do not open a public issue or pull request for a suspected security "
     "vulnerability. include a clear description, reproduction steps, impact, "
@@ -318,7 +319,7 @@ def _assert_release_checklist(text: str) -> None:
 
 def test_locator_metadata_is_exact_without_advancing_full_review_date():
     metadata = load_metadata(ROOT / "src" / "data" / "metadata.yaml")
-    assert metadata["sources_checked_at"] == "2026-08-16T00:00:00+10:00"
+    assert metadata["sources_checked_at"] == "2026-10-14T00:00:00+11:00"
     assert {
         key: metadata[key]
         for key in (
@@ -488,7 +489,10 @@ _NUMBER_WORDS = {
     35: "Thirty-five", 36: "Thirty-six", 37: "Thirty-seven", 38: "Thirty-eight",
     39: "Thirty-nine", 40: "Forty", 41: "Forty-one", 42: "Forty-two",
     43: "Forty-three", 44: "Forty-four", 45: "Forty-five", 46: "Forty-six",
-    47: "Forty-seven", 48: "Forty-eight", 49: "Forty-nine",
+    47: "Forty-seven", 48: "Forty-eight", 49: "Forty-nine", 50: "Fifty",
+    51: "Fifty-one", 52: "Fifty-two", 53: "Fifty-three", 54: "Fifty-four",
+    55: "Fifty-five",
+    59: "Fifty-nine",
 }
 
 def test_the_behaviour_header_routes_to_generated_run_coverage():

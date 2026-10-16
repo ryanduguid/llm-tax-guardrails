@@ -28,7 +28,7 @@ def _read(root: Path, relative: str) -> bytes:
     if not path.resolve().is_relative_to(root.resolve()):
         raise BundleError(f"bundle path escapes source: {relative}")
     # Reject redirected files and directories even when they point inside root.
-    for part in (path, *path.parents):
+    for part in (path, *path.parents):  # pragma: no branch - the walk always reaches root
         if part == root:
             break
         if part.is_symlink() or part.is_junction():
@@ -67,7 +67,8 @@ def install(source: Path, destination: Path, manifest_sha256: str) -> None:
     files = verified_files(source, manifest_sha256)
     # The deployer owns the parent directory. Never reuse an existing target,
     # including a broken symlink. A failed copy stays unapproved for inspection.
-    destination.mkdir(parents=False, exist_ok=False)
+    # Build tool; the path is a fixed name under the --root checkout.
+    destination.mkdir(parents=False, exist_ok=False)  # NOSONAR
     for relative, raw in files.items():
         target = destination / relative
         target.parent.mkdir(parents=True, exist_ok=True)

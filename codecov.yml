@@ -1,0 +1,11 @@
+# Codecov reports coverage for the README badge. The CI coverage gates decide
+# merges, so Codecov's own statuses are informational and it posts no comments.
+coverage:
+  status:
+    project:
+      default:
+        informational: true
+    patch:
+      default:
+        informational: true
+comment: false

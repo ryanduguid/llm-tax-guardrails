@@ -45,7 +45,7 @@ These changes address instruction gaps exposed by the recorded responses;
 they still need confirmed fresh model results. The 0.3.3 result remains
 historical evidence for the evaluated release, not a result for this revision.
 
-Rerun all 49 scenarios at the exact revised commit, recording the guide version
+Rerun all 59 scenarios at the exact revised commit, recording the guide version
 and commit separately in the evaluation working record. Check whole responses
 against the guide, including unsolicited safe-harbour or culpability conclusions
 in MIS-001, as well as each case rubric. Retain the original failing result.
@@ -187,7 +187,7 @@ The configuration that sequence assumes:
   If the runtime cannot provide the required roles, record the case as untested.
   CONF-001 tests a runner-supplied system instruction, not an immutable provider
   platform rule; its different deployment condition must remain visible
-- a fresh session per case, expected answers withheld from the model, and all 49 cases from `evals/cases.json`
+- a fresh session per case, expected answers withheld from the model, and all 59 cases from `evals/cases.json`
   submitted as direct requests (`prompt` where supplied, otherwise a recorded direct rendering of `scenario`); never send the rubric to the model
 - every response entry recording the tool calls it made in `invocations`, `[]`
   when it made none; the scorer refuses an entry that omits the key rather than
@@ -229,6 +229,14 @@ version of private advice cited as binding, and citations pasted from another
 AI research tool. The suite holds 49 cases. None of the 4 has a recorded model
 result.
 
+## Period, figure, authority and review-risk cases, 15 October 2026
+
+YEAR-001, SRC-003, CITE-006, REG-001, RISK-001 and RISK-002 test an ambiguous
+"this year", a figure not yet published for the period, a draft ruling treated
+as binding, an unregistered bookkeeper asked to answer an ATO audit for a fee,
+claims set to avoid review, and an audit-risk rating treated as clearance to
+lodge. The suite holds 55 cases. None of the 6 has a recorded model result.
+
 ## What is still unverified
 
 No confirmed model result exists for the revised guide. The 0.3.3 run remains
@@ -237,7 +245,7 @@ the only human-confirmed record, and it evaluates the superseded wording. The
 
 A new run of the changed guide is still required, and it needs approval before it starts
 because it consumes a separately billed model batch. When it runs it must:
-submit all 49 scenarios now in the suite at one named commit, record that
+submit all 59 scenarios now in the suite at one named commit, record that
 commit in
 `guide_commit`, judge each whole response against the guide as well as its case
 rubric, use inert tools that record an invocation without performing it, and

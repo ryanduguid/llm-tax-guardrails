@@ -1,13 +1,14 @@
 # DrDebits maintenance protocol
 
-Part of [DrDebits](./drdebits.md) `0.3.3`.
+Part of [DrDebits](./drdebits.md) `0.4.0`.
 
 A source-check date does not guarantee continuing currency. Before professional reliance, retrieve the authority operative for the relevant historical event or period and the current duties governing action today.
 
 The scheduled source and link checks return `0` only for complete successful
 verification, `1` for a superseded compilation, a registered change that comes
 into force within 120 days, or a dead link, and `2` for
-incomplete verification (including unpinned legislation or unreachable links).
+incomplete verification (including unpinned legislation, unreachable links, and
+Register records that carry no compilation ID, reported as `INCOMPLETE`).
 The link check returns `3` when every link it reached is live and the rest are
 `MANUAL` links: TPB and AUSTRAC pages and one ATO legal database page, whose
 hosts block GitHub's runners. Check those by hand from another connection.
@@ -22,7 +23,7 @@ register comparison does not cover TPB guidance, APESB publications or AUSTRAC
 guidance: review their catalogues, amendments and transition notices separately.
 AUSTRAC's guidance changes most often of the three and moves between URLs (its
 25 September 2026 update was found by hand), so review it monthly as well as for
-each release. The next AUSTRAC review is due on 26 October 2026; each review
+each release. The next AUSTRAC review is due on 26 November 2026; each review
 moves this date one month on.
 An unpinned source remains unverified until its substantive review is complete.
 
@@ -94,7 +95,7 @@ files; `SHA256SUMS` accompanies them and does not hash itself.
    when the signing key and trust configuration are available. A successful
    checksum comparison alone does not authenticate the release or its signer.
 2. Choose an unused directory in an existing, access-controlled project parent,
-   for example `vendor/drdebits-v0.3.3`. Keep older installations for rollback.
+   for example `vendor/drdebits-v0.4.0`. Keep older installations for rollback.
    Run the installer below from the tooling checkout using the approved digest,
    not a digest obtained from an untrusted download alongside its files.
 3. Recheck the installed bundle, then add the import to the project's existing
@@ -105,15 +106,15 @@ The commands use absolute paths so the tooling and release checkouts can differ.
 Replace the example paths and `APPROVED_MANIFEST_SHA256` before execution.
 
 ```bash
-uv run --project tools/drdebits_build --locked python -m drdebits_build.bundle install --source /approved/release --destination /project/vendor/drdebits-v0.3.3 --manifest-sha256 APPROVED_MANIFEST_SHA256
-uv run --project tools/drdebits_build --locked python -m drdebits_build.bundle verify --source /project/vendor/drdebits-v0.3.3 --manifest-sha256 APPROVED_MANIFEST_SHA256
+uv run --project tools/drdebits_build --locked python -m drdebits_build.bundle install --source /approved/release --destination /project/vendor/drdebits-v0.4.0 --manifest-sha256 APPROVED_MANIFEST_SHA256
+uv run --project tools/drdebits_build --locked python -m drdebits_build.bundle verify --source /project/vendor/drdebits-v0.4.0 --manifest-sha256 APPROVED_MANIFEST_SHA256
 ```
 
 PowerShell uses the same arguments with Windows paths:
 
 ```powershell
-uv run --project tools/drdebits_build --locked python -m drdebits_build.bundle install --source 'C:\approved\release' --destination 'C:\project\vendor\drdebits-v0.3.3' --manifest-sha256 APPROVED_MANIFEST_SHA256
-uv run --project tools/drdebits_build --locked python -m drdebits_build.bundle verify --source 'C:\project\vendor\drdebits-v0.3.3' --manifest-sha256 APPROVED_MANIFEST_SHA256
+uv run --project tools/drdebits_build --locked python -m drdebits_build.bundle install --source 'C:\approved\release' --destination 'C:\project\vendor\drdebits-v0.4.0' --manifest-sha256 APPROVED_MANIFEST_SHA256
+uv run --project tools/drdebits_build --locked python -m drdebits_build.bundle verify --source 'C:\project\vendor\drdebits-v0.4.0' --manifest-sha256 APPROVED_MANIFEST_SHA256
 ```
 
 The installer validates the manifest before reading its allowlisted members,
@@ -125,8 +126,8 @@ destination for the retry. The installer never edits host settings or imports.
 Add these two lines as ordinary text in the project's `CLAUDE.md`:
 
 ```text
-@vendor/drdebits-v0.3.3/drdebits.md
-Resolve links in DrDebits relative to vendor/drdebits-v0.3.3/ and read the relevant bundled reference before a routing decision.
+@vendor/drdebits-v0.4.0/drdebits.md
+Resolve links in DrDebits relative to vendor/drdebits-v0.4.0/ and read the relevant bundled reference before a routing decision.
 ```
 
 The example is shown in a code block here; the import must be outside code

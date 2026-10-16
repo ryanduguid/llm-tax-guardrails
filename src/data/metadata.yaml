@@ -2,9 +2,9 @@ fields:
   - key: title
     value: "DrDebits"
   - key: guide_version
-    value: "0.3.3"
+    value: "0.4.0"
   - key: status
-    value: "unreleased revision"
+    value: "current"
   - key: jurisdiction
     value: "AU"
   - key: owner
@@ -12,15 +12,15 @@ fields:
   - key: canonical_repository
     value: "https://github.com/ryanduguid/llm-tax-guardrails"
   - key: release_tag
-    value: "v0.3.3"
+    value: "v0.4.0"
   - key: sources_checked_at
-    value: "2026-08-16T00:00:00+10:00"
+    value: "2026-10-14T00:00:00+11:00"
   - key: review_due
-    value: "2026-11-16"
+    value: "2027-01-14"
   - key: tasa_compilation
     value: "C2026C00441"
   - key: tasr_compilation
-    value: "F2024C00896"
+    value: "F2026C01004"
   - key: code_determination_compilation
     value: "F2026C00953"
   - key: apes_110_compilation
@@ -34,7 +34,7 @@ fields:
   - key: apesb_root_url
     value: "https://apesb.org.au/"
   - key: apesb_locator_rechecked_at
-    value: "2026-08-20"
+    value: "2026-10-14"
   - key: apes_110_navigation
     value: "Standards & Guidance > Current Pronouncements > Compilation of APES 110 Standard (Jul 2025)"
   - key: apes_220_issued
@@ -62,6 +62,6 @@ fields:
   - key: tpb_library_index_count
     value: "55"
   - key: guide_end_marker
-    value: "DRDEBITS-END-v0.3.3"
+    value: "DRDEBITS-END-v0.4.0"
   - key: checksum_files
     value: "LICENSE|README.md|CITATION.cff|drdebits.md|MAINTENANCE.md|reference/tpb-catalogue.md|reference/apes-110-map.md|reference/ai-vendor-assurance.md|reference/tpb-gs55-concordance.md|tests/behaviour-tests.md|DISCLAIMER.md"

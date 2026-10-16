@@ -149,6 +149,8 @@ def test_a_partial_or_older_run_is_shown_without_editing_history(tmp_path):
     ("2026-02-01-example-model.json", {"results": {"A-001": "PASS"}}, "must be pass, fail or violation"),
     ("2026-02-01-example-model.json", {"model": " "}, "model must be a non-empty string"),
     ("2026-02-01-example-model.json", {"run_date": "1 Feb 2026"}, "ISO date"),
+    ("2026-99-99-example-model.json", {}, "file name date must be an ISO date"),
+    ("2026-02-30-example-model.json", {}, "file name date must be an ISO date"),
     ("2026-02-02-example-model.json", {}, "file name date 2026-02-02 != run_date"),
     ("notes.json", {}, "YYYY-MM-DD-<slug>.json"),
 ])
@@ -157,6 +159,13 @@ def test_malformed_results_are_rejected(tmp_path, name, overrides, message):
     write_result(root, name=name, **overrides)
     with pytest.raises(ModelError, match=message):
         evals.load_results(root, load_sources(root))
+
+
+def test_impossible_observation_file_date_is_rejected(tmp_path):
+    root = make_repo(tmp_path)
+    write_observation(root, name="2026-99-99-example-model.json")
+    with pytest.raises(ModelError, match="file name date must be an ISO date"):
+        evals.load_observations(root, load_sources(root))
 
 
 def test_invalid_json_duplicate_keys_and_stray_entries_are_rejected(tmp_path):
@@ -302,3 +311,12 @@ def test_build_writes_and_verify_checks_the_eval_outputs(tmp_path, monkeypatch):
     assert any(evals.RESULTS_FILE in f and "differs" in f for f in run_verify(root))
     write_result(root, results={"A-001": "maybe"})
     assert any("cannot rebuild" in f for f in run_verify(root))
+
+
+def test_result_loader_rejects_a_name_outside_the_pattern(tmp_path):
+    # load_results filters names first; the loader keeps its own check because
+    # it reads the run date from the name.
+    path = tmp_path / "notes.json"
+    path.write_text("{}", encoding="utf-8")
+    with pytest.raises(ModelError, match="file name must be YYYY-MM-DD-<slug>.json"):
+        evals._load_result(path, "evals/results/notes.json", ["A-001"], "0.9.9-test", "human-confirmed")

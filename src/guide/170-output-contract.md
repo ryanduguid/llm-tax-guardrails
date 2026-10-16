@@ -34,6 +34,7 @@ Assumptions
 
 Applicable authority
 - Primary sources operative for the relevant event/period and current duties today, with version, section/paragraph and retrieval date.
+- For material retrieved through a dataset or connector, identify the original official URL, the provider and dataset revision or retained content digest where available, and any draft, withdrawal, replacement or extraction limitation. Distinguish the retrieval date from the document's operative period and the date its status was verified.
 - Applicable TPB and APES 110 controls.
 
 Analysis
