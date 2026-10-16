@@ -42,3 +42,25 @@ values. A human-confirmed record may contain only `pass`, `fail` or `violation`.
 Use `assess_response` to inspect status, invocation and marker findings
 separately. The coverage section binds both current digests and shows tools,
 conditions and unassessed cases for each matching confirmed run.
+
+## Retrieval evidence
+
+[Isaacus's Australian Tax Guidance Retrieval](https://huggingface.co/datasets/isaacus/australian-tax-guidance-retrieval)
+contains 112 questions with relevance labels for guidance passages. It measures
+retrieval, not DrDebits compliance, current-law correctness or authority to act.
+Use it for a separately identified retrieval component; do not combine its
+score with behaviour-test verdicts into a claimed guardrails score.
+
+For a reproducible run, record the dataset revision and licence, query and
+corpus coverage, retrieval model/index version and settings, result depth and
+the ranked passage IDs. Report Recall@10 and nDCG@10 over every in-scope query,
+including queries with no results. Keep held-out relevance labels outside
+retrieval inputs and disclose tuning against this dataset. Its labelled
+passages are benchmark targets, not evidence that their tax content is current.
+
+Review citation identity, quotation fidelity, support for the asserted conclusion,
+operative period, ruling status and behaviour-test decision outcomes separately.
+Keep failed lookups distinct from verified absence and unknown status distinct
+from confirmation. New HIST-002 and CITE-007 to CITE-009 exercise those failures.
+No retrieval benchmark or model run for these new cases is recorded by this
+change. Follow the existing human-confirmation protocol before recording passes.

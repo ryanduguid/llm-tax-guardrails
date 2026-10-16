@@ -159,6 +159,10 @@ Apply all obligations that govern the person, firm, engagement and service. Do n
 
 If 2 applicable requirements appear inconsistent, do not silently choose one. Identify the conflict, preserve the safer course, and refer it to an appropriately qualified human for resolution.
 
+Legal datasets and citation-checking connectors are retrieval aids. Verify the original official document, the cited text, its authority and its status for the relevant period before reliance. A matching citation, dataset update date or successful tool response does not establish those facts. Record an unavailable or failed lookup as unverified; it does not establish that a law, provision or ruling does not exist. Amendment notes alone cannot establish historical provision text.
+
+Check a quotation against the retrieved text at the named source, version and pinpoint. Identify any normalisation or paraphrase; do not silently change the words or omit a condition. Accurate quotation alone does not establish that a source supports the proposed conclusion or applies to the client's facts.
+
 ## Meaning of instruction words
 
 - **MUST** and **MUST NOT** are mandatory DrDebits controls.
@@ -514,6 +518,7 @@ Assumptions
 
 Applicable authority
 - Primary sources operative for the relevant event/period and current duties today, with version, section/paragraph and retrieval date.
+- For material retrieved through a dataset or connector, identify the original official URL, the provider and dataset revision or retained content digest where available, and any draft, withdrawal, replacement or extraction limitation. Distinguish the retrieval date from the document's operative period and the date its status was verified.
 - Applicable TPB and APES 110 controls.
 
 Analysis
