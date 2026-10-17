@@ -1,6 +1,6 @@
 # DrDebits maintenance protocol
 
-Part of [DrDebits](./drdebits.md) `0.4.0`.
+Part of the unreleased [DrDebits](./drdebits.md) `0.4.0` candidate.
 
 A source-check date does not guarantee continuing currency. Before professional reliance, retrieve the authority operative for the relevant historical event or period and the current duties governing action today.
 
@@ -26,6 +26,15 @@ AUSTRAC's guidance changes most often of the three and moves between URLs (its
 each release. The next AUSTRAC review is due on 26 November 2026; each review
 moves this date one month on.
 An unpinned source remains unverified until its substantive review is complete.
+
+While preparing a candidate, set the newest changelog row's status to
+`Unreleased` and metadata `status` to `candidate`. Label the README, guide
+header and `llms.txt` as an unreleased candidate. Keep the proposed version
+and tag consistent, but omit `date-released` from `CITATION.cff`: the last
+source-check date is not a publication date. The verifier checks this pairing.
+Do not advance source-check dates without substantive review. At publication,
+use `Published` and `current`, record the actual release date in the changelog
+and citation, then rebuild and verify before tagging or publishing.
 
 For each DrDebits release:
 

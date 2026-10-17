@@ -1,7 +1,7 @@
 entries:
   - version: "0.4.0"
     date: "2026-10-14"
-    status: "Published"
+    status: "Unreleased"
     change: "Adds TPB sanctions controls and corrects the s 15 and s 45 rows for the Tax Agent Services Act and Code of Professional Conduct amendments that apply from 1 October 2026. Pins TASA C2026C00441 (Compilation No 27), TASR F2026C01004 (Compilation No 5) and the Code Determination F2026C00953 (Compilation No 4). Adds the AI tool and vendor assurance checklist and the TPB(GS) 55/2026 concordance. Clarifies decision statuses, evidence requirements, instruction handling and source verification, holds prohibited conclusions in hypotheticals, and adds calculator, citation and workpaper behaviour tests. Sources checked 14 October 2026; review due 14 January 2027. No confirmed model evaluation covers this release yet."
   - version: "0.3.3"
     date: "2026-09-06"

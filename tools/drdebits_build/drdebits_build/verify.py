@@ -200,11 +200,18 @@ def run_verify(root, today=None):
                     f"{rel}: source-check date does not match sources_checked_at "
                     f"({checked_date})")
 
+    candidate = s.changelog[0]["status"] == "Unreleased"
+    if candidate and s.meta.get("status") != "candidate":
+        failures.append("metadata: Unreleased changelog requires candidate status")
+    if not candidate and s.meta.get("status") == "candidate":
+        failures.append("metadata: candidate status requires Unreleased changelog")
+
     # (f) CITATION.cff carries its own copies of the version and release date.
     # When the file exists, both must agree with the sources - version with
     # guide_version, date-released with the newest changelog row - so a bump
     # cannot ship a stale citation record. Quoted and unquoted YAML scalars
-    # are both accepted. A deliberately absent file is tolerated.
+    # are both accepted. An Unreleased candidate must omit date-released.
+    # A deliberately absent file is tolerated.
     citation = root / "CITATION.cff"
     if citation.is_file():
         # Build tool; the path is a fixed name under the --root checkout.
@@ -217,7 +224,10 @@ def run_verify(root, today=None):
                 f"{s.meta['guide_version']}")
         release_date = s.changelog[0]["date"]
         date_m = re.search(r'^date-released:\s*"?([0-9-]+)"?\s*$', text, re.MULTILINE)
-        if not date_m or date_m.group(1) != release_date:
+        if candidate:
+            if re.search(r'^date-released\s*:', text, re.MULTILINE):
+                failures.append("CITATION.cff: Unreleased candidate must omit date-released")
+        elif not date_m or date_m.group(1) != release_date:
             failures.append(
                 f"CITATION.cff: date-released does not match newest changelog "
                 f"date {release_date}")

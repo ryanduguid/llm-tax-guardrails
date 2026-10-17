@@ -1,4 +1,5 @@
 """Verification pass tests: tamper each way, expect the named failure."""
+import re
 from datetime import date
 
 from drdebits_build.build import write_outputs
@@ -186,6 +187,57 @@ def test_citation_version_and_date_drift_detected(tmp_path):
         'cff-version: 1.2.0\nversion: 0.9.9-test\ndate-released: "1999-01-01"\n',
         encoding="utf-8", newline="\n")
     assert any("CITATION.cff: date-released" in f for f in verify(root))
+
+
+def test_unreleased_candidate_omits_release_date_and_requires_candidate_status(tmp_path):
+    root = make_repo(tmp_path)
+    changelog = root / "src" / "data" / "changelog.yaml"
+    changelog.write_text(
+        re.sub(r'(?m)^(\s*status:).*$', r'\1 "Unreleased"',
+               changelog.read_text(encoding="utf-8"), count=1),
+        encoding="utf-8", newline="\n")
+    metadata = root / "src" / "data" / "metadata.yaml"
+    metadata.write_text(
+        metadata.read_text(encoding="utf-8") + '  - key: status\n    value: "candidate"\n',
+        encoding="utf-8", newline="\n")
+    citation = root / "CITATION.cff"
+    citation.write_text('cff-version: 1.2.0\nversion: 0.9.9-test\n', encoding="utf-8")
+    sync(root)
+    assert verify(root) == []
+
+    for value in ('"2026-01-01"', "not-a-date", ""):
+        citation.write_text(
+            f'cff-version: 1.2.0\nversion: 0.9.9-test\ndate-released: {value}\n',
+            encoding="utf-8")
+        assert any("must omit date-released" in failure for failure in verify(root))
+    citation.write_text('cff-version: 1.2.0\nversion: 0.9.9-test\n', encoding="utf-8")
+    metadata.write_text(
+        metadata.read_text(encoding="utf-8").replace('value: "candidate"', 'value: "current"'),
+        encoding="utf-8", newline="\n")
+    sync(root)
+    assert any("Unreleased changelog requires candidate status" in failure for failure in verify(root))
+
+
+def test_publishing_candidate_requires_an_actual_release_date_and_status(tmp_path):
+    root = make_repo(tmp_path)
+    metadata = root / "src" / "data" / "metadata.yaml"
+    metadata.write_text(
+        metadata.read_text(encoding="utf-8") + '  - key: status\n    value: "candidate"\n',
+        encoding="utf-8", newline="\n")
+    citation = root / "CITATION.cff"
+    citation.write_text('cff-version: 1.2.0\nversion: 0.9.9-test\n', encoding="utf-8")
+    sync(root)
+    failures = verify(root)
+    assert any("CITATION.cff: date-released" in failure for failure in failures)
+    assert any("candidate status requires Unreleased changelog" in failure for failure in failures)
+    citation.write_text(
+        'cff-version: 1.2.0\nversion: 0.9.9-test\ndate-released: 2026-01-01\n',
+        encoding="utf-8")
+    metadata.write_text(
+        metadata.read_text(encoding="utf-8").replace('value: "candidate"', 'value: "current"'),
+        encoding="utf-8", newline="\n")
+    sync(root)
+    assert verify(root) == []
 
 
 def test_malformed_sources_checked_at_becomes_message_not_traceback(tmp_path):
