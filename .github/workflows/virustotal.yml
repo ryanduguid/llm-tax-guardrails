@@ -17,7 +17,7 @@ jobs:
   scan:
     permissions:
       contents: write # The reusable workflow edits the release notes in a separate job.
-    uses: ryanduguid/release-policy/.github/workflows/virustotal-release.yml@1aa75b40de319f1fb1afd5e5b12e35753f97d4da
+    uses: ryanduguid/release-policy/.github/workflows/virustotal-release.yml@a601f1d8b143f92b0517f709216993660d21f480
     with:
       tag: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.event.release.tag_name }}
     secrets:
