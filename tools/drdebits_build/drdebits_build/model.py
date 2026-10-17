@@ -92,14 +92,22 @@ _UniqueKeyLoader.add_constructor(
     yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, _construct_unique_mapping)
 
 
+def parse_yaml_mapping(text, path):
+    """Parse already-read YAML with the source files' strict mapping rules."""
+    loader = _UniqueKeyLoader(text)
+    try:
+        data = loader.get_single_data()
+    finally:
+        loader.dispose()
+    if not isinstance(data, dict):
+        raise ModelError(f"{path}: top level must be a mapping")
+    return data
+
+
 def _read(path):
     try:
         with open(path, encoding="utf-8") as fh:
-            loader = _UniqueKeyLoader(fh.read())
-            try:
-                data = loader.get_single_data()
-            finally:
-                loader.dispose()
+            data = parse_yaml_mapping(fh.read(), path)
     except yaml.YAMLError as e:
         raise ModelError(f"{path}: {e}") from e
     except RecursionError as e:
@@ -112,8 +120,6 @@ def _read(path):
         raise ModelError(f"{path}: is not valid UTF-8 ({e})") from e
     except OSError as e:
         raise ModelError(f"{path}: cannot read source file ({e})") from e
-    if not isinstance(data, dict):
-        raise ModelError(f"{path}: top level must be a mapping")
     return data
 
 

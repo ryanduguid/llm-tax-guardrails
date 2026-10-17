@@ -5,6 +5,8 @@ import re
 from datetime import date
 from pathlib import Path
 
+import yaml
+
 from . import evals, model
 from .build import (
     GENERATED,
@@ -215,9 +217,10 @@ def run_verify(root, today=None):
     citation = root / "CITATION.cff"
     if citation.is_file():
         try:
-            # Reuse the sources' strict mapping reader, including duplicate-key rejection.
-            record = model._read(citation)
-        except (ModelError, ValueError) as exc:
+            # Build tool; the path is a fixed name under the --root checkout.
+            text = citation.read_text(encoding="utf-8")  # NOSONAR
+            record = model.parse_yaml_mapping(text, citation)
+        except (ModelError, yaml.YAMLError, ValueError, RecursionError, OSError) as exc:
             # PyYAML raises ValueError for an invalid unquoted date scalar.
             failures.append(f"CITATION.cff: cannot parse YAML ({exc})")
         else:
