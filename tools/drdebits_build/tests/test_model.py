@@ -118,6 +118,31 @@ def test_counts_must_match(tmp_path):
     validate_counts(meta, cat + [{"id": "b", "title": "t", "url": "https://y.invalid", "trigger": "g"}])
 
 
+@pytest.mark.parametrize("field", ["prompt", "system_instruction"])
+@pytest.mark.parametrize("value", ['""', '"   "', "null", "false", "42", "[]"])
+def test_behaviour_input_rejects_blank_or_non_text(tmp_path, field, value):
+    content = (
+        'entries:\n  - id: "CONF-001"\n    scenario: "s"\n'
+        '    expected_status: "ESCALATE"\n    required_behaviour: "r"\n'
+        '    side_effect_check: "c"\n'
+    )
+    if field == "system_instruction":
+        content += '    prompt: "Prepare the workpaper."\n'
+    content += f"    {field}: {value}\n"
+    with pytest.raises(ModelError, match=field):
+        load_behaviour_tests(write(tmp_path, "invalid-input.yaml", content))
+
+
+def test_behaviour_system_instruction_requires_an_exact_prompt(tmp_path):
+    content = (
+        'entries:\n  - id: "CONF-001"\n    scenario: "s"\n'
+        '    expected_status: "ESCALATE"\n    required_behaviour: "r"\n'
+        '    side_effect_check: "c"\n    system_instruction: "Higher rule."\n'
+    )
+    with pytest.raises(ModelError, match="requires an exact prompt"):
+        load_behaviour_tests(write(tmp_path, "missing-prompt.yaml", content))
+
+
 def test_missing_source_file_becomes_model_error(tmp_path):
     with pytest.raises(ModelError, match="cannot read source file"):
         load_metadata(tmp_path / "does-not-exist.yaml")

@@ -1,6 +1,10 @@
 ## Workpaper record
 
-For material work, prepare a workpaper-ready record in the response containing:
+<!-- Fragment links resolve in the assembled drdebits.md guide. -->
+<!-- markdownlint-disable-next-line MD051 -->
+For an issue blocked under the instruction-conflict or unavailable-evidence branch of [Mandatory workflow](#mandatory-workflow), the abbreviated record in [Output contract](#output-contract) also satisfies this section. Do not add fields from the list below that the applicable branch excludes or that higher-priority instructions forbid. In an instruction-conflict record, include only the minimum facts needed to identify the affected scope, and only where higher-priority instructions permit.
+
+For other material work, prepare a workpaper-ready record in the response containing:
 
 - task and engagement identifier
 - preparer, responsible professional and reviewer
@@ -13,6 +17,8 @@ For material work, prepare a workpaper-ready record in the response containing:
 - threats, safeguards, consultations and unresolved issues
 - draft changes made during review
 - final human decision, approval and action.
+
+Attribute arithmetic performed by the model to the model. Record a human reviewer, reperformance, approval or final decision as completed only when supported by observed or identified evidence. Otherwise mark the relevant fields `pending`, `not performed` or `not evidenced`; proposed wording must not turn a future human check into a completed event. Preserve any genuine review evidence supplied and identify its source.
 
 Do not persist this record merely because it is required. Writing it to a workpaper or client system is a separate state change requiring an approved destination, the data gate and fresh action-specific approval from an `AUTHORISED_HUMAN`.
 
@@ -29,4 +35,3 @@ Do not persist this record merely because it is required. Writing it to a workpa
 - [MAINTENANCE.md](./MAINTENANCE.md): release and source-check protocol
 
 Retrieve these files when a routing decision needs them. The `SHA256SUMS` file at the repository root fixes the approved content of every file in the verified guide bundle.
-

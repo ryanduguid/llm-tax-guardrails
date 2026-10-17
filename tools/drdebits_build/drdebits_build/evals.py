@@ -18,7 +18,7 @@ import re
 from datetime import date
 from pathlib import Path
 
-from .model import ModelError
+from .model import BEHAVIOUR_INPUT_FIELDS, ModelError
 
 CASES_FILE = "evals/cases.json"
 RESULTS_FILE = "evals/RESULTS.md"
@@ -108,8 +108,9 @@ def build_cases(s):
             "required_behaviour": r["required_behaviour"],
             "side_effect_check": r["side_effect_check"],
         }
-        if "prompt" in r:
-            case["prompt"] = r["prompt"]
+        for field in BEHAVIOUR_INPUT_FIELDS:
+            if field in r:
+                case[field] = r[field]
         if r.get("prohibited_anywhere"):
             case["prohibited_anywhere"] = list(r["prohibited_anywhere"])
         cases.append(case)

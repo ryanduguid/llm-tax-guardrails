@@ -92,14 +92,22 @@ _UniqueKeyLoader.add_constructor(
     yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, _construct_unique_mapping)
 
 
+def parse_yaml_mapping(text, path):
+    """Parse already-read YAML with the source files' strict mapping rules."""
+    loader = _UniqueKeyLoader(text)
+    try:
+        data = loader.get_single_data()
+    finally:
+        loader.dispose()
+    if not isinstance(data, dict):
+        raise ModelError(f"{path}: top level must be a mapping")
+    return data
+
+
 def _read(path):
     try:
         with open(path, encoding="utf-8") as fh:
-            loader = _UniqueKeyLoader(fh.read())
-            try:
-                data = loader.get_single_data()
-            finally:
-                loader.dispose()
+            data = parse_yaml_mapping(fh.read(), path)
     except yaml.YAMLError as e:
         raise ModelError(f"{path}: {e}") from e
     except RecursionError as e:
@@ -112,8 +120,6 @@ def _read(path):
         raise ModelError(f"{path}: is not valid UTF-8 ({e})") from e
     except OSError as e:
         raise ModelError(f"{path}: cannot read source file ({e})") from e
-    if not isinstance(data, dict):
-        raise ModelError(f"{path}: top level must be a mapping")
     return data
 
 
@@ -230,6 +236,7 @@ def load_catalogue(path):
 
 BEHAVIOUR_FIELDS = ("id", "scenario", "expected_status", "required_behaviour",
                     "side_effect_check")
+BEHAVIOUR_INPUT_FIELDS = ("prompt", "system_instruction")
 #: The optional per-case field emphasising the prohibited conclusions that case
 #: turns on. Every declared conclusion makes a response a `violation` wherever
 #: in it it appears, so this field narrows nothing. The labels are defined once
@@ -246,15 +253,18 @@ PROHIBITED_CONCLUSION_FIELDS = ("label", "definition", "markers")
 
 def load_behaviour_tests(path):
     rows = _rows(path, _read(path), "entries", BEHAVIOUR_FIELDS, table_safe=True,
-                 optional=(PROHIBITED_ANYWHERE, "prompt"))
+                 optional=(PROHIBITED_ANYWHERE, *BEHAVIOUR_INPUT_FIELDS))
     _unique_ids(path, rows)
     for r in rows:
         if r["expected_status"] not in ALLOWED_STATUSES:
             raise ModelError(f"{path}: {r['id']} has unknown status {r['expected_status']!r}")
-        if "prompt" in r:
-            _require_str(path, f"{r['id']} prompt", r["prompt"])
-            if not r["prompt"].strip():
-                raise ModelError(f"{path}: {r['id']} prompt must not be blank")
+        for field in BEHAVIOUR_INPUT_FIELDS:
+            if field in r:
+                _require_str(path, f"{r['id']} {field}", r[field])
+                if not r[field].strip():
+                    raise ModelError(f"{path}: {r['id']} {field} must not be blank")
+        if "system_instruction" in r and "prompt" not in r:
+            raise ModelError(f"{path}: {r['id']} system_instruction requires an exact prompt")
         if PROHIBITED_ANYWHERE in r:
             r[PROHIBITED_ANYWHERE] = _string_list(
                 path, f"{r['id']} {PROHIBITED_ANYWHERE}", r[PROHIBITED_ANYWHERE])
