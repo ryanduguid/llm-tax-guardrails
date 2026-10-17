@@ -5,7 +5,7 @@ import re
 from datetime import date
 from pathlib import Path
 
-from . import evals
+from . import evals, model
 from .build import (
     GENERATED,
     SOURCE_CHECK_DATE_FILES,
@@ -214,23 +214,25 @@ def run_verify(root, today=None):
     # A deliberately absent file is tolerated.
     citation = root / "CITATION.cff"
     if citation.is_file():
-        # Build tool; the path is a fixed name under the --root checkout.
-        text = citation.read_text(encoding="utf-8")  # NOSONAR
-        # Reads the repository's own CITATION.cff; a rewrite risks changing which scalars match.
-        version_m = re.search(r'^version:\s*"?([^"\r\n]+?)"?\s*$', text, re.MULTILINE)  # NOSONAR
-        if not version_m or version_m.group(1) != s.meta["guide_version"]:
-            failures.append(
-                f"CITATION.cff: version does not match guide_version "
-                f"{s.meta['guide_version']}")
-        release_date = s.changelog[0]["date"]
-        date_m = re.search(r'^date-released:\s*"?([0-9-]+)"?\s*$', text, re.MULTILINE)
-        if candidate:
-            if re.search(r'^date-released\s*:', text, re.MULTILINE):
-                failures.append("CITATION.cff: Unreleased candidate must omit date-released")
-        elif not date_m or date_m.group(1) != release_date:
-            failures.append(
-                f"CITATION.cff: date-released does not match newest changelog "
-                f"date {release_date}")
+        try:
+            # Reuse the sources' strict mapping reader, including duplicate-key rejection.
+            record = model._read(citation)
+        except (ModelError, ValueError) as exc:
+            # PyYAML raises ValueError for an invalid unquoted date scalar.
+            failures.append(f"CITATION.cff: cannot parse YAML ({exc})")
+        else:
+            if record.get("version") != s.meta["guide_version"]:
+                failures.append(
+                    f"CITATION.cff: version does not match guide_version "
+                    f"{s.meta['guide_version']}")
+            release_date = s.changelog[0]["date"]
+            if candidate:
+                if "date-released" in record:
+                    failures.append("CITATION.cff: Unreleased candidate must omit date-released")
+            elif str(record.get("date-released", "")) != release_date:
+                failures.append(
+                    f"CITATION.cff: date-released does not match newest changelog "
+                    f"date {release_date}")
 
     # (g) review_due is the one metadata field the guide tells every consuming
     # LLM to act on: once it has passed, the guide labels its own contents
