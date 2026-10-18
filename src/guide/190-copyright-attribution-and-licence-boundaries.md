@@ -1,7 +1,5 @@
 ## Copyright, attribution and licence boundaries
 
-DrDebits is independent and is not endorsed by the TPB, APESB, AUSTRAC, IFAC, CA ANZ, CPA Australia or IPA.
-
 - TPB website material is identified by the TPB as available under the [Creative Commons Attribution 3.0 Australia licence](https://www.tpb.gov.au/copyright-notice), except for excluded logos, the Commonwealth Coat of Arms and material otherwise noted. TPB source titles, links and adapted concepts in this guide are attributed to the Tax Practitioners Board.
 - APES 110 is published by APESB under licence from IFAC and is protected by copyright. APESB’s copyright policy controls reproduction, adaptation and communication. This repository does not reproduce the standard. It provides independently written operational rules and section references. APESB’s terms ask external sites to link only to its main page, so this guide links to the [APESB website](https://apesb.org.au/) and names the exact publication to locate there.
 - Legislation links point to the authorised Federal Register of Legislation versions. The exact current law must be read there.
