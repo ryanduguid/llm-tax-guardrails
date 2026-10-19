@@ -279,6 +279,8 @@ def test_other_unreachable_links_keep_the_check_incomplete(monkeypatch, capsys):
     ("https://www.tpb.gov.au/guidance", True),
     ("https://www.austrac.gov.au/obligations", True),
     (ATO_DENIED, True),
+    ("https://www.ato.gov.au/about-ato/ato-advice-and-guidance/how-our-advice-and-guidance-protects-you", True),
+    ("https://www.ato.gov.au/about-ato/ato-advice-and-guidance", False),
     ("https://www.ato.gov.au/law/view/document?docid=OTHER", False),
     ("https://tpb.gov.au.example.com/guidance", False),
     ("https://example.com/www.tpb.gov.au", False),
