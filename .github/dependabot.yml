@@ -13,6 +13,14 @@ updates:
       codeql-action:
         patterns:
           - "github/codeql-action*"
+      # Minor and patch action updates arrive as one pull request, so they need
+      # one rebase and CI run instead of one each. Majors stay separate for review.
+      actions-minor-patch:
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
     ignore:
       # The release-policy pin is an immutable full commit SHA, advanced only
       # by a reviewed re-pin of its workflow family. A Dependabot bump adds an
