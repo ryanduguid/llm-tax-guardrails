@@ -36,14 +36,17 @@ DEAD_GAI_ERRNOS = frozenset(
 )
 
 # Hosts that time out on GitHub's runners because they block cloud address
-# ranges, and one ATO page that answers the runners 403 while the rest of its
+# ranges, and two ATO pages that answer the runners 403 while the rest of their
 # host answers. From a residential connection on 29 September 2026 every one of
-# these links resolved (issue 113). An unreachable link here is listed for
-# checking by hand instead of making the check incomplete; a dead answer still
-# fails.
+# these links resolved (issue 113). The advice-and-guidance page answered the
+# 18 October 2026 run "UNREACHABLE 403" (run 39174483634, issue 134) and
+# answered 200 with its own title from a residential connection on
+# 19 October 2026. An unreachable link here is listed for checking by hand
+# instead of making the check incomplete; a dead answer still fails.
 MANUAL_HOSTS = frozenset({"www.tpb.gov.au", "www.austrac.gov.au"})
 MANUAL_URLS = frozenset({
     "https://www.ato.gov.au/law/view/document?docid=PSR%2FPS20125%2FNAT%2FATO%2F00001",
+    "https://www.ato.gov.au/about-ato/ato-advice-and-guidance/how-our-advice-and-guidance-protects-you",
 })
 
 
