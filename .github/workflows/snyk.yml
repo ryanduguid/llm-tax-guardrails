@@ -15,12 +15,14 @@ on:
       - "**/requirements*.txt"
       - "**/package-lock.json"
       - ".github/workflows/snyk.yml"
+      - ".snyk"
   pull_request:
     paths:
       - "**/uv.lock"
       - "**/requirements*.txt"
       - "**/package-lock.json"
       - ".github/workflows/snyk.yml"
+      - ".snyk"
 
 permissions:
   contents: read
@@ -69,7 +71,7 @@ jobs:
           while IFS=: read -r kind target; do
             [ -n "$kind" ] || continue
             if [ "$kind" = npm ]; then
-              [ -z "$SNYK_TOKEN" ] || snyk test --file="$target" --project-name="$target" || status=1
+              [ -z "$SNYK_TOKEN" ] || snyk test --file="$target" --project-name="$target" --policy-path="$GITHUB_WORKSPACE/.snyk" || status=1
               continue
             fi
             work=$(mktemp -d)
@@ -95,7 +97,7 @@ jobs:
             "$work/venv/bin/python" -m pip install --quiet --disable-pip-version-check --no-deps \
               --only-binary=:all: --requirement "$work/requirements.txt" || { status=1; continue; }
             [ -z "$SNYK_TOKEN" ] || snyk test --file="$work/requirements.txt" --package-manager=pip --skip-unresolved \
-              --command="$work/venv/bin/python" --project-name="$kind:$target" || status=1
+              --command="$work/venv/bin/python" --project-name="$kind:$target" --policy-path="$GITHUB_WORKSPACE/.snyk" || status=1
           done <<< "$SNYK_TARGETS"
           [ -n "$SNYK_TOKEN" ] || exit 1
           exit "$status"
