@@ -27,6 +27,7 @@ candidate.
 - Marker hits printed after scoring, with the screen's literal-phrase limit stated (#109).
 - `CONTRIBUTING.md` with the change workflow and the checks CI runs (#165).
 - `CLAUDE.md` and project settings that protect generated outputs (#122), and maintenance routing in `AGENTS.md` (#49).
+- `CHANGELOG.md`, this file (#178).
 
 ### Changed
 
@@ -46,6 +47,7 @@ candidate.
 - Release checklist status of `v0.3.2` stated accurately (#61); maintenance guidance for evaluation tools and bundle contents corrected (#114).
 - README and diagrams recoloured to the website palette (#136, #137, #142, #143, #155, #160, #173).
 - Contributor workflow: pull requests and pushed commits carrying an AI authorship credit are refused (#47, #70, #72).
+- README licence section names the CI helper scripts under `.github/ci/` as MIT-licensed code alongside `tools/` (#183).
 
 ### Fixed
 
@@ -58,6 +60,7 @@ candidate.
 - Disclaimer set phrase and its checksum corrected (#127).
 - Attribution title matching (#52).
 - Flaky concurrency probe in the test suite (#64, #65).
+- The ATO advice-and-guidance page, which refuses GitHub's runners, is listed for checking by hand instead of making the link check incomplete (#178).
 
 ### Security
 
@@ -70,7 +73,7 @@ candidate.
 - Locked dependencies tested with Snyk (#153), OpenSSF Scorecard results published (#151) and release assets scanned with VirusTotal (#150).
 
 Not listed, as they have no user-visible effect: dependency and action pin
-updates (#43, #44, #66, #86, #87, #88, #89, #90, #93, #117, #118, #119, #171),
+updates (#43, #44, #66, #86, #87, #88, #89, #90, #93, #117, #118, #119, #171, #179),
 attribution-policy pin moves (#53, #59, #78, #79, #100, #175), review-bot
 configuration (#39, #57, #58, #62, #63, #97, #98, #128), badges and coverage
 reporting (#99, #144, #149, #152, #154, #157, #158, #166, #167), and CI and
