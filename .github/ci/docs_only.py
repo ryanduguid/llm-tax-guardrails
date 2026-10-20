@@ -43,11 +43,12 @@ def git(*args: str) -> subprocess.CompletedProcess[str]:
 
 
 def referenced(path: str) -> bool:
-    """Whether a tracked file other than documentation names the file (its path names it too)."""
+    """Whether a tracked file other than documentation names the file (its path names it too).
+
+    A failed search counts as a reference, so every job runs.
+    """
     found = git("grep", "-l", "-F", "-e", posixpath.basename(path), "--", ".", *DOCS_EXCLUDES)
-    if found.returncode not in (0, 1):
-        raise OSError(found.stderr.strip())
-    return found.returncode == 0
+    return found.returncode != 1
 
 
 def docs_only(checked: list[str]) -> tuple[bool, str]:
