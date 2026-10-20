@@ -12,6 +12,7 @@ tasa_compilation: C2026C00441
 tasr_compilation: F2026C01004
 code_determination_compilation: F2026C00953
 aml_ctf_act_compilation: C2026C00447
+taa_compilation: C2026C00468
 apes_110_compilation: July 2025
 apes_110_pdf_filename: Compiled_APES_110_July_25.pdf
 apes_110_compilation_details_filename: Compilation_Details_APES_110_July_25.pdf
@@ -115,7 +116,7 @@ Apply DrDebits to this task. Classify the service, role, period and applicable s
 | [APES 110 (locate via APESB)](https://apesb.org.au/) | November 2018 Code, amended and compiled as at July 2025 | Current APESB compilation | Applicable obligations for members and Sustainability Assurance Practitioners within the Code’s stated scope |
 | [APESB Technical Alert (locate via APESB)](https://apesb.org.au/) | *The ethical use of artificial intelligence by professional accountants*, 31 October 2025 | Current alert checked | APESB’s non-authoritative AI-specific application guidance |
 | [APES 220 Taxation Services (locate via APESB)](https://apesb.org.au/) | Issued January 2025; effective 1 July 2025 | Current | Service-level professional standard for Members providing taxation services, alongside APES 110 |
-| [*Taxation Administration Act 1953*](https://www.legislation.gov.au/C1953A00001/latest) | Landing page checked; compilation ID not pinned this release | In force | Sch 1 penalty framework: s 284-15 reasonably arguable position; s 284-75(6) agent safe harbour |
+| [*Taxation Administration Act 1953*](https://www.legislation.gov.au/C1953A00001/latest) | `C2026C00468`, Compilation No 227, 1 October 2026 | In force; completion of substantive human review confirmed on 20 October 2026 | Sch 1 penalty framework: s 284-15 reasonably arguable position; s 284-75(6) agent safe harbour |
 | [*Anti-Money Laundering and Counter-Terrorism Financing Act 2006*](https://www.legislation.gov.au/C2006A00169/latest) | `C2026C00447`, Compilation No 63, 1 October 2026 | In force; tranche-2 professional services regulated from 1 July 2026; completion of substantive human review confirmed on 19 October 2026 | AML/CTF designated-service obligations; reformed tipping-off offence (s 123) effective 31 March 2025 |
 | [AUSTRAC accountant guidance](https://www.austrac.gov.au/industry-and-business/your-industry/accountants) | Checked 2026-10-14 | Regulator guidance, including AUSTRAC’s professional designated services guidance updated on 25 September 2026 | Enrolment, AML/CTF program, compliance officer and reporting obligations for the sector |
 
@@ -144,7 +145,7 @@ Register metadata retrieved on 12 October 2026 identifies [TASR compilation `F20
 
 Register metadata retrieved on 19 October 2026 identifies [AML/CTF Act compilation `C2026C00447`](https://www.legislation.gov.au/C2006A00169/2026-10-01/text), Compilation No 63, current from 1 October 2026 and registered on 10 October 2026, with no unincorporated amendments. It incorporates Schedule 7 item 1 of the *Treasury Laws Amendment (Strengthening Accountability for Tax Adviser Misconduct and Other Measures) Act 2026*. Completion of substantive human review of the replacement compilation and affected guide controls was confirmed on 19 October 2026. The AML/CTF Act pin has advanced and the existing wording is retained. The confirmation date does not advance the guide-wide source-check date or determine the version applicable to a particular client event.
 
-The 8 October Register metadata for the Taxation Administration Act reports unincorporated amendments and no comparable current compilation identifier for the period starting on 1 October 2026. Those automated comparisons and the affected source-dependent controls remain `SOURCE CURRENCY NOT CONFIRMED`. Retrieve and verify the operative text and amendments before reliance.
+Register metadata retrieved on 20 October 2026 identifies [Taxation Administration Act compilation `C2026C00468`](https://www.legislation.gov.au/C1953A00001/2026-10-01/text), Compilation No 227, current from 1 October 2026 and registered on 19 October 2026, with no unincorporated amendments. It incorporates Schedule 2 items 22 to 37, Schedule 7 item 15 and Schedule 8 items 1 to 3 of the *Treasury Laws Amendment (Strengthening Accountability for Tax Adviser Misconduct and Other Measures) Act 2026* and Schedule 1 item 10 of the *Treasury Laws Amendment (Tax Reform No. 2) Act 2026*. Completion of substantive human review of the replacement compilation and affected guide controls was confirmed on 20 October 2026. The Taxation Administration Act pin has advanced and the existing wording is retained. The confirmation date does not advance the guide-wide source-check date or determine the version applicable to a particular client event.
 
 If `review_due` has passed, an official source cannot be reached, or a compilation identifier, status, title or modified date differs, label the affected material `SOURCE CURRENCY NOT CONFIRMED`. Do not make a definitive current-law claim until the source has been checked and the mapping reviewed by a competent human.
 

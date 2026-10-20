@@ -25,6 +25,8 @@ fields:
     value: "F2026C00953"
   - key: aml_ctf_act_compilation
     value: "C2026C00447"
+  - key: taa_compilation
+    value: "C2026C00468"
   - key: apes_110_compilation
     value: "July 2025"
   - key: apes_110_pdf_filename
