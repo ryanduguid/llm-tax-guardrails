@@ -19,50 +19,71 @@ on:
 
 permissions:
   contents: read
-  issues: write
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-# CI follows Python 3.15 maintenance releases; local development pins the patch.
-env:
-  UV_PYTHON: "3.14"
-
 jobs:
-  compilations:
-    timeout-minutes: 15
-    name: pinned compilation currency, report only
+  build:
+    # Compiling runs dependency build scripts, so it happens here, with
+    # read-only access, and never in the job that can write issues.
+    name: build the checker
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: tools/drdebits_build
     steps:
       - name: Check out source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      - name: Set up Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
-        with:
-          # 3.14: pyyaml 6.0.3, the locked runtime dependency, has no 3.15 wheel yet.
-          python-version: "3.14"
+      - name: Install the pinned toolchain
+        run: rustup toolchain install 1.99 --profile minimal
 
-      - name: Install the locked toolchain
-        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
-        with:
-          version: "0.12.0"
-          enable-cache: true
+      - name: Build the checker
+        run: cargo build --locked --release
 
-      # This job can write issues, so nothing it installs may run a build script.
-      # The tool runs from source; only its locked dependencies are installed, as wheels.
-      - name: Install the locked dependencies
-        run: uv sync --project tools/drdebits_build --locked --no-build --no-install-project
+      - name: Hand the checker to the report job
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: drdebits-build
+          path: tools/drdebits_build/target/release/drdebits_build
+          retention-days: 1
+
+  compilations:
+    needs: build
+    timeout-minutes: 15
+    name: pinned compilation currency, report only
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # This job can write issues, so nothing it installs may run a build
+      # script: it runs the checker the build job compiled.
+      - name: Fetch the checker
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: drdebits-build
+          path: bin
 
       - name: Check and retain the report
         id: check
         shell: bash
         run: |
           set +e
-          PYTHONPATH=tools/drdebits_build uv run --project tools/drdebits_build --no-sync --no-build python -m drdebits_build.sources --root . > source-currency.txt 2>&1
+          chmod +x bin/drdebits_build
+          bin/drdebits_build sources --root . > source-currency.txt 2>&1
           result=$?
           set -e
           echo "exit_code=$result" >> "$GITHUB_OUTPUT"

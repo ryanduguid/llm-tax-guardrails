@@ -1,8 +1,9 @@
 name: Snyk
 
-# Snyk's free plan cannot read uv.lock, so each locked environment is exported
-# to a requirements file, installed into its own virtual environment and
-# tested through Snyk's pip support. It runs weekly and when a dependency file
+# Snyk cannot read Cargo.lock or uv.lock directly. A Cargo set is described as
+# a CycloneDX SBOM and tested with `snyk sbom test`; a uv set is exported to a
+# requirements file, installed into its own virtual environment and tested
+# through Snyk's pip support. It runs weekly and when a dependency file
 # changes, which keeps it inside the free plan's monthly test allowance.
 on:
   schedule:
@@ -11,6 +12,7 @@ on:
   push:
     branches: [main]
     paths:
+      - "**/Cargo.lock"
       - "**/uv.lock"
       - "**/requirements*.txt"
       - "**/package-lock.json"
@@ -18,6 +20,7 @@ on:
       - ".snyk"
   pull_request:
     paths:
+      - "**/Cargo.lock"
       - "**/uv.lock"
       - "**/requirements*.txt"
       - "**/package-lock.json"
@@ -40,10 +43,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      # One dependency set per line: uv:<project directory>,
-      # pip:<requirements file> or npm:<package-lock.json>.
+      # One dependency set per line: cargo:<crate directory>,
+      # uv:<project directory>, pip:<requirements file> or npm:<package-lock.json>.
       SNYK_TARGETS: |
-        uv:tools/drdebits_build
+        cargo:tools/drdebits_build
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -56,6 +59,10 @@ jobs:
           version: "0.12.5"
           enable-cache: false
       - uses: snyk/actions/setup@9adf32b1121593767fc3c057af55b55db032dc04 # v1.0.0
+      - name: Install the SBOM generator
+        run: |
+          rustup toolchain install 1.99 --profile minimal
+          cargo install cargo-cyclonedx --locked --version 0.5.9
       - name: Test each dependency set
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
@@ -72,6 +79,12 @@ jobs:
             [ -n "$kind" ] || continue
             if [ "$kind" = npm ]; then
               [ -z "$SNYK_TOKEN" ] || snyk test --file="$target" --project-name="$target" --policy-path="$GITHUB_WORKSPACE/.snyk" || status=1
+              continue
+            fi
+            if [ "$kind" = cargo ]; then
+              (cd "$target" && cargo cyclonedx --format json --spec-version 1.5 --override-filename snyk-sbom) \
+                || { echo "::error::cargo cyclonedx failed for $target"; status=1; continue; }
+              [ -z "$SNYK_TOKEN" ] || snyk sbom test --experimental --file="$target/snyk-sbom.json" || status=1
               continue
             fi
             work=$(mktemp -d)

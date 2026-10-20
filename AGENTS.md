@@ -21,12 +21,12 @@ documented builder. Historical human-recorded evaluation results stay unchanged.
 
 Before handoff, run the builder tests and generated-output verification defined
 in [verify.yml](.github/workflows/verify.yml). `pre-commit install` runs the
-same commands through the same locked toolchain before a commit lands, and adds
+same commands through the same pinned toolchain before a commit lands, and adds
 a gitleaks scan against [.gitleaks.toml](.gitleaks.toml), which carries
 client-identifier rules on top of the default credential rules.
 
 For source currency, run
-`uv run --project tools/drdebits_build --locked python -m drdebits_build.sources --root .`.
+`cargo run --manifest-path tools/drdebits_build/Cargo.toml --locked --release -- sources --root .`.
 It asks the Federal Register whether each compilation the guide pins is still
 the current one, which a link check cannot tell you: a superseded compilation
 keeps resolving. It also reports a registered amendment that comes into force

@@ -28,13 +28,15 @@ updates:
       # so re-pin by hand instead.
       - dependency-name: "ryanduguid/release-policy/.github/workflows/*"
 
-  - package-ecosystem: uv
-    directory: /tools/drdebits_build
+  - package-ecosystem: cargo
+    directories:
+      - /tools/drdebits_build
+      - /tools/drdebits_build/fuzz
     schedule:
       interval: weekly
     cooldown:
       default-days: 7
     groups:
-      python-dependencies:
+      rust-dependencies:
         patterns:
           - "*"
