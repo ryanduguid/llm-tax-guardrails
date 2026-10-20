@@ -20,7 +20,31 @@ env:
   UV_PYTHON: "3.15"
 
 jobs:
+  changes:
+    # A documentation-only pull request that no check reads skips the jobs
+    # that need this one; .github/ci/docs_only.py decides, and the gate below
+    # still reports.
+    timeout-minutes: 5
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      docs-only: ${{ steps.select.outputs.docs-only }}
+    steps:
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.15"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          # The merge commit's parents give the pull request's changed paths.
+          fetch-depth: 2
+      - id: select
+        run: python3 .github/ci/docs_only.py select --checked src/ --checked reference/ --checked evals/ --checked tests/ --checked tools/ >> "$GITHUB_OUTPUT"
+
   verify:
+    needs: changes
+    if: needs.changes.outputs.docs-only != 'true'
     name: ${{ matrix.name }}
     strategy:
       fail-fast: false
@@ -164,10 +188,11 @@ jobs:
 
   verify-gates:
     # The one context branch protection requires from this workflow. It fails
-    # unless every job it needs succeeded, when a job in this file is missing
+    # unless every job it needs succeeded (or, on a documentation-only pull
+    # request, skipped), when a job in this file is missing
     # from needs, or when a pull request removes a job without adding a
     # "# removed-jobs: <job>" comment to this file.
-    needs: [verify, secrets]
+    needs: [changes, verify, secrets]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -184,7 +209,11 @@ jobs:
           # The merge commit's first parent holds the base branch's workflow.
           fetch-depth: 2
           sparse-checkout: .github
-      - name: Require every job to be listed, kept and successful
+      - name: Require every job to succeed, or skip on a documentation-only pull request
         env:
           RESULTS: ${{ toJSON(needs) }}
-        run: python3 .github/ci/check_gates.py .github/workflows/verify.yml verify-gates --exempt codecov --exempt fuzzing
+        run: python3 .github/ci/docs_only.py gate
+      - name: Require every job to be listed and kept
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: python3 .github/ci/check_gates.py .github/workflows/verify.yml verify-gates --no-results --exempt codecov --exempt fuzzing
