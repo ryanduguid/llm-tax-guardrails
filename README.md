@@ -1,16 +1,16 @@
 # DrDebits: stop the model concluding what only a practitioner may
 
-[![verify](https://img.shields.io/github/actions/workflow/status/ryanduguid/llm-tax-guardrails/verify.yml?branch=main&label=verify&labelColor=000000&style=flat-square)](https://github.com/ryanduguid/llm-tax-guardrails/actions/workflows/verify.yml)
-[![Codecov](https://img.shields.io/codecov/c/github/ryanduguid/llm-tax-guardrails?label=coverage&labelColor=000000&style=flat-square)](https://codecov.io/gh/ryanduguid/llm-tax-guardrails)
-[![CodeQL](https://img.shields.io/github/actions/workflow/status/ryanduguid/llm-tax-guardrails/codeql.yml?branch=main&label=CodeQL&labelColor=000000&style=flat-square)](https://github.com/ryanduguid/llm-tax-guardrails/actions/workflows/codeql.yml)
-[![Snyk](https://img.shields.io/github/actions/workflow/status/ryanduguid/llm-tax-guardrails/snyk.yml?branch=main&label=Snyk&labelColor=000000&style=flat-square)](https://github.com/ryanduguid/llm-tax-guardrails/actions/workflows/snyk.yml)
-[![SonarCloud](https://img.shields.io/sonar/quality_gate/ryanduguid_llm-tax-guardrails?server=https%3A%2F%2Fsonarcloud.io&label=SonarCloud&labelColor=000000&style=flat-square)](https://sonarcloud.io/summary/new_code?id=ryanduguid_llm-tax-guardrails)
-[![Codacy code quality](https://img.shields.io/codacy/grade/aa06cf4e42c14a59b22c8825bfa180d3?label=Codacy&labelColor=000000&style=flat-square)](https://app.codacy.com/gh/ryanduguid/llm-tax-guardrails/dashboard)<br>
-[![OpenSSF Scorecard](https://img.shields.io/ossf-scorecard/github.com/ryanduguid/llm-tax-guardrails?label=Scorecard&labelColor=000000&style=flat-square)](https://scorecard.dev/viewer/?uri=github.com/ryanduguid/llm-tax-guardrails)
-[![OpenSSF Best Practices](https://img.shields.io/cii/level/15427?label=Best%20Practices&labelColor=000000&style=flat-square)](https://www.bestpractices.dev/projects/15427)
-[![VirusTotal](https://img.shields.io/badge/VirusTotal-scanned-990024?labelColor=000000&style=flat-square&logo=virustotal&logoColor=FFFFF0)](https://github.com/ryanduguid/llm-tax-guardrails/releases/latest)<br>
-[![release](https://img.shields.io/github/v/release/ryanduguid/llm-tax-guardrails?color=66023C&labelColor=000000&style=flat-square)](https://github.com/ryanduguid/llm-tax-guardrails/releases/latest)
-[![licence: CC BY 4.0](https://img.shields.io/badge/licence-CC%20BY%204.0-66023C?labelColor=000000&style=flat-square)](LICENSE)
+[![verify](https://img.shields.io/github/actions/workflow/status/ryanduguid/llm-tax-guardrails/verify.yml?branch=main&label=verify&labelColor=000000&style=flat)](https://github.com/ryanduguid/llm-tax-guardrails/actions/workflows/verify.yml)
+[![Codecov](https://img.shields.io/codecov/c/github/ryanduguid/llm-tax-guardrails?label=coverage&labelColor=000000&style=flat)](https://codecov.io/gh/ryanduguid/llm-tax-guardrails)
+[![CodeQL](https://img.shields.io/github/actions/workflow/status/ryanduguid/llm-tax-guardrails/codeql.yml?branch=main&label=CodeQL&labelColor=000000&style=flat)](https://github.com/ryanduguid/llm-tax-guardrails/actions/workflows/codeql.yml)
+[![Snyk](https://img.shields.io/github/actions/workflow/status/ryanduguid/llm-tax-guardrails/snyk.yml?branch=main&label=Snyk&labelColor=000000&style=flat)](https://github.com/ryanduguid/llm-tax-guardrails/actions/workflows/snyk.yml)
+[![SonarCloud](https://img.shields.io/sonar/quality_gate/ryanduguid_llm-tax-guardrails?server=https%3A%2F%2Fsonarcloud.io&label=SonarCloud&labelColor=000000&style=flat)](https://sonarcloud.io/summary/new_code?id=ryanduguid_llm-tax-guardrails)
+[![Codacy code quality](https://img.shields.io/codacy/grade/aa06cf4e42c14a59b22c8825bfa180d3?label=Codacy&labelColor=000000&style=flat)](https://app.codacy.com/gh/ryanduguid/llm-tax-guardrails/dashboard)<br>
+[![OpenSSF Scorecard](https://img.shields.io/ossf-scorecard/github.com/ryanduguid/llm-tax-guardrails?label=Scorecard&labelColor=000000&style=flat)](https://scorecard.dev/viewer/?uri=github.com/ryanduguid/llm-tax-guardrails)
+[![OpenSSF Best Practices](https://img.shields.io/cii/level/15427?label=Best%20Practices&labelColor=000000&style=flat)](https://www.bestpractices.dev/projects/15427)
+[![VirusTotal](https://img.shields.io/badge/VirusTotal-scanned-990024?labelColor=000000&style=flat&logo=virustotal&logoColor=FFD32A&color=990024)](https://github.com/ryanduguid/llm-tax-guardrails/releases/latest)<br>
+[![release](https://img.shields.io/github/v/release/ryanduguid/llm-tax-guardrails?color=66023C&labelColor=000000&style=flat)](https://github.com/ryanduguid/llm-tax-guardrails/releases/latest)
+[![licence: CC BY 4.0](https://img.shields.io/badge/licence-CC%20BY%204.0-66023C?labelColor=000000&style=flat&color=66023C)](LICENSE)
 
 Guardrails, not advice. A competent, authorised human remains responsible for every professional service, judgement and consequential action.
 
