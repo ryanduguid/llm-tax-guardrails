@@ -56,6 +56,27 @@ Other hosts need their own documented loading and enforcement checks. Prompt
 wording cannot enforce action restrictions. Configure reachable tools,
 approvals and human review in the host before client work.
 
+### Gate each high-impact draft
+
+Prompt wording cannot make a model meet the output contract either. Have the
+host run the builder's `gate` command on each high-impact draft before anyone
+relies on it:
+
+```bash
+cargo run --manifest-path tools/drdebits_build/Cargo.toml --locked --release -- gate draft.md
+```
+
+It checks the banner, one primary decision status, `action_authority: NONE`,
+the state-change and source-version lines and that each mandatory section has
+content, and recomputes every written `a op b = c` calculation, including each
+link of a chain, in exact decimal arithmetic. It exits 0 when those checks
+pass, 1 when the draft breaks the contract or a calculation does not
+reperform, 2 when it could not run and 3 when nothing blocked but the
+prohibited-conclusion screen matched or the draft records a state-changing
+action, which a person must resolve. `--json` prints the findings for the
+host. A pass does not establish that the facts,
+sources or conclusion are right; a person still reviews the draft.
+
 ## Ethical routing and boundary architecture
 
 ```mermaid
