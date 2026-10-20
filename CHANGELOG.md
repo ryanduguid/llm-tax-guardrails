@@ -35,7 +35,7 @@ candidate.
 - Instruction handling and source verification clarified (#54); source mappings and evidence boundaries clarified (#56).
 - Prohibited conclusions held in hypotheticals (#80).
 - The 1 October 2026 TASA and Code of Professional Conduct amendments flagged in the guide (#103), with a warning for `v0.3.3` users (#107).
-- Pinned and reviewed compilations: Code Determination Compilation 4 (#125, #132), TASA Compilation 27 (#141), TASR Compilation 5 (#148) and AML/CTF Act Compilation 63 (#177).
+- Pinned and reviewed compilations: Code Determination Compilation 4 (#125, #132), TASA Compilation 27 (#141), TASR Compilation 5 (#148), AML/CTF Act Compilation 63 (#177) and Taxation Administration Act Compilation 227.
 - Sources reviewed on 14 October 2026 (#168); `0.4.0` prepared as an unreleased candidate (#169, #174).
 - AUSTRAC guidance reviewed monthly, with the next review date named (#110).
 - Private source review register requirement removed (#129).
