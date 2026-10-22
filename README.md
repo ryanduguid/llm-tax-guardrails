@@ -1,5 +1,7 @@
 # DrDebits: stop the model concluding what only a practitioner may
 
+DrDebits is the prompt guide in the `llm-tax-guardrails` repository.
+
 [![verify](https://img.shields.io/github/actions/workflow/status/ryanduguid/llm-tax-guardrails/verify.yml?branch=main&label=verify&labelColor=000000&style=flat)](https://github.com/ryanduguid/llm-tax-guardrails/actions/workflows/verify.yml)
 [![Codecov](https://img.shields.io/codecov/c/github/ryanduguid/llm-tax-guardrails?label=coverage&labelColor=000000&style=flat)](https://codecov.io/gh/ryanduguid/llm-tax-guardrails)
 [![CodeQL](https://img.shields.io/github/actions/workflow/status/ryanduguid/llm-tax-guardrails/codeql.yml?branch=main&label=CodeQL&labelColor=000000&style=flat)](https://github.com/ryanduguid/llm-tax-guardrails/actions/workflows/codeql.yml)
