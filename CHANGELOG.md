@@ -36,7 +36,7 @@ Changes released in `0.4.0`, merged since `v0.3.3` (6 September 2026).
 - Instruction handling and source verification clarified (#54); source mappings and evidence boundaries clarified (#56).
 - Prohibited conclusions held in hypotheticals (#80).
 - The 1 October 2026 TASA and Code of Professional Conduct amendments flagged in the guide (#103), with a warning for `v0.3.3` users (#107).
-- Pinned and reviewed compilations: Code Determination Compilation 4 (#125, #132), TASA Compilation 27 (#141), TASR Compilation 5 (#148), AML/CTF Act Compilation 63 (#177) and Taxation Administration Act Compilation 227.
+- Pinned and reviewed compilations: Code Determination Compilation 4 (#125, #132), TASA Compilation 27 (#141), TASR Compilation 5 (#148), AML/CTF Act Compilation 63 (#177) and Taxation Administration Act Compilation 227 (#187).
 - Sources reviewed on 14 October 2026 (#168); `0.4.0` prepared as an unreleased candidate (#169, #174).
 - AUSTRAC guidance reviewed monthly, with the next review date named (#110).
 - Private source review register requirement removed (#129).
@@ -46,7 +46,7 @@ Changes released in `0.4.0`, merged since `v0.3.3` (6 September 2026).
 - Prose aligned with the Australian Government Style Manual (#60), hand-written prose tightened (#40) and redundant disclaimers trimmed (#176).
 - Python 3.14 required for the builder (#133); CI also runs on Python 3.15 (#145).
 - Release checklist status of `v0.3.2` stated accurately (#61); maintenance guidance for evaluation tools and bundle contents corrected (#114).
-- README and diagrams recoloured to the website palette (#136, #137, #142, #143, #155, #160, #173).
+- README and diagrams recoloured to the website palette (#136, #137, #142, #143, #155, #160, #173), with README badge styling flattened (#188).
 - Contributor workflow: pull requests and pushed commits carrying an AI authorship credit are refused (#47, #70, #72).
 - README licence section names the CI helper scripts under `.github/ci/` as MIT-licensed code alongside `tools/` (#183).
 
@@ -74,11 +74,11 @@ Changes released in `0.4.0`, merged since `v0.3.3` (6 September 2026).
 - Locked dependencies tested with Snyk (#153), OpenSSF Scorecard results published (#151) and release assets scanned with VirusTotal (#150).
 
 Not listed, as they have no user-visible effect: dependency and action pin
-updates (#43, #44, #66, #86, #87, #88, #89, #90, #93, #117, #118, #119, #171, #179),
+updates (#43, #44, #66, #86, #87, #88, #89, #90, #93, #117, #118, #119, #171, #179, #180, #181, #182),
 attribution-policy pin moves (#53, #59, #78, #79, #100, #175), review-bot
 configuration (#39, #57, #58, #62, #63, #97, #98, #128), badges and coverage
 reporting (#99, #144, #149, #152, #154, #157, #158, #166, #167), and CI and
-documentation housekeeping (#48, #101, #111, #135).
+documentation housekeeping (#48, #101, #111, #135, #184, #185, #186).
 
 [Unreleased]: https://github.com/ryanduguid/llm-tax-guardrails/compare/v0.4.0...HEAD
 [v0.4.0]: https://github.com/ryanduguid/llm-tax-guardrails/compare/v0.3.3...v0.4.0
