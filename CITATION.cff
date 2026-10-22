@@ -1,5 +1,5 @@
 cff-version: 1.2.0
-message: "This is the unreleased 0.4.0 candidate. Identify a review by its exact commit and digests; cite a signed release tag only after publication."
+message: "Identify a review by its exact commit and digests; cite the signed release tag v0.4.0."
 title: "DrDebits"
 type: dataset
 authors:

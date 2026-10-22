@@ -8,8 +8,9 @@ release.
 
 ## [Unreleased]
 
-Changes merged since `v0.3.3` (6 September 2026), the proposed `0.4.0`
-candidate.
+## [v0.4.0] - YYYY-MM-DD
+
+Changes released in `0.4.0`, merged since `v0.3.3` (6 September 2026).
 
 ### Added
 
@@ -79,4 +80,5 @@ configuration (#39, #57, #58, #62, #63, #97, #98, #128), badges and coverage
 reporting (#99, #144, #149, #152, #154, #157, #158, #166, #167), and CI and
 documentation housekeeping (#48, #101, #111, #135).
 
-[Unreleased]: https://github.com/ryanduguid/llm-tax-guardrails/compare/v0.3.3...HEAD
+[Unreleased]: https://github.com/ryanduguid/llm-tax-guardrails/compare/v0.4.0...HEAD
+[v0.4.0]: https://github.com/ryanduguid/llm-tax-guardrails/compare/v0.3.3...v0.4.0
