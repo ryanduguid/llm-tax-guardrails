@@ -1,0 +1,9 @@
+# Snyk policy for .github/workflows/snyk.yml, which passes this file with --policy-path.
+# The owner accepted MPL-2.0 for unmodified third-party dependencies on 18 October 2026.
+# Its copyleft applies to modified MPL files only, and nothing here modifies these packages.
+version: v1.25.0
+ignore:
+  'snyk:lic:pip:pathspec:MPL-2.0':
+    - '*':
+        reason: MPL-2.0 accepted for unmodified dependencies (owner decision, 18 October 2026)
+patch: {}

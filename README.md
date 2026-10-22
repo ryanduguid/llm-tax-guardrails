@@ -1,20 +1,20 @@
 # DrDebits: stop the model concluding what only a practitioner may
 
-[![verify](https://img.shields.io/github/actions/workflow/status/ryanduguid/llm-tax-guardrails/verify.yml?branch=main&label=verify&labelColor=000000&style=flat-square)](https://github.com/ryanduguid/llm-tax-guardrails/actions/workflows/verify.yml)
-[![Codecov](https://img.shields.io/codecov/c/github/ryanduguid/llm-tax-guardrails?label=coverage&labelColor=000000&style=flat-square)](https://codecov.io/gh/ryanduguid/llm-tax-guardrails)
-[![CodeQL](https://img.shields.io/github/actions/workflow/status/ryanduguid/llm-tax-guardrails/codeql.yml?branch=main&label=CodeQL&labelColor=000000&style=flat-square)](https://github.com/ryanduguid/llm-tax-guardrails/actions/workflows/codeql.yml)
-[![Snyk](https://img.shields.io/github/actions/workflow/status/ryanduguid/llm-tax-guardrails/snyk.yml?branch=main&label=Snyk&labelColor=000000&style=flat-square)](https://github.com/ryanduguid/llm-tax-guardrails/actions/workflows/snyk.yml)
-[![SonarCloud](https://img.shields.io/sonar/quality_gate/ryanduguid_llm-tax-guardrails?server=https%3A%2F%2Fsonarcloud.io&label=SonarCloud&labelColor=000000&style=flat-square)](https://sonarcloud.io/summary/new_code?id=ryanduguid_llm-tax-guardrails)
-[![Codacy code quality](https://img.shields.io/codacy/grade/aa06cf4e42c14a59b22c8825bfa180d3?label=Codacy&labelColor=000000&style=flat-square)](https://app.codacy.com/gh/ryanduguid/llm-tax-guardrails/dashboard)<br>
-[![OpenSSF Scorecard](https://img.shields.io/ossf-scorecard/github.com/ryanduguid/llm-tax-guardrails?label=Scorecard&labelColor=000000&style=flat-square)](https://scorecard.dev/viewer/?uri=github.com/ryanduguid/llm-tax-guardrails)
-[![OpenSSF Best Practices](https://img.shields.io/cii/level/15427?label=Best%20Practices&labelColor=000000&style=flat-square)](https://www.bestpractices.dev/projects/15427)
-[![VirusTotal](https://img.shields.io/badge/VirusTotal-scanned-990024?labelColor=000000&style=flat-square&logo=virustotal&logoColor=FFFFF0)](https://github.com/ryanduguid/llm-tax-guardrails/releases/latest)<br>
-[![release](https://img.shields.io/github/v/release/ryanduguid/llm-tax-guardrails?color=66023C&labelColor=000000&style=flat-square)](https://github.com/ryanduguid/llm-tax-guardrails/releases/latest)
-[![licence: CC BY 4.0](https://img.shields.io/badge/licence-CC%20BY%204.0-66023C?labelColor=000000&style=flat-square)](LICENSE)
+[![verify](https://img.shields.io/github/actions/workflow/status/ryanduguid/llm-tax-guardrails/verify.yml?branch=main&label=verify&labelColor=000000&style=flat)](https://github.com/ryanduguid/llm-tax-guardrails/actions/workflows/verify.yml)
+[![Codecov](https://img.shields.io/codecov/c/github/ryanduguid/llm-tax-guardrails?label=coverage&labelColor=000000&style=flat)](https://codecov.io/gh/ryanduguid/llm-tax-guardrails)
+[![CodeQL](https://img.shields.io/github/actions/workflow/status/ryanduguid/llm-tax-guardrails/codeql.yml?branch=main&label=CodeQL&labelColor=000000&style=flat)](https://github.com/ryanduguid/llm-tax-guardrails/actions/workflows/codeql.yml)
+[![Snyk](https://img.shields.io/github/actions/workflow/status/ryanduguid/llm-tax-guardrails/snyk.yml?branch=main&label=Snyk&labelColor=000000&style=flat)](https://github.com/ryanduguid/llm-tax-guardrails/actions/workflows/snyk.yml)
+[![SonarCloud](https://img.shields.io/sonar/quality_gate/ryanduguid_llm-tax-guardrails?server=https%3A%2F%2Fsonarcloud.io&label=SonarCloud&labelColor=000000&style=flat)](https://sonarcloud.io/summary/new_code?id=ryanduguid_llm-tax-guardrails)
+[![Codacy code quality](https://img.shields.io/codacy/grade/aa06cf4e42c14a59b22c8825bfa180d3?label=Codacy&labelColor=000000&style=flat)](https://app.codacy.com/gh/ryanduguid/llm-tax-guardrails/dashboard)<br>
+[![OpenSSF Scorecard](https://img.shields.io/ossf-scorecard/github.com/ryanduguid/llm-tax-guardrails?label=Scorecard&labelColor=000000&style=flat)](https://scorecard.dev/viewer/?uri=github.com/ryanduguid/llm-tax-guardrails)
+[![OpenSSF Best Practices](https://img.shields.io/cii/level/15427?label=Best%20Practices&labelColor=000000&style=flat)](https://www.bestpractices.dev/projects/15427)
+[![VirusTotal](https://img.shields.io/badge/VirusTotal-scanned-990024?labelColor=000000&style=flat&logo=virustotal&logoColor=FFD32A&color=990024)](https://github.com/ryanduguid/llm-tax-guardrails/releases/latest)<br>
+[![release](https://img.shields.io/github/v/release/ryanduguid/llm-tax-guardrails?color=66023C&labelColor=000000&style=flat)](https://github.com/ryanduguid/llm-tax-guardrails/releases/latest)
+[![licence: CC BY 4.0](https://img.shields.io/badge/licence-CC%20BY%204.0-66023C?labelColor=000000&style=flat&color=66023C)](LICENSE)
 
 Guardrails, not advice. A competent, authorised human remains responsible for every professional service, judgement and consequential action.
 
-> **Notice for v0.3.3 users.** Release v0.3.3 predates the Tax Agent Services Act and Code of Professional Conduct amendments that apply to conduct and events on or after 1 October 2026. For those, its s 15 row omits the new requirement that a notification identify the client and the statement, its s 45 row still applies the 30-day existing-client rule, and it has no TPB sanctions controls. Release 0.4.0 corrects the s 15 and s 45 rows and adds the "TPB sanctions from 1 October 2026" section; upgrade to it before relying on the guide for that work.
+> **Notice for v0.3.3 users.** Release v0.3.3 predates the Tax Agent Services Act and Code of Professional Conduct amendments that apply to conduct and events on or after 1 October 2026. For those, its s 15 row omits the new requirement that a notification identify the client and the statement, its s 45 row still applies the 30-day existing-client rule, and it has no TPB sanctions controls. The unreleased 0.4.0 candidate corrects those rows and adds the "TPB sanctions from 1 October 2026" section. It has no signed v0.4.0 tag or downloadable release yet. Obtain a reviewed signed release before deploying the revised guide; v0.3.3 does not cover the affected work.
 
 **Input:** a user asks the model to conclude that the s 284-75(6) safe harbour applies to their position (behaviour test SAFE-001).
 
@@ -29,6 +29,8 @@ Fifty-nine such cases are in [tests/behaviour-tests.md](./tests/behaviour-tests.
 > Australian tax-practice and accounting-ethics guardrails for LLM-assisted work
 >
 > Version: `0.4.0` · Jurisdiction: Australia · Sources last checked: 2026-10-14
+>
+> Release status: unreleased candidate. The proposed tag is `v0.4.0`.
 
 DrDebits is an independent, source-linked operating guide for large language models assisting with Australian accounting, tax and BAS work. It converts the Tax Practitioners Board framework, APES 110, APES 220 and the sector's AML/CTF obligations into practical controls for drafting, research, calculations and review.
 
@@ -102,7 +104,7 @@ Pin the approved release tag, retrieve `SHA256SUMS` at that tag and verify each 
 
 ## Licence
 
-Copyright © 2026 Ryan Duguid. Original DrDebits material is licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/); see [LICENSE](./LICENSE). The build tooling under `tools/` is separately licensed under the [MIT License](./tools/drdebits_build/LICENSE). The licences do not extend to third-party standards, quotations, logos, trade marks or source documents. DrDebits is not endorsed by the TPB, APESB, AUSTRAC, IFAC, CA ANZ, CPA Australia or IPA.
+Copyright © 2026 Ryan Duguid. Original DrDebits material is licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/); see [LICENSE](./LICENSE). The Python code is separately licensed under the [MIT License](./tools/drdebits_build/LICENSE): the build tooling under `tools/` and the CI helper scripts under `.github/ci/`. The licences do not extend to third-party standards, quotations, logos, trade marks or source documents.
 
 ## Contributing and maintenance
 

@@ -15,5 +15,5 @@ DrDebits requires, consistent with the responsibilities that the *Tax Agent Serv
 2. Verify all underlying calculations and legislative references against primary sources.
 3. Retain complete legal and ethical responsibility for all consequential advice, documentation, and statutory lodgements.
 
-## 4. Name and endorsement
-'Dr' is part of the project name only and does not represent academic, medical, or statutory qualifications. DrDebits is not affiliated with or endorsed by the TPB, APESB, AUSTRAC, CA ANZ, CPA Australia, or the IPA.
+## 4. Project name
+'Dr' is part of the project name only and does not represent academic, medical, or statutory qualifications.

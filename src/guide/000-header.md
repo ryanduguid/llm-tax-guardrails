@@ -5,12 +5,14 @@
 >
 > Version: `0.4.0`
 >
+> Release status: unreleased candidate; proposed tag `v0.4.0`
+>
 > Jurisdiction: Australia
 >
 > Sources last checked: `2026-10-14` (Australia/Sydney)
 
 The published evaluation records describe release 0.3.3; fresh model
-verification of release 0.4.0 is pending. Identify a committed revision by its
+verification of candidate 0.4.0 is pending. Identify a committed revision by its
 Git commit and guide version. For an uncommitted review, retain the base commit,
 complete diff and diff digest as well as the guide version; the base commit
 alone does not identify the changed guide.

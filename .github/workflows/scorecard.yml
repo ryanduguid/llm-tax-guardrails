@@ -1,8 +1,8 @@
 name: Scorecard
 
+# No push trigger: the weekly run on main publishes the results, so rescanning
+# after every merge only repeated it.
 on:
-  push:
-    branches: [main]
   branch_protection_rule:
   schedule:
     - cron: "35 6 * * 1"
