@@ -85,7 +85,7 @@ jobs:
         run: |
           rustup component add llvm-tools-preview --toolchain "$RUST_TOOLCHAIN"
           cargo install cargo-llvm-cov --locked --version 0.9.1
-          cargo llvm-cov --locked --lcov --output-path coverage-codecov.lcov --fail-under-lines 90
+          cargo llvm-cov --locked --lcov --output-path coverage-codecov.lcov --fail-under-lines 92
 
       - name: Keep the coverage report for the Codecov upload
         if: matrix.os == 'ubuntu-latest'

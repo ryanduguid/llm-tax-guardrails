@@ -61,6 +61,9 @@ suite replays it on every platform.
   platform verifier, and a redirect target is joined with WHATWG URL rules
   before it is checked. Dead, unreachable and manual classifications, the
   destination guard and the exit codes are unchanged.
+- **Response size.** `sources` reads at most 64 MiB of a Federal Register
+  API response and reports a larger one as unreachable. Python read the whole
+  response.
 - **Operating-system messages.** File errors are rendered as Python rendered
   them for the common cases (missing file, permission, existing target);
   unusual error codes may be worded differently.
@@ -68,8 +71,9 @@ suite replays it on every platform.
 ### Checks
 
 - CI runs `cargo fmt --check`, `cargo clippy -- -D warnings`, the test suite on
-  Ubuntu and Windows, and line coverage with a 90% floor. The Python builder
-  was held at 100% branch coverage.
+  Ubuntu and Windows, and line coverage with a 92% floor (92.9% on Ubuntu and
+  92.8% on Windows at release). The Python builder was held at 100% branch
+  coverage; stable Rust has no branch coverage measure.
 - Fuzzing moves from Atheris to cargo-fuzz on a pinned nightly toolchain.
 - CodeQL analyses Rust instead of Python. Dependabot updates the Cargo
   dependencies. Snyk tests the Cargo dependencies through a CycloneDX SBOM with
