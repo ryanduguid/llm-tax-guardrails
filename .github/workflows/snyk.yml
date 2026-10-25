@@ -82,7 +82,8 @@ jobs:
               continue
             fi
             if [ "$kind" = cargo ]; then
-              (cd "$target" && cargo cyclonedx --format json --spec-version 1.5 --override-filename snyk-sbom) \
+              # The generator needs no Snyk credential, so it does not get one.
+              (cd "$target" && env -u SNYK_TOKEN cargo cyclonedx --format json --spec-version 1.5 --override-filename snyk-sbom) \
                 || { echo "::error::cargo cyclonedx failed for $target"; status=1; continue; }
               [ -z "$SNYK_TOKEN" ] || snyk sbom test --experimental --file="$target/snyk-sbom.json" || status=1
               continue

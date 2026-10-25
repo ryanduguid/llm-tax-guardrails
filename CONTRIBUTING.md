@@ -31,7 +31,7 @@ Run them from `tools/drdebits_build` before you push:
 ```bash
 cargo fmt --check
 cargo clippy --locked --all-targets -- -D warnings
-cargo llvm-cov --locked --fail-under-lines 90
+cargo llvm-cov --locked --fail-under-lines 92
 cargo run --locked --release -- verify --root ../..
 ```
 
@@ -45,6 +45,6 @@ each commit, through the same pinned toolchain.
 
 New or changed behaviour in `tools/drdebits_build` needs a test in
 `tools/drdebits_build/tests` or beside the code it covers. CI holds the builder
-at 90% line coverage, so a large untested change fails the coverage
+at 92% line coverage, so a large untested change fails the coverage
 report. A test for a fix should fail on the base commit and pass with the
 change.
