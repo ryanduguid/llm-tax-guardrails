@@ -18,9 +18,9 @@ path = "src/main.rs"
 [dependencies]
 chrono = { version = "0.4.45", default-features = false, features = ["clock", "std"] }
 clap = { version = "4.6.7", features = ["derive"] }
-dns-lookup = "3"
+dns-lookup = "4"
 fancy-regex = "0.19.2"
-num-bigint = "0.4.8"
+num-bigint = "0.5.1"
 num-traits = "0.2.19"
 regex = "1.13.1"
 sha2 = "0.11.1"
