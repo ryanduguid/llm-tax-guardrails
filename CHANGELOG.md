@@ -49,6 +49,7 @@ Changes released in `0.4.0`, merged since `v0.3.3` (6 September 2026).
 - README and diagrams recoloured to the website palette (#136, #137, #142, #143, #155, #160, #173), with README badge styling flattened (#188).
 - Contributor workflow: pull requests and pushed commits carrying an AI authorship credit are refused (#47, #70, #72).
 - README licence section names the CI helper scripts under `.github/ci/` as MIT-licensed code alongside `tools/` (#183).
+- The build tooling under `tools/` and the CI helper scripts under `.github/ci/` are licensed under the Apache License 2.0 instead of MIT; the guide stays CC BY 4.0.
 
 ### Fixed
 

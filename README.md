@@ -100,7 +100,7 @@ Pin the approved release tag, retrieve `SHA256SUMS` at that tag and verify each 
 
 ## Licence
 
-Copyright © 2026 Ryan Duguid. Original DrDebits material is licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/); see [LICENSE](./LICENSE). The Python code is separately licensed under the [MIT License](./tools/drdebits_build/LICENSE): the build tooling under `tools/` and the CI helper scripts under `.github/ci/`. The licences do not extend to third-party standards, quotations, logos, trade marks or source documents.
+Copyright © 2026 Ryan Duguid. Original DrDebits material is licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/); see [LICENSE](./LICENSE). The Python code is separately licensed under the [Apache License 2.0](./tools/drdebits_build/LICENSE): the build tooling under `tools/` and the CI helper scripts under `.github/ci/`. The licences do not extend to third-party standards, quotations, logos, trade marks or source documents.
 
 ## Contributing and maintenance
 
