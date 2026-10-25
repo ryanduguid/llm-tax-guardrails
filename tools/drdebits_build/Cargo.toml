@@ -2,7 +2,7 @@
 name = "drdebits-build"
 version = "1.0.0"
 description = "Deterministic build and verification tooling for the DrDebits guide"
-license = "MIT"
+license = "Apache-2.0 AND MIT"
 edition = "2024"
 rust-version = "1.99"
 publish = false
