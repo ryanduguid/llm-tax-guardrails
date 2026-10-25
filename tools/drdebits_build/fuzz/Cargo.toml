@@ -1,0 +1,23 @@
+[package]
+name = "drdebits-build-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2024"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4.13"
+drdebits-build = { path = ".." }
+
+# A separate workspace, so the builder's own build never compiles the fuzzer.
+[workspace]
+members = ["."]
+
+[[bin]]
+name = "sources"
+path = "fuzz_targets/sources.rs"
+test = false
+doc = false
+bench = false
