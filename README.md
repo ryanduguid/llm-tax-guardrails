@@ -1,4 +1,11 @@
-# DrDebits: stop the model concluding what only a practitioner may
+<p align="center">
+  <picture>
+    <source media="(max-width: 600px) and (prefers-color-scheme: light)" srcset=".github/assets/banner-phone-light.svg">
+    <source media="(max-width: 600px)" srcset=".github/assets/banner-phone.svg">
+    <source media="(prefers-color-scheme: light)" srcset=".github/assets/banner-light.svg">
+    <img src=".github/assets/banner.svg" width="100%" alt="Guardrails. Guardrails for AI in Australian tax and BAS work. Pixel art of a striped road barrier with warning lamps beside the Guardrails wordmark in slab-serif block letters.">
+  </picture>
+</p>
 
 DrDebits is the prompt guide in the `llm-tax-guardrails` repository.
 
