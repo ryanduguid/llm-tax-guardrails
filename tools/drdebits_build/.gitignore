@@ -1,4 +1,6 @@
-*.egg-info/
-.venv/
-.pytest_cache/
-__pycache__/
+/target/
+/fuzz/target/
+/fuzz/artifacts/
+/fuzz/coverage/
+snyk-sbom.json
+coverage-codecov.lcov

@@ -12,7 +12,7 @@ The guide, the reference files, the behaviour tests, `evals/cases.json` and
 `evals/RESULTS.md` are generated. Edit their sources under `src/`, then rebuild:
 
 ```bash
-uv run --project tools/drdebits_build --locked python -m drdebits_build build --root .
+cargo run --manifest-path tools/drdebits_build/Cargo.toml --locked --release -- build --root .
 ```
 
 The build rewrites the generated files and `SHA256SUMS`. Commit them with the
@@ -24,26 +24,27 @@ including the hand-written copies a release must update.
 
 ## Checks a change must pass
 
-[verify.yml](.github/workflows/verify.yml) runs these on Ubuntu and Windows with
-Python 3.15. Run them before you push:
+[verify.yml](.github/workflows/verify.yml) runs these on Ubuntu and Windows
+with the Rust toolchain pinned in [rust-toolchain.toml](rust-toolchain.toml).
+Run them from `tools/drdebits_build` before you push:
 
 ```bash
-uv run --project tools/drdebits_build --locked --extra dev ruff check tools/drdebits_build/drdebits_build tools/drdebits_build/tests
-uv run --project tools/drdebits_build --locked --extra dev mypy --config-file tools/drdebits_build/pyproject.toml tools/drdebits_build/drdebits_build
-uv run --project tools/drdebits_build --locked --extra dev coverage run --rcfile=tools/drdebits_build/pyproject.toml --branch --source=tools/drdebits_build/drdebits_build -m pytest tools/drdebits_build/tests -q
-uv run --project tools/drdebits_build --locked --extra dev coverage report --rcfile=tools/drdebits_build/pyproject.toml --fail-under=100
-uv run --project tools/drdebits_build --locked python -m drdebits_build verify --root .
+cargo fmt --check
+cargo clippy --locked --all-targets -- -D warnings
+cargo llvm-cov --locked --fail-under-lines 92
+cargo run --locked --release -- verify --root ../..
 ```
 
-The Windows job runs the tests without coverage. CI also scans the full history
-for secrets and client identifiers with gitleaks and
-[.gitleaks.toml](.gitleaks.toml). `pre-commit install` runs the lint, type
-check, tests, `verify` and gitleaks before each commit, through the same locked
-toolchain.
+`cargo llvm-cov` runs the tests with line coverage; `cargo test --locked` runs
+them without it, as the Windows job does. CI also scans the full history for
+secrets and client identifiers with gitleaks and [.gitleaks.toml](.gitleaks.toml).
+`pre-commit install` runs formatting, lint, tests, `verify` and gitleaks before
+each commit, through the same pinned toolchain.
 
 ## Tests for the build tooling
 
 New or changed behaviour in `tools/drdebits_build` needs a test in
-`tools/drdebits_build/tests`. CI holds the builder at 100% branch coverage, so
-an untested branch fails the coverage report. A test for a fix should fail on
-the base commit and pass with the change.
+`tools/drdebits_build/tests` or beside the code it covers. CI holds the builder
+at 92% line coverage, so a large untested change fails the coverage
+report. A test for a fix should fail on the base commit and pass with the
+change.
