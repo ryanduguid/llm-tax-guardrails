@@ -146,6 +146,26 @@ fn link_dir(original: &Path, link: &Path) -> std::io::Result<()> {
 }
 
 #[test]
+fn missing_member_under_a_linked_parent_is_an_os_error() {
+    // A link above the source (or a Windows 8.3 short name in TEMP) must not
+    // turn a missing member into an escape.
+    let dir = tempfile::tempdir().unwrap();
+    std::fs::create_dir(dir.path().join("real")).unwrap();
+    let (real_source, digest) = make_bundle(&dir.path().join("real"), true);
+    link_dir(&dir.path().join("real"), &dir.path().join("linked"))
+        .expect("create a directory link");
+    let source = dir
+        .path()
+        .join("linked")
+        .join(real_source.file_name().unwrap());
+    std::fs::remove_file(source.join("drdebits.md")).unwrap();
+    let target = dir.path().join("installed");
+    let result = bundle::install(&py(&source), &py(&target), &digest);
+    assert!(matches!(result, Err(Fail::Os(_))), "{result:?}");
+    assert!(!target.exists());
+}
+
+#[test]
 fn redirected_bundle_member_is_rejected_before_read() {
     let dir = tempfile::tempdir().unwrap();
     let (source, digest) = make_bundle(dir.path(), true);

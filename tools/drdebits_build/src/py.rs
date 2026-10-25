@@ -763,7 +763,23 @@ impl std::fmt::Display for PyPath {
 /// `Path.resolve()`, without Windows' verbatim `\\?\` prefix.
 pub fn resolve(path: &Path) -> PathBuf {
     let absolute = std::path::absolute(path).unwrap_or_else(|_| path.to_path_buf());
-    let resolved = std::fs::canonicalize(&absolute).unwrap_or(absolute);
+    // Non-strict, as CPython: resolve the deepest existing ancestor and keep
+    // the missing rest as written, so a link or Windows short name above a
+    // missing file still resolves.
+    let mut existing = absolute.as_path();
+    let mut missing = Vec::new();
+    let resolved = loop {
+        if let Ok(real) = std::fs::canonicalize(existing) {
+            break missing.iter().rev().fold(real, |acc, part| acc.join(part));
+        }
+        match (existing.parent(), existing.file_name()) {
+            (Some(parent), Some(name)) => {
+                missing.push(name);
+                existing = parent;
+            }
+            _ => break absolute.clone(),
+        }
+    };
     let text = resolved.to_string_lossy();
     if let Some(rest) = text.strip_prefix(r"\\?\UNC\") {
         PathBuf::from(format!(r"\\{rest}"))
