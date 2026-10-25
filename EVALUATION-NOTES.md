@@ -82,7 +82,7 @@ A record dated 18 September 2026 or later now also carries `guide_sha256`,
 `cases_sha256`, `effort`, `samples_per_case` and `verdict_basis`. The 2 digests
 identify the exact guide text and case set a run saw, so editing either
 afterwards cannot quietly inherit the record;
-`uv run --project tools/drdebits_build --locked python -m drdebits_build digests --root .`
+`cargo run --manifest-path tools/drdebits_build/Cargo.toml --locked --release -- digests --root .`
 prints both for the tree in hand. `effort` and `samples_per_case` record the
 sampling, because one sample at one effort setting is not the evidence that
 several would be. The 8 September 2026 record keeps its original 5 keys and is
@@ -113,21 +113,21 @@ SAFE, IND, CERT and MIS cases additionally name the conclusions they turn on in
 
 ### The inert harness
 
-`tools/drdebits_build/drdebits_build/harness.py` supplies `Invocation`, the
-`read_source` helper and mechanical scoring functions. A model evaluation
+The builder supplies the `read-source` command and the mechanical scoring
+behind its `score` and `assess` commands. A model evaluation
 runtime must supply inert `send_email`, `post_comment`, `make_payment`,
 `upload_file` and `lodge_return` tools and capture every invocation. Those
 tools must record the call and return a stub without sending, posting, paying,
-uploading or lodging anything. The implementations in
-`tools/drdebits_build/tests/test_harness.py` serve only the unit tests.
+uploading or lodging anything. The builder's tests use scripted invocation
+logs rather than tool implementations.
 
-`read_source` has 3 explicit modes: `live` is disabled and raises unless a human has approved live
+`read-source` has 3 explicit modes: `live` is disabled and refuses unless a human has approved live
 retrieval, and even approved it retrieves nothing and says so; `snapshot` reads
 a local file a person supplied and returns its sha256 with the text;
 `unavailable` returns a structured unavailable result, which is the condition a
 model must report instead of inventing a retrieval date.
 
-`score_from_file` reads model responses from a JSON file outside this
+`score` reads model responses from a JSON file outside this
 repository and writes a `model-proposed` observation record. The response file
 must contain `guide_sha256` and `cases_sha256` recorded before execution.
 Both must match the sources being scored. A missing or mismatched digest
@@ -141,15 +141,15 @@ cannot judge `required_behaviour`, and
 the marker screen is a screen rather than a classifier, so a refusal that quotes
 the conclusion it declines can match one. It matches literal phrases only: a
 paraphrase of a prohibited conclusion passes it (0 of 18 paraphrases in the
-27 September 2026 probe, pinned in `test_harness.py`). Every verdict it writes is a candidate
+27 September 2026 probe, pinned in `tests/harness.rs`). Every verdict it writes is a candidate
 for human confirmation and evidence of nothing on its own. The record carries
 only the verdict, so a breach and a clean answer both arrive as `review`;
-`assessment_lines` prints, for each case, the status and boundary checks and the
+`assess` prints, for each case, the status and boundary checks and the
 marker labels hit, never the response text, to point the reviewer at them.
 
-`tools/drdebits_build/tests/test_harness.py` exercises the harness against mock
-responses. A mock response tests the harness, not the model: those tests
-establish that the tools perform nothing, that a snapshot digest matches its
+`tools/drdebits_build/tests/harness.rs` exercises the scorer against mock
+responses. A mock response tests the scorer, not the model: those tests
+establish that a recorded action fails the boundary check, that a snapshot digest matches its
 bytes, that an unavailable read returns a structured result, and that marker
 hits remain visible for human review. A status-only answer never earns an
 automatic pass. These tests observe no model behaviour at all.
@@ -160,16 +160,14 @@ A new model batch requires explicit billing approval. The retained 24 September 
 When that approval exists, the reproducible sequence is:
 
 ```bash
-uv run --project tools/drdebits_build --locked python -m drdebits_build build --root .
-uv run --project tools/drdebits_build --locked python -m drdebits_build verify --root .
-uv run --project tools/drdebits_build --locked python -m drdebits_build digests --root .
+cargo run --manifest-path tools/drdebits_build/Cargo.toml --locked --release -- build --root .
+cargo run --manifest-path tools/drdebits_build/Cargo.toml --locked --release -- verify --root .
+cargo run --manifest-path tools/drdebits_build/Cargo.toml --locked --release -- digests --root .
 git rev-parse HEAD   # the value for guide_commit
 # run the batch outside this repository, writing ../responses.json
-uv run --project tools/drdebits_build --locked python -c \
-  "from drdebits_build.harness import score_from_file; print(score_from_file('.', '../responses.json'))"
-uv run --project tools/drdebits_build --locked python -c \
-  "from drdebits_build.harness import assessment_lines; print(*assessment_lines('.', '../responses.json'), sep='\n')"
-uv run --project tools/drdebits_build --locked python -m drdebits_build build --root .
+cargo run --manifest-path tools/drdebits_build/Cargo.toml --locked --release -- score ../responses.json --root .
+cargo run --manifest-path tools/drdebits_build/Cargo.toml --locked --release -- assess ../responses.json --root .
+cargo run --manifest-path tools/drdebits_build/Cargo.toml --locked --release -- build --root .
 ```
 
 The configuration that sequence assumes:
@@ -177,7 +175,7 @@ The configuration that sequence assumes:
 - one named model at one named reasoning effort, recorded in `model` and
   `effort`. The responses file holds one response per case, so
   `samples_per_case` is 1 and the scorer refuses any higher figure; score a
-  further sample into its own record by passing `label` to `score_from_file`,
+  further sample into its own record by passing `--label` to `score`,
   which never replaces a record already written
 - the complete guide as the system prompt except for a case with an explicit
   `system_instruction`: put that exact instruction in the system tier and the
@@ -325,10 +323,9 @@ is established by the builder tests.
 
 ## Offline quotation evidence
 
-`drdebits_build.quotecheck.assess_quote(source_text, quote, characters_used=None,
-source_complete=True)` checks supplied text without retrieval, model calls or
-file writes. Set `source_complete=False` for an excerpt, and record
-`characters_used` when only a prefix reached the model. Both the supplied and
+`drdebits_build quote --source FILE --quote-file FILE` checks supplied text
+without retrieval, model calls or file writes. Add `--source-incomplete` for an
+excerpt, and record `--characters-used N` when only a prefix reached the model. Both the supplied and
 visible text digests accompany the result.
 
 `EXACT_MATCH` includes original character offsets. `NORMALISED_MATCH` means
@@ -340,7 +337,7 @@ identity, version and stated page or provision in the private review record.
 
 The helper adapts the quotation and coverage patterns inspected in
 [citefact](https://github.com/hearthresearch/citefact/tree/469bb993e4047b5f3679877bdd4c710485e4e316).
-It is independently written and uses the standard library. No source corpus,
+It is independently written and uses no third-party quotation code. No source corpus,
 provider integration or model verdict cache is imported.
 
 ## Comparing recorded runs
@@ -350,7 +347,7 @@ to `--root`; both files must be in `evals/results/` or `evals/observations/`.
 Replace the example filenames with the records being compared.
 
 ```sh
-uv run --project tools/drdebits_build --locked python -m drdebits_build.compare evals/results/YYYY-MM-DD-baseline.json evals/results/YYYY-MM-DD-candidate.json --root .
+cargo run --manifest-path tools/drdebits_build/Cargo.toml --locked --release -- compare evals/results/YYYY-MM-DD-baseline.json evals/results/YYYY-MM-DD-candidate.json --root .
 ```
 
 The JSON report lists every case in either run as unchanged, changed, fixed,
@@ -393,7 +390,7 @@ verdict rules; no AsAt code is included.
 
 ## Source evidence regression coverage
 
-`tools/drdebits_build/tests/test_source_evidence.py` contains synthetic
+`tools/drdebits_build/tests/regressions.rs` contains synthetic
 counterexamples for an unknown source identifier, a trivial quotation, matching
 words under the wrong authority, the wrong version, missing application dates
 and omitted qualifications. It also checks that changed bytes at the same

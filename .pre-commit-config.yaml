@@ -1,8 +1,9 @@
 # Local gates, matching .github/workflows/verify.yml.
 #
-# Every hook below runs the same command the workflow runs, through the same
-# locked toolchain, so a hook that passes here cannot fail there on a version
-# difference. `uv` must be on PATH; the workflow installs it with setup-uv.
+# Every hook below runs the same command the workflow runs, through the
+# toolchain pinned in rust-toolchain.toml and the locked dependencies, so a
+# hook that passes here cannot fail there on a version difference. `cargo`
+# must be on PATH; rustup installs the pinned toolchain on first use.
 #
 # The build parity check matters most locally: CI rejects a hand edit to a
 # generated file, and finding that out after a push means rewriting the commit.
@@ -18,23 +19,23 @@ repos:
 
   - repo: local
     hooks:
-      - id: ruff
+      - id: rustfmt
+        name: format the builder
+        entry: cargo fmt --manifest-path tools/drdebits_build/Cargo.toml --check
+        language: system
+        pass_filenames: false
+        files: ^tools/drdebits_build/
+
+      - id: clippy
         name: lint the builder
-        entry: uv run --project tools/drdebits_build --locked --extra dev ruff check tools/drdebits_build/drdebits_build tools/drdebits_build/tests
+        entry: cargo clippy --manifest-path tools/drdebits_build/Cargo.toml --locked --all-targets -- -D warnings
         language: system
         pass_filenames: false
         files: ^tools/drdebits_build/
 
-      - id: mypy
-        name: typecheck the builder
-        entry: uv run --project tools/drdebits_build --locked --extra dev mypy --config-file tools/drdebits_build/pyproject.toml tools/drdebits_build/drdebits_build
-        language: system
-        pass_filenames: false
-        files: ^tools/drdebits_build/
-
-      - id: pytest
-        name: build package tests
-        entry: uv run --project tools/drdebits_build --locked --extra dev pytest tools/drdebits_build/tests -q
+      - id: cargo-test
+        name: builder tests
+        entry: cargo test --manifest-path tools/drdebits_build/Cargo.toml --locked
         language: system
         pass_filenames: false
 
@@ -42,7 +43,7 @@ repos:
         name: committed outputs match src/
         # The one gate that catches the mistake this repository is most prone
         # to: editing a generated file instead of its source fragment.
-        entry: uv run --project tools/drdebits_build --locked python -m drdebits_build verify --root .
+        entry: cargo run --manifest-path tools/drdebits_build/Cargo.toml --locked --release --quiet -- verify --root .
         language: system
         pass_filenames: false
 

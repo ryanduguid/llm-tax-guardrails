@@ -25,7 +25,7 @@ pull request.
 
 ## What this project does and does not do
 
-DrDebits is a source-linked ethics guide plus a Python build that renders it.
+DrDebits is a source-linked ethics guide plus a Rust build that renders it.
 The build and verify jobs read and write local files. The weekly link check
 fetches public URLs and reports failures; it does not send credentials.
 

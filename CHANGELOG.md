@@ -45,6 +45,7 @@ Changes released in `0.4.0`, merged since `v0.3.3` (6 September 2026).
 - Source provenance and quotation checks strengthened (#172).
 - Prose aligned with the Australian Government Style Manual (#60), hand-written prose tightened (#40) and redundant disclaimers trimmed (#176).
 - Python 3.14 required for the builder (#133); CI also runs on Python 3.15 (#145).
+- Builder ported to Rust: `drdebits_build` 1.0.0 replaces the Python package with the same generated files, findings and exit codes, apart from the divergences listed in `tools/drdebits_build/CHANGELOG.md`. CI runs `cargo fmt`, `clippy`, the tests on Ubuntu and Windows and line coverage.
 - Release checklist status of `v0.3.2` stated accurately (#61); maintenance guidance for evaluation tools and bundle contents corrected (#114).
 - README and diagrams recoloured to the website palette (#136, #137, #142, #143, #155, #160, #173), with README badge styling flattened (#188).
 - Contributor workflow: pull requests and pushed commits carrying an AI authorship credit are refused (#47, #70, #72).

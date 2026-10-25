@@ -1,0 +1,3683 @@
+{
+ "source": "drdebits_build at llm-tax-guardrails 588784e, PyYAML 6.0.3, CPython 3.15.0",
+ "yaml": [
+  {
+   "yaml": "a: 1\n",
+   "value": "{'a': 1}"
+  },
+  {
+   "yaml": "a: 1\na: 2\n",
+   "error": "source.yaml: while constructing a mapping\n  in \"<unicode string>\", line 1, column 1:\n    a: 1\n    ^\nfound duplicate key 'a'\n  in \"<unicode string>\", line 2, column 1:\n    a: 2\n    ^"
+  },
+  {
+   "yaml": "- a\n",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "~\n",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "a\n",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "!!map [a, b]\n",
+   "error": "source.yaml: expected a mapping node, but found sequence\n  in \"<unicode string>\", line 1, column 1:\n    !!map [a, b]\n    ^"
+  },
+  {
+   "yaml": "? [complex, key]\n: value\n",
+   "error": "source.yaml: while constructing a mapping\n  in \"<unicode string>\", line 1, column 1:\n    ? [complex, key]\n    ^\nfound unhashable key\n  in \"<unicode string>\", line 1, column 3:\n    ? [complex, key]\n      ^"
+  },
+  {
+   "yaml": "a: yes\nb: No\nc: on\nd: OFF\n",
+   "value": "{'a': True, 'b': False, 'c': True, 'd': False}"
+  },
+  {
+   "yaml": "a: 012\nb: 0x1F\nc: 0b101\nd: 1_000\ne: 1:30\nf: -0\ng: +12\n",
+   "value": "{'a': 10, 'b': 31, 'c': 5, 'd': 1000, 'e': 90, 'f': 0, 'g': 12}"
+  },
+  {
+   "yaml": "a: 1.5\nb: .5\nc: 1.e+5\nd: -.inf\ne: .NaN\nf: 1:30.5\ng: 1_0.5\n",
+   "value": "{'a': 1.5, 'b': 0.5, 'c': 100000.0, 'd': -inf, 'e': nan, 'f': 90.5, 'g': 10.5}"
+  },
+  {
+   "yaml": "a: 2026-10-17\nb: 2001-12-14t21:59:43.10-05:00\nc: 2001-12-14 21:59:43.10 +10\nd: 2001-12-14 21:59:43Z\ne: 2001-12-14 21:59:43\n",
+   "value": "{'a': datetime.date(2026, 10, 17), 'b': datetime.datetime(2001, 12, 14, 21, 59, 43, 100000, tzinfo=datetime.timezone(datetime.timedelta(days=-1, seconds=68400))), 'c': datetime.datetime(2001, 12, 14, 21, 59, 43, 100000, tzinfo=datetime.timezone(datetime.timedelta(seconds=36000))), 'd': datetime.datetime(2001, 12, 14, 21, 59, 43, tzinfo=datetime.timezone.utc), 'e': datetime.datetime(2001, 12, 14, 21, 59, 43)}"
+  },
+  {
+   "yaml": "a: 2026-02-30\n",
+   "internal": "ValueError"
+  },
+  {
+   "yaml": "a: 2001-12-14 25:59:43\n",
+   "internal": "ValueError"
+  },
+  {
+   "yaml": "a: 2001-12-14 21:59:43 +24\n",
+   "internal": "ValueError"
+  },
+  {
+   "yaml": "a: !!binary aGVsbG8=\n",
+   "value": "{'a': b'hello'}"
+  },
+  {
+   "yaml": "a: !!binary aGVsbG8\n",
+   "error": "source.yaml: failed to decode base64 data: Incorrect padding\n  in \"<unicode string>\", line 1, column 4:\n    a: !!binary aGVsbG8\n       ^"
+  },
+  {
+   "yaml": "a: !!binary aGVsbA\n",
+   "error": "source.yaml: failed to decode base64 data: Incorrect padding\n  in \"<unicode string>\", line 1, column 4:\n    a: !!binary aGVsbA\n       ^"
+  },
+  {
+   "yaml": "a: !!binary é\n",
+   "error": "source.yaml: failed to convert base64 data into ascii: 'ascii' codec can't encode character '\\xe9' in position 0: ordinal not in range(128)\n  in \"<unicode string>\", line 1, column 4:\n    a: !!binary é\n       ^"
+  },
+  {
+   "yaml": "a: !!binary ééx\n",
+   "error": "source.yaml: failed to convert base64 data into ascii: 'ascii' codec can't encode characters in position 0-1: ordinal not in range(128)\n  in \"<unicode string>\", line 1, column 4:\n    a: !!binary ééx\n       ^"
+  },
+  {
+   "yaml": "a: !!str 5\n",
+   "value": "{'a': '5'}"
+  },
+  {
+   "yaml": "a: !!int x\n",
+   "internal": "ValueError"
+  },
+  {
+   "yaml": "a: !!int ' 12 '\n",
+   "value": "{'a': 12}"
+  },
+  {
+   "yaml": "a: !!int 0b0b11\n",
+   "value": "{'a': 3}"
+  },
+  {
+   "yaml": "a: !!int 0x_1f\n",
+   "value": "{'a': 31}"
+  },
+  {
+   "yaml": "a: !!int ''\n",
+   "internal": "IndexError"
+  },
+  {
+   "yaml": "a: !!int '+'\n",
+   "internal": "IndexError"
+  },
+  {
+   "yaml": "a: !!int '1:'\n",
+   "internal": "ValueError"
+  },
+  {
+   "yaml": "a: !!int 09\n",
+   "internal": "ValueError"
+  },
+  {
+   "yaml": "a: !!float '1.e+5'\n",
+   "value": "{'a': 100000.0}"
+  },
+  {
+   "yaml": "a: !!float x\n",
+   "internal": "ValueError"
+  },
+  {
+   "yaml": "a: !!float ''\n",
+   "internal": "IndexError"
+  },
+  {
+   "yaml": "a: !!bool maybe\n",
+   "internal": "KeyError"
+  },
+  {
+   "yaml": "a: !!bool YES\n",
+   "value": "{'a': True}"
+  },
+  {
+   "yaml": "a: !!null x\n",
+   "value": "{'a': None}"
+  },
+  {
+   "yaml": "a: !!null [a]\n",
+   "error": "source.yaml: expected a scalar node, but found sequence\n  in \"<unicode string>\", line 1, column 4:\n    a: !!null [a]\n       ^"
+  },
+  {
+   "yaml": "a: !!timestamp 2026-1-1\n",
+   "value": "{'a': datetime.date(2026, 1, 1)}"
+  },
+  {
+   "yaml": "a: !!timestamp x\n",
+   "internal": "AttributeError"
+  },
+  {
+   "yaml": "a: !!set [a]\n",
+   "error": "source.yaml: expected a mapping node, but found sequence\n  in \"<unicode string>\", line 1, column 4:\n    a: !!set [a]\n       ^"
+  },
+  {
+   "yaml": "a: !!omap [{a: 1}, {b: 2}]\n",
+   "value": "{'a': [('a', 1), ('b', 2)]}"
+  },
+  {
+   "yaml": "a: !!omap {a: 1}\n",
+   "error": "source.yaml: while constructing an ordered map\nexpected a sequence, but found mapping\n  in \"<unicode string>\", line 1, column 4:\n    a: !!omap {a: 1}\n       ^"
+  },
+  {
+   "yaml": "a: !!omap [a]\n",
+   "error": "source.yaml: while constructing an ordered map\n  in \"<unicode string>\", line 1, column 4:\n    a: !!omap [a]\n       ^\nexpected a mapping of length 1, but found scalar\n  in \"<unicode string>\", line 1, column 12:\n    a: !!omap [a]\n               ^"
+  },
+  {
+   "yaml": "a: !!omap [{a: 1, b: 2}]\n",
+   "error": "source.yaml: while constructing an ordered map\n  in \"<unicode string>\", line 1, column 4:\n    a: !!omap [{a: 1, b: 2}]\n       ^\nexpected a single mapping item, but found 2 items\n  in \"<unicode string>\", line 1, column 12:\n    a: !!omap [{a: 1, b: 2}]\n               ^"
+  },
+  {
+   "yaml": "a: !!pairs [{a: 1}, {a: 2}]\n",
+   "value": "{'a': [('a', 1), ('a', 2)]}"
+  },
+  {
+   "yaml": "a: !!seq {a: 1}\n",
+   "error": "source.yaml: expected a sequence node, but found mapping\n  in \"<unicode string>\", line 1, column 4:\n    a: !!seq {a: 1}\n       ^"
+  },
+  {
+   "yaml": "a: !!map [a]\n",
+   "error": "source.yaml: expected a mapping node, but found sequence\n  in \"<unicode string>\", line 1, column 4:\n    a: !!map [a]\n       ^"
+  },
+  {
+   "yaml": "a: !!str {=: inner}\n",
+   "value": "{'a': 'inner'}"
+  },
+  {
+   "yaml": "a: !!str [a]\n",
+   "error": "source.yaml: expected a scalar node, but found sequence\n  in \"<unicode string>\", line 1, column 4:\n    a: !!str [a]\n       ^"
+  },
+  {
+   "yaml": "a: !!str {b: c}\n",
+   "error": "source.yaml: expected a scalar node, but found mapping\n  in \"<unicode string>\", line 1, column 4:\n    a: !!str {b: c}\n       ^"
+  },
+  {
+   "yaml": "a: !foo x\n",
+   "error": "source.yaml: could not determine a constructor for the tag '!foo'\n  in \"<unicode string>\", line 1, column 4:\n    a: !foo x\n       ^"
+  },
+  {
+   "yaml": "a: ! 12\n",
+   "value": "{'a': 12}"
+  },
+  {
+   "yaml": "a: ! '12'\n",
+   "value": "{'a': 12}"
+  },
+  {
+   "yaml": "a: =\n",
+   "error": "source.yaml: could not determine a constructor for the tag 'tag:yaml.org,2002:value'\n  in \"<unicode string>\", line 1, column 4:\n    a: =\n       ^"
+  },
+  {
+   "yaml": "{=: v}\n",
+   "value": "{'=': 'v'}"
+  },
+  {
+   "yaml": "a: !<tag:yaml.org,2002:str> 5\n",
+   "value": "{'a': '5'}"
+  },
+  {
+   "yaml": "a: !<!> x\n",
+   "value": "{'a': 'x'}"
+  },
+  {
+   "yaml": "%YAML 1.1\n---\na: 1\n",
+   "value": "{'a': 1}"
+  },
+  {
+   "yaml": "%YAML 2.0\n---\na: 1\n",
+   "error": "source.yaml: found incompatible YAML document (version 1.* is required)\n  in \"<unicode string>\", line 1, column 1:\n    %YAML 2.0\n    ^"
+  },
+  {
+   "yaml": "%YAML 1.1\n%YAML 1.1\n---\na: 1\n",
+   "error": "source.yaml: found duplicate YAML directive\n  in \"<unicode string>\", line 2, column 1:\n    %YAML 1.1\n    ^"
+  },
+  {
+   "yaml": "%YAML 1\n---\n",
+   "error": "source.yaml: while scanning a directive\n  in \"<unicode string>\", line 1, column 1:\n    %YAML 1\n    ^\nexpected a digit or '.', but found '\\n'\n  in \"<unicode string>\", line 1, column 8:\n    %YAML 1\n           ^"
+  },
+  {
+   "yaml": "%YAML x\n---\n",
+   "error": "source.yaml: while scanning a directive\n  in \"<unicode string>\", line 1, column 1:\n    %YAML x\n    ^\nexpected a digit, but found 'x'\n  in \"<unicode string>\", line 1, column 7:\n    %YAML x\n          ^"
+  },
+  {
+   "yaml": "%YAML 1.x\n---\n",
+   "error": "source.yaml: while scanning a directive\n  in \"<unicode string>\", line 1, column 1:\n    %YAML 1.x\n    ^\nexpected a digit, but found 'x'\n  in \"<unicode string>\", line 1, column 9:\n    %YAML 1.x\n            ^"
+  },
+  {
+   "yaml": "%YAML 1.1 x\n---\n",
+   "error": "source.yaml: while scanning a directive\n  in \"<unicode string>\", line 1, column 1:\n    %YAML 1.1 x\n    ^\nexpected a comment or a line break, but found 'x'\n  in \"<unicode string>\", line 1, column 11:\n    %YAML 1.1 x\n              ^"
+  },
+  {
+   "yaml": "%TAG !e! tag:example.com,2000:\n---\na: !e!foo x\n",
+   "error": "source.yaml: could not determine a constructor for the tag 'tag:example.com,2000:foo'\n  in \"<unicode string>\", line 3, column 4:\n    a: !e!foo x\n       ^"
+  },
+  {
+   "yaml": "%TAG !e! tag:x,2000:\n%TAG !e! tag:y,2000:\n---\n",
+   "error": "source.yaml: duplicate tag handle '!e!'\n  in \"<unicode string>\", line 2, column 1:\n    %TAG !e! tag:y,2000:\n    ^"
+  },
+  {
+   "yaml": "%TAG !e tag:x\n---\n",
+   "error": "source.yaml: while scanning a directive\n  in \"<unicode string>\", line 1, column 1:\n    %TAG !e tag:x\n    ^\nexpected '!', but found ' '\n  in \"<unicode string>\", line 1, column 8:\n    %TAG !e tag:x\n           ^"
+  },
+  {
+   "yaml": "%TAG !e! \n---\n",
+   "error": "source.yaml: while parsing a directive\n  in \"<unicode string>\", line 1, column 1:\n    %TAG !e! \n    ^\nexpected URI, but found '\\n'\n  in \"<unicode string>\", line 1, column 10:\n    %TAG !e! \n             ^"
+  },
+  {
+   "yaml": "%FOO bar\n---\na: 1\n",
+   "value": "{'a': 1}"
+  },
+  {
+   "yaml": "% x\n",
+   "error": "source.yaml: while scanning a directive\n  in \"<unicode string>\", line 1, column 1:\n    % x\n    ^\nexpected alphabetic or numeric character, but found ' '\n  in \"<unicode string>\", line 1, column 2:\n    % x\n     ^"
+  },
+  {
+   "yaml": "%YAML 1.1 # c\n---\n",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "%YAML 1.1 x\n",
+   "error": "source.yaml: while scanning a directive\n  in \"<unicode string>\", line 1, column 1:\n    %YAML 1.1 x\n    ^\nexpected a comment or a line break, but found 'x'\n  in \"<unicode string>\", line 1, column 11:\n    %YAML 1.1 x\n              ^"
+  },
+  {
+   "yaml": "a: !e!x y\n",
+   "error": "source.yaml: while parsing a node\nfound undefined tag handle '!e!'\n  in \"<unicode string>\", line 1, column 4:\n    a: !e!x y\n       ^"
+  },
+  {
+   "yaml": "---\na: 1\n---\nb: 2\n",
+   "error": "source.yaml: expected a single document in the stream\n  in \"<unicode string>\", line 2, column 1:\n    a: 1\n    ^\nbut found another document\n  in \"<unicode string>\", line 3, column 1:\n    ---\n    ^"
+  },
+  {
+   "yaml": "a: 1\n...\n",
+   "value": "{'a': 1}"
+  },
+  {
+   "yaml": "...\n",
+   "error": "source.yaml: while parsing a block node\nexpected the node content, but found '<document end>'\n  in \"<unicode string>\", line 1, column 1:\n    ...\n    ^"
+  },
+  {
+   "yaml": "--- !!map\na: 1\n",
+   "value": "{'a': 1}"
+  },
+  {
+   "yaml": "---\n",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "--- |\n  x\n",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "a: &x 1\nb: *x\n",
+   "value": "{'a': 1, 'b': 1}"
+  },
+  {
+   "yaml": "a: *x\n",
+   "error": "source.yaml: found undefined alias 'x'\n  in \"<unicode string>\", line 1, column 4:\n    a: *x\n       ^"
+  },
+  {
+   "yaml": "a: &x 1\nb: &x 2\n",
+   "error": "source.yaml: found duplicate anchor 'x'; first occurrence\n  in \"<unicode string>\", line 1, column 4:\n    a: &x 1\n       ^\nsecond occurrence\n  in \"<unicode string>\", line 2, column 4:\n    b: &x 2\n       ^"
+  },
+  {
+   "yaml": "a: &x {k: 1}\nb:\n  <<: *x\n  k: 2\n",
+   "error": "source.yaml: while constructing a mapping\n  in \"<unicode string>\", line 3, column 3:\n      <<: *x\n      ^\nfound duplicate key 'k'\n  in \"<unicode string>\", line 4, column 3:\n      k: 2\n      ^"
+  },
+  {
+   "yaml": "a: &x {k: 1}\nb:\n  <<: *x\n  j: 2\n",
+   "value": "{'a': {'k': 1}, 'b': {'k': 1, 'j': 2}}"
+  },
+  {
+   "yaml": "a: &x {k: 1}\nb: &y {j: 2}\nc:\n  <<: [*x, *y]\n",
+   "value": "{'a': {'k': 1}, 'b': {'j': 2}, 'c': {'j': 2, 'k': 1}}"
+  },
+  {
+   "yaml": "c:\n  <<: [a]\n",
+   "error": "source.yaml: while constructing a mapping\n  in \"<unicode string>\", line 2, column 3:\n      <<: [a]\n      ^\nexpected a mapping for merging, but found scalar\n  in \"<unicode string>\", line 2, column 8:\n      <<: [a]\n           ^"
+  },
+  {
+   "yaml": "c:\n  <<: a\n",
+   "error": "source.yaml: while constructing a mapping\n  in \"<unicode string>\", line 2, column 3:\n      <<: a\n      ^\nexpected a mapping or list of mappings for merging, but found scalar\n  in \"<unicode string>\", line 2, column 7:\n      <<: a\n          ^"
+  },
+  {
+   "yaml": "a: &x [*x]\n",
+   "value": "{'a': [[...]]}"
+  },
+  {
+   "yaml": "a: &x {b: *x}\n",
+   "error": "source.yaml: found unconstructable recursive node\n  in \"<unicode string>\", line 1, column 4:\n    a: &x {b: *x}\n       ^"
+  },
+  {
+   "yaml": "&x a: 1\n",
+   "value": "{'a': 1}"
+  },
+  {
+   "yaml": "a: & 1\n",
+   "error": "source.yaml: while scanning an anchor\n  in \"<unicode string>\", line 1, column 4:\n    a: & 1\n       ^\nexpected alphabetic or numeric character, but found ' '\n  in \"<unicode string>\", line 1, column 5:\n    a: & 1\n        ^"
+  },
+  {
+   "yaml": "a: * \n",
+   "error": "source.yaml: while scanning an alias\n  in \"<unicode string>\", line 1, column 4:\n    a: * \n       ^\nexpected alphabetic or numeric character, but found ' '\n  in \"<unicode string>\", line 1, column 5:\n    a: * \n        ^"
+  },
+  {
+   "yaml": "a: &x! 1\n",
+   "error": "source.yaml: while scanning an anchor\n  in \"<unicode string>\", line 1, column 4:\n    a: &x! 1\n       ^\nexpected alphabetic or numeric character, but found '!'\n  in \"<unicode string>\", line 1, column 6:\n    a: &x! 1\n         ^"
+  },
+  {
+   "yaml": "a: *x!\n",
+   "error": "source.yaml: while scanning an alias\n  in \"<unicode string>\", line 1, column 4:\n    a: *x!\n       ^\nexpected alphabetic or numeric character, but found '!'\n  in \"<unicode string>\", line 1, column 6:\n    a: *x!\n         ^"
+  },
+  {
+   "yaml": "a: [1, 2\n",
+   "error": "source.yaml: while parsing a flow sequence\n  in \"<unicode string>\", line 1, column 4:\n    a: [1, 2\n       ^\nexpected ',' or ']', but got '<stream end>'\n  in \"<unicode string>\", line 2, column 1:\n    \n    ^"
+  },
+  {
+   "yaml": "a: {b: 1\n",
+   "error": "source.yaml: while parsing a flow mapping\n  in \"<unicode string>\", line 1, column 4:\n    a: {b: 1\n       ^\nexpected ',' or '}', but got '<stream end>'\n  in \"<unicode string>\", line 2, column 1:\n    \n    ^"
+  },
+  {
+   "yaml": "a: [1 2]\n",
+   "value": "{'a': ['1 2']}"
+  },
+  {
+   "yaml": "a: {b c}\n",
+   "value": "{'a': {'b c': None}}"
+  },
+  {
+   "yaml": "a: ]\n",
+   "error": "source.yaml: while parsing a block node\nexpected the node content, but found ']'\n  in \"<unicode string>\", line 1, column 4:\n    a: ]\n       ^"
+  },
+  {
+   "yaml": "a: }\n",
+   "error": "source.yaml: while parsing a block node\nexpected the node content, but found '}'\n  in \"<unicode string>\", line 1, column 4:\n    a: }\n       ^"
+  },
+  {
+   "yaml": "a: - b\n",
+   "error": "source.yaml: sequence entries are not allowed here\n  in \"<unicode string>\", line 1, column 4:\n    a: - b\n       ^"
+  },
+  {
+   "yaml": "a:\n- b\n- c\n",
+   "value": "{'a': ['b', 'c']}"
+  },
+  {
+   "yaml": "a:\n  - b\n - c\n",
+   "error": "source.yaml: while parsing a block mapping\n  in \"<unicode string>\", line 1, column 1:\n    a:\n    ^\nexpected <block end>, but found '<block sequence start>'\n  in \"<unicode string>\", line 3, column 2:\n     - c\n     ^"
+  },
+  {
+   "yaml": "- a\nb: c\n",
+   "error": "source.yaml: while parsing a block collection\n  in \"<unicode string>\", line 1, column 1:\n    - a\n    ^\nexpected <block end>, but found '?'\n  in \"<unicode string>\", line 2, column 1:\n    b: c\n    ^"
+  },
+  {
+   "yaml": "a: b: c\n",
+   "error": "source.yaml: mapping values are not allowed here\n  in \"<unicode string>\", line 1, column 5:\n    a: b: c\n        ^"
+  },
+  {
+   "yaml": "? a\n? b\n",
+   "value": "{'a': None, 'b': None}"
+  },
+  {
+   "yaml": "? a\n: b\n: c\n",
+   "error": "source.yaml: while parsing a block mapping\n  in \"<unicode string>\", line 1, column 1:\n    ? a\n    ^\nexpected <block end>, but found ':'\n  in \"<unicode string>\", line 3, column 1:\n    : c\n    ^"
+  },
+  {
+   "yaml": "a: 'x\n",
+   "error": "source.yaml: while scanning a quoted scalar\n  in \"<unicode string>\", line 1, column 4:\n    a: 'x\n       ^\nfound unexpected end of stream\n  in \"<unicode string>\", line 2, column 1:\n    \n    ^"
+  },
+  {
+   "yaml": "a: \"x\n",
+   "error": "source.yaml: while scanning a quoted scalar\n  in \"<unicode string>\", line 1, column 4:\n    a: \"x\n       ^\nfound unexpected end of stream\n  in \"<unicode string>\", line 2, column 1:\n    \n    ^"
+  },
+  {
+   "yaml": "a: \"\\q\"\n",
+   "error": "source.yaml: while scanning a double-quoted scalar\n  in \"<unicode string>\", line 1, column 4:\n    a: \"\\q\"\n       ^\nfound unknown escape character 'q'\n  in \"<unicode string>\", line 1, column 6:\n    a: \"\\q\"\n         ^"
+  },
+  {
+   "yaml": "a: \"\\x4\"\n",
+   "error": "source.yaml: while scanning a double-quoted scalar\n  in \"<unicode string>\", line 1, column 4:\n    a: \"\\x4\"\n       ^\nexpected escape sequence of 2 hexadecimal numbers, but found '\"'\n  in \"<unicode string>\", line 1, column 7:\n    a: \"\\x4\"\n          ^"
+  },
+  {
+   "yaml": "a: \"\\u00e9\\U0001F600\"\n",
+   "value": "{'a': 'é😀'}"
+  },
+  {
+   "yaml": "a: \"\\ud800\"\n",
+   "value": "{'a': '\\ud800'}"
+  },
+  {
+   "yaml": "a: \"\\N\\_\\L\\P\\e\\a\\0\\t\\/\"\n",
+   "value": "{'a': '\\x85\\xa0\\u2028\\u2029\\x1b\\x07\\x00\\t/'}"
+  },
+  {
+   "yaml": "a: 'it''s'\n",
+   "value": "{'a': \"it's\"}"
+  },
+  {
+   "yaml": "a: \"line\\\n  continued\"\n",
+   "value": "{'a': 'linecontinued'}"
+  },
+  {
+   "yaml": "a: 'a\n\n  b'\n",
+   "value": "{'a': 'a\\nb'}"
+  },
+  {
+   "yaml": "a: '\n---\n'\n",
+   "error": "source.yaml: while scanning a quoted scalar\n  in \"<unicode string>\", line 1, column 4:\n    a: '\n       ^\nfound unexpected document separator\n  in \"<unicode string>\", line 2, column 1:\n    ---\n    ^"
+  },
+  {
+   "yaml": "a: \"x\n... y\"\n",
+   "error": "source.yaml: while scanning a quoted scalar\n  in \"<unicode string>\", line 1, column 4:\n    a: \"x\n       ^\nfound unexpected document separator\n  in \"<unicode string>\", line 2, column 1:\n    ... y\"\n    ^"
+  },
+  {
+   "yaml": "a: |\n  block\n  text\n",
+   "value": "{'a': 'block\\ntext\\n'}"
+  },
+  {
+   "yaml": "a: >-\n  folded\n  text\n\n",
+   "value": "{'a': 'folded text'}"
+  },
+  {
+   "yaml": "a: |+\n  keep\n\n",
+   "value": "{'a': 'keep\\n\\n'}"
+  },
+  {
+   "yaml": "a: |2\n   indented\n",
+   "value": "{'a': ' indented\\n'}"
+  },
+  {
+   "yaml": "a: |0\n x\n",
+   "error": "source.yaml: while scanning a block scalar\n  in \"<unicode string>\", line 1, column 4:\n    a: |0\n       ^\nexpected indentation indicator in the range 1-9, but found 0\n  in \"<unicode string>\", line 1, column 5:\n    a: |0\n        ^"
+  },
+  {
+   "yaml": "a: |-1\n x\n",
+   "value": "{'a': 'x'}"
+  },
+  {
+   "yaml": "a: |x\n",
+   "error": "source.yaml: while scanning a block scalar\n  in \"<unicode string>\", line 1, column 4:\n    a: |x\n       ^\nexpected chomping or indentation indicators, but found 'x'\n  in \"<unicode string>\", line 1, column 5:\n    a: |x\n        ^"
+  },
+  {
+   "yaml": "a: | # c\n  x\n",
+   "value": "{'a': 'x\\n'}"
+  },
+  {
+   "yaml": "a: | x\n",
+   "error": "source.yaml: while scanning a block scalar\n  in \"<unicode string>\", line 1, column 4:\n    a: | x\n       ^\nexpected a comment or a line break, but found 'x'\n  in \"<unicode string>\", line 1, column 6:\n    a: | x\n         ^"
+  },
+  {
+   "yaml": "a: >\n\n  x\n  y\n",
+   "value": "{'a': '\\nx y\\n'}"
+  },
+  {
+   "yaml": "a: >\n  x\n\n   y\n  z\n",
+   "value": "{'a': 'x\\n\\n y\\nz\\n'}"
+  },
+  {
+   "yaml": "a: b\n  c\n",
+   "value": "{'a': 'b c'}"
+  },
+  {
+   "yaml": "a: b # c\nd: e\n",
+   "value": "{'a': 'b', 'd': 'e'}"
+  },
+  {
+   "yaml": "a: b\n# c\n",
+   "value": "{'a': 'b'}"
+  },
+  {
+   "yaml": "a: \t1\n",
+   "error": "source.yaml: while scanning for the next token\nfound character '\\t' that cannot start any token\n  in \"<unicode string>\", line 1, column 4:\n    a: \t1\n       ^"
+  },
+  {
+   "yaml": "\ta: 1\n",
+   "error": "source.yaml: while scanning for the next token\nfound character '\\t' that cannot start any token\n  in \"<unicode string>\", line 1, column 1:\n    \ta: 1\n    ^"
+  },
+  {
+   "yaml": "a: 1 b: 2\n",
+   "value": "{'a': 1, 'b': 2}"
+  },
+  {
+   "yaml": "a: x\n",
+   "error": "source.yaml: while scanning a simple key\n  in \"<unicode string>\", line 2, column 1:\n    x\n    ^\ncould not find expected ':'\n  in \"<unicode string>\", line 3, column 1:\n    \n    ^"
+  },
+  {
+   "yaml": "a: \u0001\n",
+   "error": "source.yaml: unacceptable character #x0001: special characters are not allowed\n  in \"<unicode string>\", position 3"
+  },
+  {
+   "yaml": "﻿a: 1\n",
+   "value": "{'a': 1}"
+  },
+  {
+   "yaml": "a: ﻿b\n",
+   "value": "{'a': '\\ufeffb'}"
+  },
+  {
+   "yaml": "a: @x\n",
+   "error": "source.yaml: while scanning for the next token\nfound character '@' that cannot start any token\n  in \"<unicode string>\", line 1, column 4:\n    a: @x\n       ^"
+  },
+  {
+   "yaml": "a: `x\n",
+   "error": "source.yaml: while scanning for the next token\nfound character '`' that cannot start any token\n  in \"<unicode string>\", line 1, column 4:\n    a: `x\n       ^"
+  },
+  {
+   "yaml": "a: %x\n",
+   "error": "source.yaml: while scanning for the next token\nfound character '%' that cannot start any token\n  in \"<unicode string>\", line 1, column 4:\n    a: %x\n       ^"
+  },
+  {
+   "yaml": "a: !\n",
+   "value": "{'a': None}"
+  },
+  {
+   "yaml": "!x [a]\n",
+   "error": "source.yaml: could not determine a constructor for the tag '!x'\n  in \"<unicode string>\", line 1, column 1:\n    !x [a]\n    ^"
+  },
+  {
+   "yaml": "- !!str\n",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "- &a\n",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "[a, b, ]\n",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "[a, , b]\n",
+   "error": "source.yaml: while parsing a flow node\nexpected the node content, but found ','\n  in \"<unicode string>\", line 1, column 5:\n    [a, , b]\n        ^"
+  },
+  {
+   "yaml": "{a, b}\n",
+   "value": "{'a': None, 'b': None}"
+  },
+  {
+   "yaml": "{? a: b}\n",
+   "value": "{'a': 'b'}"
+  },
+  {
+   "yaml": "[? a: b]\n",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "[a: b, c: d]\n",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "{a: [b, {c: d}]}\n",
+   "value": "{'a': ['b', {'c': 'd'}]}"
+  },
+  {
+   "yaml": "a: [b, c]: d\n",
+   "error": "source.yaml: mapping values are not allowed here\n  in \"<unicode string>\", line 1, column 10:\n    a: [b, c]: d\n             ^"
+  },
+  {
+   "yaml": "{a: b}: c\n",
+   "error": "source.yaml: while constructing a mapping\nfound unhashable key\n  in \"<unicode string>\", line 1, column 1:\n    {a: b}: c\n    ^"
+  },
+  {
+   "yaml": "[a]: b\n",
+   "error": "source.yaml: while constructing a mapping\nfound unhashable key\n  in \"<unicode string>\", line 1, column 1:\n    [a]: b\n    ^"
+  },
+  {
+   "yaml": "a: 'x' y\n",
+   "error": "source.yaml: while parsing a block mapping\n  in \"<unicode string>\", line 1, column 1:\n    a: 'x' y\n    ^\nexpected <block end>, but found '<scalar>'\n  in \"<unicode string>\", line 1, column 8:\n    a: 'x' y\n           ^"
+  },
+  {
+   "yaml": "a: \"x\" y\n",
+   "error": "source.yaml: while parsing a block mapping\n  in \"<unicode string>\", line 1, column 1:\n    a: \"x\" y\n    ^\nexpected <block end>, but found '<scalar>'\n  in \"<unicode string>\", line 1, column 8:\n    a: \"x\" y\n           ^"
+  },
+  {
+   "yaml": "a:b\n",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "a :b\n",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "a: b:c\n",
+   "value": "{'a': 'b:c'}"
+  },
+  {
+   "yaml": "-a\n",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "- -a\n",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "?a\n",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": ":a\n",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "a: ---\n",
+   "value": "{'a': '---'}"
+  },
+  {
+   "yaml": "a: ...\n",
+   "value": "{'a': '...'}"
+  },
+  {
+   "yaml": "--- a\n--- b\n",
+   "error": "source.yaml: expected a single document in the stream\n  in \"<unicode string>\", line 1, column 5:\n    --- a\n        ^\nbut found another document\n  in \"<unicode string>\", line 2, column 1:\n    --- b\n    ^"
+  },
+  {
+   "yaml": "a: 1\na: 1\na: 1\n",
+   "error": "source.yaml: while constructing a mapping\n  in \"<unicode string>\", line 1, column 1:\n    a: 1\n    ^\nfound duplicate key 'a'\n  in \"<unicode string>\", line 2, column 1:\n    a: 1\n    ^"
+  },
+  {
+   "yaml": "1: a\ntrue: b\n",
+   "error": "source.yaml: while constructing a mapping\n  in \"<unicode string>\", line 1, column 1:\n    1: a\n    ^\nfound duplicate key True\n  in \"<unicode string>\", line 2, column 1:\n    true: b\n    ^"
+  },
+  {
+   "yaml": "1.0: a\n1: b\n",
+   "error": "source.yaml: while constructing a mapping\n  in \"<unicode string>\", line 1, column 1:\n    1.0: a\n    ^\nfound duplicate key 1\n  in \"<unicode string>\", line 2, column 1:\n    1: b\n    ^"
+  },
+  {
+   "yaml": ".nan: a\n.nan: b\n",
+   "error": "source.yaml: while constructing a mapping\n  in \"<unicode string>\", line 1, column 1:\n    .nan: a\n    ^\nfound duplicate key nan\n  in \"<unicode string>\", line 2, column 1:\n    .nan: b\n    ^"
+  },
+  {
+   "yaml": "2001-12-14t21:59:43Z: a\n2001-12-14 21:59:43+00: b\n",
+   "error": "source.yaml: while constructing a mapping\n  in \"<unicode string>\", line 1, column 1:\n    2001-12-14t21:59:43Z: a\n    ^\nfound duplicate key datetime.datetime(2001, 12, 14, 21, 59, 43, tzinfo=datetime.timezone.utc)\n  in \"<unicode string>\", line 2, column 1:\n    2001-12-14 21:59:43+00: b\n    ^"
+  },
+  {
+   "yaml": "a: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n",
+   "value": "{'a': 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'}"
+  },
+  {
+   "yaml": "a: [[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]\n",
+   "value": "{'a': [[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]}"
+  },
+  {
+   "yaml": "a: 99999999999999999999999999999\n",
+   "value": "{'a': 99999999999999999999999999999}"
+  },
+  {
+   "yaml": "a: 0o17\n",
+   "value": "{'a': '0o17'}"
+  },
+  {
+   "yaml": "a: 1e5\n",
+   "value": "{'a': '1e5'}"
+  },
+  {
+   "yaml": "a: 1E+5\n",
+   "value": "{'a': '1E+5'}"
+  },
+  {
+   "yaml": "a: 0.\n",
+   "value": "{'a': 0.0}"
+  },
+  {
+   "yaml": "a: -.5e-3\n",
+   "value": "{'a': '-.5e-3'}"
+  },
+  {
+   "yaml": "a: 2026-10-17T00:00:00+11:00\n",
+   "value": "{'a': datetime.datetime(2026, 10, 17, 0, 0, tzinfo=datetime.timezone(datetime.timedelta(seconds=39600)))}"
+  },
+  {
+   "yaml": "a: 20261017\n",
+   "value": "{'a': 20261017}"
+  },
+  {
+   "yaml": "a: !!int 1:2:3\n",
+   "value": "{'a': 3723}"
+  },
+  {
+   "yaml": "a: !!float 1:2:3.5\n",
+   "value": "{'a': 3723.5}"
+  },
+  {
+   "yaml": "fields:\n  - key: title\n    value: - \"DrDebivaluets\"\n",
+   "error": "source.yaml: sequence entries are not allowed here\n  in \"<unicode string>\", line 3, column 12:\n        value: - \"DrDebivaluets\"\n               ^"
+  },
+  {
+   "yaml": "#key:   \n:*a: yes",
+   "value": "{':*a': True}"
+  },
+  {
+   "yaml": "a: [1, 2, {b: c}]\nd: |\n  text\n&a ",
+   "error": "source.yaml: while scanning a simple key\n  in \"<unicode string>\", line 4, column 1:\n    &a \n    ^\ncould not find expected ':'\n  in \"<unicode string>\", line 4, column 4:\n    &a \n       ^"
+  },
+  {
+   "yaml": "2026-10-17",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "&a ",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "fields:2026-10-17\n  - key: title\n   [value: \"DrDebits\"\n",
+   "error": "source.yaml: mapping values are not allowed here\n  in \"<unicode string>\", line 2, column 8:\n      - key: title\n           ^"
+  },
+  {
+   "yaml": "{- =2026-10-17é}%- yes:2026-10-17",
+   "error": "source.yaml: while scanning for the next token\nfound character '%' that cannot start any token\n  in \"<unicode string>\", line 1, column 17:\n    {- =2026-10-17é}%- yes:2026-10-17\n                    ^"
+  },
+  {
+   "yaml": "fields:\n  - key: tit---e\n    value: \"DrDebits~\"\n",
+   "value": "{'fields': [{'key': 'tit---e', 'value': 'DrDebits~'}]}"
+  },
+  {
+   "yaml": ">*a{\u0001*a: ",
+   "error": "source.yaml: unacceptable character #x0001: special characters are not allowed\n  in \"<unicode string>\", position 4"
+  },
+  {
+   "yaml": "1\"\t|<<:? 0x1\n",
+   "error": "source.yaml: while scanning for the next token\nfound character '\\t' that cannot start any token\n  in \"<unicode string>\", line 1, column 3:\n    1\"\t|<<:? 0x1\n      ^"
+  },
+  {
+   "yaml": "entries:\n  - id: \"GS01\"\n    title: \"T\"\n    url: \"https://x\"\n  \n  trigger: \"g\"\n",
+   "error": "source.yaml: while parsing a block collection\n  in \"<unicode string>\", line 2, column 3:\n      - id: \"GS01\"\n      ^\nexpected <block end>, but found '?'\n  in \"<unicode string>\", line 6, column 3:\n      trigger: \"g\"\n      ^"
+  },
+  {
+   "yaml": "yes2026-10-17",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "'\"\u0001\\<<1=---:: !...\u0001﻿",
+   "error": "source.yaml: unacceptable character #x0001: special characters are not allowed\n  in \"<unicode string>\", position 2"
+  },
+  {
+   "yaml": "a: [1, 2,{b: c}]\nd: \t|\n﻿  text\n",
+   "error": "source.yaml: while scanning for the next token\nfound character '\\t' that cannot start any token\n  in \"<unicode string>\", line 3, column 4:\n    d: \t|\n       ^"
+  },
+  {
+   "yaml": "entries:\n  - id: \"GS0 1\"\n    title: \"T\"\n    url: \"https://x\"\n  value  trigger: \"g\"\n",
+   "error": "source.yaml: while parsing a block collection\n  in \"<unicode string>\", line 2, column 3:\n      - id: \"GS0\n      ^\nexpected <block end>, but found '?'\n  in \"<unicode string>\", line 6, column 3:\n      value  trigger: \"g\"\n      ^"
+  },
+  {
+   "yaml": "*a``",
+   "error": "source.yaml: while scanning for the next token\nfound character '`' that cannot start any token\n  in \"<unicode string>\", line 1, column 3:\n    *a``\n      ^"
+  },
+  {
+   "yaml": ": ]\t`yes!,  ",
+   "error": "source.yaml: while parsing a block mapping\nexpected <block end>, but found ':'\n  in \"<unicode string>\", line 1, column 1:\n    : ]\t`yes!,  \n    ^"
+  },
+  {
+   "yaml": "\n\\\r@&a ",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "fields:\n  - ke﻿y: title\n    value: \"DrDebits\"\n",
+   "value": "{'fields': [{'ke\\ufeffy': 'title', 'value': 'DrDebits'}]}"
+  },
+  {
+   "yaml": "a: [1, 2|, {b: c}]\nd: |\n  text\n",
+   "value": "{'a': [1, '2|', {'b': 'c'}], 'd': 'text\\n'}"
+  },
+  {
+   "yaml": "a: [1, 2\u0001 {b: c}]\nd2026-10-17: |\n  text\n",
+   "error": "source.yaml: unacceptable character #x0001: special characters are not allowed\n  in \"<unicode string>\", position 8"
+  },
+  {
+   "yaml": "\rvalue---\ryes````- ...",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "}",
+   "error": "source.yaml: while parsing a block node\nexpected the node content, but found '}'\n  in \"<unicode string>\", line 1, column 1:\n    }\n    ^"
+  },
+  {
+   "yaml": "fields:\n  ? - key: title\n    value: \"DvaluerDebits\"\n",
+   "error": "source.yaml: while parsing a block collection\n  in \"<unicode string>\", line 2, column 5:\n      ? - key: title\n        ^\nexpected <block end>, but found '?'\n  in \"<unicode string>\", line 3, column 5:\n        value: \"DvaluerDebits\"\n        ^"
+  },
+  {
+   "yaml": "f:ields%\n  - key: title\n    value: \"DrD@ebits\"\n",
+   "error": "source.yaml: mapping values are not allowed here\n  in \"<unicode string>\", line 2, column 8:\n      - key: title\n           ^"
+  },
+  {
+   "yaml": "<<%...? ? 1",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "......>: [- \"!!str ",
+   "error": "source.yaml: while parsing a flow node\nexpected the node content, but found '-'\n  in \"<unicode string>\", line 1, column 11:\n    ......>: [- \"!!str \n              ^"
+  },
+  {
+   "yaml": "a: [1, 2, {b: c}b]\nd: |\n  text\n",
+   "error": "source.yaml: while parsing a flow sequence\n  in \"<unicode string>\", line 1, column 4:\n    a: [1, 2, {b: c}b]\n       ^\nexpected ',' or ']', but got '<scalar>'\n  in \"<unicode string>\", line 1, column 17:\n    a: [1, 2, {b: c}b]\n                    ^"
+  },
+  {
+   "yaml": "%[\u0001~b1.5>: ",
+   "error": "source.yaml: unacceptable character #x0001: special characters are not allowed\n  in \"<unicode string>\", position 2"
+  },
+  {
+   "yaml": "1.5%]\\&a ",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "0x1\"é&a  }*a`&a }1.51\\",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "!",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "field&a s:\n  - key: title\n    value: \"DrD\\ebits\"\n\\",
+   "error": "source.yaml: while scanning a simple key\n  in \"<unicode string>\", line 4, column 1:\n    \\\n    ^\ncould not find expected ':'\n  in \"<unicode string>\", line 4, column 2:\n    \\\n     ^"
+  },
+  {
+   "yaml": "fields:\n  - k...y: title\n    value: \"DraDebits\"\n",
+   "value": "{'fields': [{'k...y': 'title', 'value': 'DraDebits'}]}"
+  },
+  {
+   "yaml": ": ﻿? @}",
+   "error": "source.yaml: while parsing a block mapping\nexpected <block end>, but found ':'\n  in \"<unicode string>\", line 2, column 1:\n    : ﻿? @}\n    ^"
+  },
+  {
+   "yaml": "fields:\n  - key: title\n    value: \"DrDeb\"its\"\n`",
+   "error": "source.yaml: while parsing a block mapping\n  in \"<unicode string>\", line 2, column 5:\n      - key: title\n        ^\nexpected <block end>, but found '<scalar>'\n  in \"<unicode string>\", line 3, column 19:\n        value: \"DrDeb\"its\"\n                      ^"
+  },
+  {
+   "yaml": "f[elds:\n  ]- key: title\n    value: \"DrDebits\"\n",
+   "error": "source.yaml: while parsing a block node\nexpected the node content, but found ']'\n  in \"<unicode string>\", line 2, column 3:\n      ]- key: title\n      ^"
+  },
+  {
+   "yaml": "...﻿\\[yesyes,ba",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "a: [1, 2, {b:} c}]\nd: |\n  text\n",
+   "error": "source.yaml: while parsing a flow sequence\n  in \"<unicode string>\", line 1, column 4:\n    a: [1, 2, {b:} c}]\n       ^\nexpected ',' or ']', but got '<scalar>'\n  in \"<unicode string>\", line 1, column 16:\n    a: [1, 2, {b:} c}]\n                   ^"
+  },
+  {
+   "yaml": "fields:\n  - key: tit!!str e\n    value*a \"DrDebits\"\n",
+   "error": "source.yaml: while scanning a simple key\n  in \"<unicode string>\", line 3, column 5:\n        value*a \"DrDebits\"\n        ^\ncould not find expected ':'\n  in \"<unicode string>\", line 4, column 1:\n    \n    ^"
+  },
+  {
+   "yaml": "fields:\n  - key: title---    value: \"DrDebits\"\n",
+   "error": "source.yaml: mapping values are not allowed here\n  in \"<unicode string>\", line 2, column 27:\n      - key: title---    value: \"DrDebits\"\n                              ^"
+  },
+  {
+   "yaml": "\n0x1,~[1.50x1b\t",
+   "error": "source.yaml: while scanning for the next token\nfound character '\\t' that cannot start any token\n  in \"<unicode string>\", line 2, column 14:\n    0x1,~[1.50x1b\t\n                 ^"
+  },
+  {
+   "yaml": "a[{[... ? yesvalue'",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "yes...- yesvalue*a}!key",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "\tyesb:\t' 0x1<<",
+   "error": "source.yaml: while scanning for the next token\nfound character '\\t' that cannot start any token\n  in \"<unicode string>\", line 1, column 1:\n    \tyesb:\t'\n    ^"
+  },
+  {
+   "yaml": "!\t0x1~...0x1*a\u00011.5!!str yes}",
+   "error": "source.yaml: unacceptable character #x0001: special characters are not allowed\n  in \"<unicode string>\", position 14"
+  },
+  {
+   "yaml": "\n? `",
+   "error": "source.yaml: while scanning for the next token\nfound character '`' that cannot start any token\n  in \"<unicode string>\", line 2, column 3:\n    ? `\n      ^"
+  },
+  {
+   "yaml": "fields:[  - k﻿ey  : title\n    value: \"DrDebits\"\n",
+   "error": "source.yaml: mapping values are not allowed here\n  in \"<unicode string>\", line 2, column 10:\n        value: \"DrDebits\"\n             ^"
+  },
+  {
+   "yaml": "[!!str ,---&a - ",
+   "error": "source.yaml: while parsing a flow sequence\n  in \"<unicode string>\", line 1, column 1:\n    [!!str ,---&a - \n    ^\nexpected ',' or ']', but got '<stream end>'\n  in \"<unicode string>\", line 1, column 17:\n    [!!str ,---&a - \n                    ^"
+  },
+  {
+   "yaml": "entries:\n  - id: \"GS01\"\n    ]itle: \"T\"\n    url: \"https://x\"\n    trigger: \"g\"\n",
+   "error": "source.yaml: while parsing a block mapping\n  in \"<unicode string>\", line 2, column 5:\n      - id: \"GS01\"\n        ^\nexpected <block end>, but found ']'\n  in \"<unicode string>\", line 3, column 5:\n        ]itle: \"T\"\n        ^"
+  },
+  {
+   "yaml": "a: [1, 2, \n{b: c}]\nd: '|\n  text\n",
+   "error": "source.yaml: while scanning a quoted scalar\n  in \"<unicode string>\", line 3, column 4:\n    d: '|\n       ^\nfound unexpected end of stream\n  in \"<unicode string>\", line 5, column 1:\n    \n    ^"
+  },
+  {
+   "yaml": "\"",
+   "error": "source.yaml: while scanning a quoted scalar\n  in \"<unicode string>\", line 1, column 1:\n    \"\n    ^\nfound unexpected end of stream\n  in \"<unicode string>\", line 1, column 2:\n    \"\n     ^"
+  },
+  {
+   "yaml": "b@\"1.5 |0x1:",
+   "error": "source.yaml: mapping values are not allowed here\n  in \"<unicode string>\", line 2, column 5:\n    |0x1:\n        ^"
+  },
+  {
+   "yaml": "field!!str s:\n  - key: title\n    value: \"DrDebits\"\n",
+   "value": "{'field!!str s': [{'key': 'title', 'value': 'DrDebits'}]}"
+  },
+  {
+   "yaml": "fields:\n   - key`: title\n    value: \"DrDebits\"\n",
+   "error": "source.yaml: while parsing a block collection\n  in \"<unicode string>\", line 2, column 4:\n       - key`: title\n       ^\nexpected <block end>, but found '<block mapping start>'\n  in \"<unicode string>\", line 3, column 5:\n        value: \"DrDebits\"\n        ^"
+  },
+  {
+   "yaml": "2026-10-171\u0001': !value\u0001{",
+   "error": "source.yaml: unacceptable character #x0001: special characters are not allowed\n  in \"<unicode string>\", position 11"
+  },
+  {
+   "yaml": "féields:\n  - key:  title\n    value: \"DrDebits\"\n",
+   "value": "{'féields': [{'key': 'title', 'value': 'DrDebits'}]}"
+  },
+  {
+   "yaml": "!!str ? ",
+   "error": "source.yaml: mapping keys are not allowed here\n  in \"<unicode string>\", line 1, column 7:\n    !!str ? \n          ^"
+  },
+  {
+   "yaml": "entries:\n  - id:key\"GS01\"\n    ? title: \"T\"\n    url: \"http!://x\"\n    trigger: \"g\"\n",
+   "error": "source.yaml: mapping values are not allowed here\n  in \"<unicode string>\", line 3, column 12:\n        ? title: \"T\"\n               ^"
+  },
+  {
+   "yaml": "fields:\n  - key: tiétle\n    value: \"DrDebits\"\n",
+   "value": "{'fields': [{'key': 'tiétle', 'value': 'DrDebits'}]}"
+  },
+  {
+   "yaml": "|\t0x1\r",
+   "error": "source.yaml: while scanning a block scalar\n  in \"<unicode string>\", line 1, column 1:\n    |\t0x1\n    ^\nexpected chomping or indentation indicators, but found '\\t'\n  in \"<unicode string>\", line 1, column 2:\n    |\t0x1\n     ^"
+  },
+  {
+   "yaml": "entries:\n  - id: \"GS01\"\n    titlkeye: \"T\"\n    url: \"https://x\"\n    trigger: \"g\"\n",
+   "value": "{'entries': [{'id': 'GS01', 'titlkeye': 'T', 'url': 'https://x', 'trigger': 'g'}]}"
+  },
+  {
+   "yaml": "a: [1,0x1 2, {b\t: c}]\nd: |\n﻿  text\n",
+   "error": "source.yaml: while scanning for the next token\nfound character '\\t' that cannot start any token\n  in \"<unicode string>\", line 1, column 16:\n    a: [1,0x1 2, {b\t: c}]\n                   ^"
+  },
+  {
+   "yaml": "0x1>\u0001#&a \"}",
+   "error": "source.yaml: unacceptable character #x0001: special characters are not allowed\n  in \"<unicode string>\", position 4"
+  },
+  {
+   "yaml": "é,`\\value,a:é!!str   ]",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "a: [1, 2, {b: c}]\n<<d: |\n  te0x1t\n",
+   "value": "{'a': [1, 2, {'b': 'c'}], '<<d': 'te0x1t\\n'}"
+  },
+  {
+   "yaml": "---",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "!!str entries:\n  - id: \"GS01\"\n    title: \"yesT\"\n    url: \"https://x\"\n    trigger: \"g\"\n",
+   "value": "{'entries': [{'id': 'GS01', 'title': 'yesT', 'url': 'https://x', 'trigger': 'g'}]}"
+  },
+  {
+   "yaml": "entries:\n  - id: \"GS01\"\n    title: \"T\"\n    ur{l: \"https://x\"\n    trigger: \"g\"\n",
+   "value": "{'entries': [{'id': 'GS01', 'title': 'T', 'ur{l': 'https://x', 'trigger': 'g'}]}"
+  },
+  {
+   "yaml": "fields:\n  - *aey: 0x1itle\n    value: \"DrDebits\"\n",
+   "error": "source.yaml: found undefined alias 'aey'\n  in \"<unicode string>\", line 2, column 5:\n      - *aey: 0x1itle\n        ^"
+  },
+  {
+   "yaml": "!!str : ",
+   "value": "{'': None}"
+  },
+  {
+   "yaml": "a: [1, 2, {bb: c}]\nd: |\n  text\n",
+   "value": "{'a': [1, 2, {'bb': 'c'}], 'd': 'text\\n'}"
+  },
+  {
+   "yaml": "fields:\n  - key: title\n    value: \"Dr1.5Debits\"\n",
+   "value": "{'fields': [{'key': 'title', 'value': 'Dr1.5Debits'}]}"
+  },
+  {
+   "yaml": "<<@'1[| [key0x1é",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "a\r [1.5, 2, {b: : c}]\nd: |\n  text\n",
+   "error": "source.yaml: mapping values are not allowed here\n  in \"<unicode string>\", line 2, column 13:\n     [1.5, 2, {b: : c}]\n                ^"
+  },
+  {
+   "yaml": "a: [1, 2, {b: c}]\nd: |\n  texyest\n- ",
+   "error": "source.yaml: while parsing a block mapping\n  in \"<unicode string>\", line 1, column 1:\n    a: [1, 2, {b: c}]\n    ^\nexpected <block end>, but found '-'\n  in \"<unicode string>\", line 4, column 1:\n    - \n    ^"
+  },
+  {
+   "yaml": "~\r*a1!!str a---:0x1~: ",
+   "error": "source.yaml: mapping values are not allowed here\n  in \"<unicode string>\", line 2, column 19:\n    *a1!!str a---:0x1~: \n                      ^"
+  },
+  {
+   "yaml": "...!!str ",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "!!str *a#&a ---1@:...\r|key ",
+   "error": "source.yaml: while scanning an alias\n  in \"<unicode string>\", line 1, column 7:\n    !!str *a#&a \n          ^\nexpected alphabetic or numeric character, but found '#'\n  in \"<unicode string>\", line 1, column 9:\n    !!str *a#&a \n            ^"
+  },
+  {
+   "yaml": ":<<[\"",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "a: 1[a1, 2, {b: c}]\nd: |\n  text\n",
+   "error": "source.yaml: while scanning a simple key\n  in \"<unicode string>\", line 2, column 1:\n    {b: c}]\n    ^\ncould not find expected ':'\n  in \"<unicode string>\", line 2, column 7:\n    {b: c}]\n          ^"
+  },
+  {
+   "yaml": "\u0001#",
+   "error": "source.yaml: unacceptable character #x0001: special characters are not allowed\n  in \"<unicode string>\", position 0"
+  },
+  {
+   "yaml": "1.5|---------",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "}>: ...b|---:0x1",
+   "error": "source.yaml: while parsing a block node\nexpected the node content, but found '}'\n  in \"<unicode string>\", line 1, column 1:\n    }>: ...b|---:0x1\n    ^"
+  },
+  {
+   "yaml": "!@##:=: [",
+   "error": "source.yaml: while scanning a tag\n  in \"<unicode string>\", line 1, column 1:\n    !@##:=: [\n    ^\nexpected ' ', but found '#'\n  in \"<unicode string>\", line 1, column 3:\n    !@##:=: [\n      ^"
+  },
+  {
+   "yaml": "%,<<é0x1",
+   "error": "source.yaml: while scanning a directive\n  in \"<unicode string>\", line 1, column 1:\n    %,<<é0x1\n    ^\nexpected alphabetic or numeric character, but found ','\n  in \"<unicode string>\", line 1, column 2:\n    %,<<é0x1\n     ^"
+  },
+  {
+   "yaml": "fields:\n  a- key: title\n&a     v`alue: \"DrDebits\"\n",
+   "value": "{'fields': {'a- key': 'title'}, 'v`alue': 'DrDebits'}"
+  },
+  {
+   "yaml": ">[\n\\@'? ",
+   "error": "source.yaml: while scanning a block scalar\n  in \"<unicode string>\", line 1, column 1:\n    >[\n    ^\nexpected chomping or indentation indicators, but found '['\n  in \"<unicode string>\", line 1, column 2:\n    >[\n     ^"
+  },
+  {
+   "yaml": "'",
+   "error": "source.yaml: while scanning a quoted scalar\n  in \"<unicode string>\", line 1, column 1:\n    '\n    ^\nfound unexpected end of stream\n  in \"<unicode string>\", line 1, column 2:\n    '\n     ^"
+  },
+  {
+   "yaml": "`? }a|!!str %:`@=:%  ",
+   "error": "source.yaml: while scanning for the next token\nfound character '`' that cannot start any token\n  in \"<unicode string>\", line 1, column 1:\n    `? }a|!!str %:`@=:%  \n    ^"
+  },
+  {
+   "yaml": "value!- value﻿|é[*a!  0x1'}",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "  bé`yesyes#: value\n\t ,",
+   "error": "source.yaml: while scanning for the next token\nfound character '\\t' that cannot start any token\n  in \"<unicode string>\", line 2, column 1:\n    \t\n    ^"
+  },
+  {
+   "yaml": "1valueyes,]",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "entries:\n  - id: \"GS01\"\n    title` \"T\"!!str     url: \"https://x\"\n    trigger: \"g\"\n",
+   "value": "{'entries': [{'id': 'GS01', 'title` \"T\"!!str     url': 'https://x', 'trigger': 'g'}]}"
+  },
+  {
+   "yaml": "entries:\n  - id: \"GS:01\"\n    title: \"T\"\n    url: \"h? ttps://x\"\n 1  trigger: \"g\"\n",
+   "error": "source.yaml: while parsing a block mapping\n  in \"<unicode string>\", line 1, column 1:\n    entries:\n    ^\nexpected <block end>, but found '<block mapping start>'\n  in \"<unicode string>\", line 5, column 2:\n     1  trigger: \"g\"\n     ^"
+  },
+  {
+   "yaml": "entries:\n  - id: \"GS01\"\n*a    title: \"T\"\n    url: \"https,//x\"\n    trigger: \"g\"\n",
+   "error": "source.yaml: found undefined alias 'a'\n  in \"<unicode string>\", line 3, column 1:\n    *a    title: \"T\"\n    ^"
+  },
+  {
+   "yaml": "a: [1, 2, *a{b: c}]\nd: |\n  text\n",
+   "error": "source.yaml: while scanning an alias\n  in \"<unicode string>\", line 1, column 11:\n    a: [1, 2, *a{b: c}]\n              ^\nexpected alphabetic or numeric character, but found '{'\n  in \"<unicode string>\", line 1, column 13:\n    a: [1, 2, *a{b: c}]\n                ^"
+  },
+  {
+   "yaml": "a: [1, 2, {b: c}]\nd: |\n  texb\n",
+   "value": "{'a': [1, 2, {'b': 'c'}], 'd': 'texb\\n'}"
+  },
+  {
+   "yaml": "\n1.5#@!\"value",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "a: [\r, 2, {b: c}é]\nd: |\n  text\n",
+   "error": "source.yaml: while parsing a flow node\nexpected the node content, but found ','\n  in \"<unicode string>\", line 2, column 1:\n    , 2, {b: c}é]\n    ^"
+  },
+  {
+   "yaml": "fields:\n  - key: title\n   > value: \"DrDebits\"\n",
+   "error": "source.yaml: while scanning a block scalar\n  in \"<unicode string>\", line 4, column 2:\n     > value: \"DrDebits\"\n     ^\nexpected a comment or a line break, but found 'v'\n  in \"<unicode string>\", line 4, column 4:\n     > value: \"DrDebits\"\n       ^"
+  },
+  {
+   "yaml": ":entries:\n  - id: \"GS01\"\n    title: \"T\"\n    url: \"https://x\"\n=    t---rigger: \"g\"\n",
+   "value": "{':entries': [{'id': 'GS01', 'title': 'T', 'url': 'https://x'}], '=    t---rigger': 'g'}"
+  },
+  {
+   "yaml": "fields:\n [- key: title\n    value: \"DrDebits\"\n",
+   "error": "source.yaml: while parsing a flow node\nexpected the node content, but found '-'\n  in \"<unicode string>\", line 2, column 3:\n     [- key: title\n      ^"
+  },
+  {
+   "yaml": "\u0001",
+   "error": "source.yaml: unacceptable character #x0001: special characters are not allowed\n  in \"<unicode string>\", position 0"
+  },
+  {
+   "yaml": ": yeskeya,&a 2026-10-17key",
+   "error": "source.yaml: while parsing a block mapping\nexpected <block end>, but found ':'\n  in \"<unicode string>\", line 1, column 1:\n    : yeskeya,&a 2026-10-17key\n    ^"
+  },
+  {
+   "yaml": ",é!!str 1.5é",
+   "error": "source.yaml: while parsing a block node\nexpected the node content, but found ','\n  in \"<unicode string>\", line 1, column 1:\n    ,é!!str 1.5é\n    ^"
+  },
+  {
+   "yaml": "fiel>s:\n  - key: title\n    value: \"DrDebits\"\n",
+   "value": "{'fiel>s': [{'key': 'title', 'value': 'DrDebits'}]}"
+  },
+  {
+   "yaml": "@!!str &a <<",
+   "error": "source.yaml: while scanning for the next token\nfound character '@' that cannot start any token\n  in \"<unicode string>\", line 1, column 1:\n    @!!str &a <<\n    ^"
+  },
+  {
+   "yaml": "a: [1, 2, {b: !...}]\nd: |\n  text\n",
+   "error": "source.yaml: while scanning a tag\n  in \"<unicode string>\", line 1, column 15:\n    a: [1, 2, {b: !...}]\n                  ^\nexpected ' ', but found '}'\n  in \"<unicode string>\", line 1, column 19:\n    a: [1, 2, {b: !...}]\n                      ^"
+  },
+  {
+   "yaml": "fields:\n  - key: title\n    value: \"DrDebits\"\n",
+   "error": "source.yaml: while parsing a block mapping\n  in \"<unicode string>\", line 1, column 1:\n    fields:\n    ^\nexpected <block end>, but found '<block mapping start>'\n  in \"<unicode string>\", line 4, column 2:\n     value: \"DrDebits\"\n     ^"
+  },
+  {
+   "yaml": "field!!str s:\n  - key: title\n    value: \"DrDebits\"\n",
+   "value": "{'field!!str s': [{'key': 'title', 'value': 'DrDebits '}]}"
+  },
+  {
+   "yaml": "&a 1key\u0001\"\n",
+   "error": "source.yaml: unacceptable character #x0001: special characters are not allowed\n  in \"<unicode string>\", position 7"
+  },
+  {
+   "yaml": "|ntries:\n  - id: \"GS01\"\n    title: \"T\"\n    url: \"https://x\"\n    trigger: \"g\"\n",
+   "error": "source.yaml: while scanning a block scalar\n  in \"<unicode string>\", line 1, column 1:\n    |ntries:\n    ^\nexpected chomping or indentation indicators, but found 'n'\n  in \"<unicode string>\", line 1, column 2:\n    |ntries:\n     ^"
+  },
+  {
+   "yaml": "#1",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "}&a ---&a !!str ",
+   "error": "source.yaml: while parsing a block node\nexpected the node content, but found '}'\n  in \"<unicode string>\", line 1, column 1:\n    }&a ---&a !!str \n    ^"
+  },
+  {
+   "yaml": "-  1 {",
+   "error": "source.yaml: while scanning a simple key\n  in \"<unicode string>\", line 2, column 1:\n    1\n    ^\ncould not find expected ':'\n  in \"<unicode string>\", line 3, column 1:\n    {\n    ^"
+  },
+  {
+   "yaml": "\n﻿value<<[`value#",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "a: [1, 2, {b:valuec}]\nd: |\n  text\n",
+   "value": "{'a': [1, 2, {'b:valuec': None}], 'd': 'text\\n'}"
+  },
+  {
+   "yaml": "entries:\n  - id: \"GS0\"1\"\n    title: \"T\"\n ?    url: \"https://x\"\n    trigger: \"g\"\n",
+   "error": "source.yaml: while parsing a block mapping\n  in \"<unicode string>\", line 2, column 5:\n      - id: \"GS0\"1\"\n        ^\nexpected <block end>, but found '<scalar>'\n  in \"<unicode string>\", line 2, column 14:\n      - id: \"GS0\"1\"\n                 ^"
+  },
+  {
+   "yaml": "a: [1, 2, {b: keyc}]\nd: %|\n ] text\n",
+   "error": "source.yaml: while scanning for the next token\nfound character '%' that cannot start any token\n  in \"<unicode string>\", line 2, column 4:\n    d: %|\n       ^"
+  },
+  {
+   "yaml": "entries:\n  - id: \"GS01\"\n    title: \"T\"\n    u\nrl: \"https://x\"\n    trigger: \"g\"\n",
+   "error": "source.yaml: while scanning a simple key\n  in \"<unicode string>\", line 4, column 5:\n        u\n        ^\ncould not find expected ':'\n  in \"<unicode string>\", line 5, column 1:\n    rl: \"https://x\"\n    ^"
+  },
+  {
+   "yaml": "#@\\>  : value...}%~\t}",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "éa: [1, 2, {b: éc}]\nd: |\n  text\n",
+   "value": "{'éa': [1, 2, {'b': 'éc'}], 'd': 'text\\n'}"
+  },
+  {
+   "yaml": "fielvalueds::  - key: title\n    value: \"DrDebits\"\n",
+   "error": "source.yaml: sequence entries are not allowed here\n  in \"<unicode string>\", line 1, column 16:\n    fielvalueds::  - key: title\n                   ^"
+  },
+  {
+   "yaml": "entri!!str s:\n  - id: \"GS01\"\n    title: !\"T\"\n    url: \"https://x\"\n    trigger: \"g\"\n",
+   "error": "source.yaml: while parsing a tag\n  in \"<unicode string>\", line 3, column 12:\n        title: !\"T\"\n               ^\nexpected URI, but found '\"'\n  in \"<unicode string>\", line 3, column 13:\n        title: !\"T\"\n                ^"
+  },
+  {
+   "yaml": "a: [1, 2, {b: - c}]\nd: |\n  te@xt\n:",
+   "error": "source.yaml: while parsing a flow node\nexpected the node content, but found '-'\n  in \"<unicode string>\", line 1, column 15:\n    a: [1, 2, {b: - c}]\n                  ^"
+  },
+  {
+   "yaml": "1,1{a>\u0001[<<*a''---%",
+   "error": "source.yaml: unacceptable character #x0001: special characters are not allowed\n  in \"<unicode string>\", position 6"
+  },
+  {
+   "yaml": ": 0x1}`]*a\n:key",
+   "error": "source.yaml: while parsing a block mapping\nexpected <block end>, but found ':'\n  in \"<unicode string>\", line 1, column 1:\n    : 0x1}`]*a\n    ^"
+  },
+  {
+   "yaml": "a: [!!str   , 2, {b: c}]\nd: |\n  text\n",
+   "value": "{'a': ['', 2, {'b': 'c'}], 'd': 'text\\n'}"
+  },
+  {
+   "yaml": "fields:\n  - ke,y: title\n    valu\te: \"DrDebits\"\n",
+   "error": "source.yaml: while scanning for the next token\nfound character '\\t' that cannot start any token\n  in \"<unicode string>\", line 3, column 9:\n        valu\te: \"DrDebits\"\n            ^"
+  },
+  {
+   "yaml": "a: [1, 2, {b: c}]\nd: |\n~ text\n",
+   "error": "source.yaml: while scanning a simple key\n  in \"<unicode string>\", line 3, column 1:\n    ~ text\n    ^\ncould not find expected ':'\n  in \"<unicode string>\", line 4, column 1:\n    \n    ^"
+  },
+  {
+   "yaml": "||!2026-10-17!%!!str !!str }\t*a{*a",
+   "error": "source.yaml: while scanning a block scalar\n  in \"<unicode string>\", line 1, column 1:\n    ||!2026-10-17!%!!str !!str }\t*a{*a\n    ^\nexpected chomping or indentation indicators, but found '|'\n  in \"<unicode string>\", line 1, column 2:\n    ||!2026-10-17!%!!str !!str }\t*a{*a\n     ^"
+  },
+  {
+   "yaml": "entries:\n  - id: \"GS01\"\n'    title: \"T\"\n    url: \"!!str https://1.5x\"\n    trigger: \"g\"\n",
+   "error": "source.yaml: while scanning a quoted scalar\n  in \"<unicode string>\", line 3, column 1:\n    '    title: \"T\"\n    ^\nfound unexpected end of stream\n  in \"<unicode string>\", line 6, column 1:\n    \n    ^"
+  },
+  {
+   "yaml": "---",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "a...",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "\t%key|",
+   "error": "source.yaml: while scanning for the next token\nfound character '\\t' that cannot start any token\n  in \"<unicode string>\", line 1, column 1:\n    \t%key|\n    ^"
+  },
+  {
+   "yaml": "fields:\n  - key: title\n    value: \"DrD=ebits\"\n",
+   "value": "{'fields': [{'key': 'title', 'value': 'DrD=ebits'}]}"
+  },
+  {
+   "yaml": "0x1{\t<<!!str ﻿",
+   "error": "source.yaml: while scanning for the next token\nfound character '\\t' that cannot start any token\n  in \"<unicode string>\", line 1, column 5:\n    0x1{\t<<!!str ﻿\n        ^"
+  },
+  {
+   "yaml": "é<<",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "#key%\"[key",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "entries:\n  - id: \"GS01\"\n    title: \"T\"\n    url: \"https://x\"\n    trigger: \"g\"\n",
+   "value": "{'entries': [{'id': 'GS01', 'title': 'T', 'url': 'https://x', 'trigger': 'g'}]}"
+  },
+  {
+   "yaml": "'\n\r%{ >:#key1yes...:",
+   "error": "source.yaml: while scanning a quoted scalar\n  in \"<unicode string>\", line 1, column 1:\n    '\n    ^\nfound unexpected end of stream\n  in \"<unicode string>\", line 4, column 15:\n    >:#key1yes...:\n                  ^"
+  },
+  {
+   "yaml": "entries:\n  - id: \"GS`1\"\n    title: \"T\"\n    url: \"https://x\"\n    trig: e[: \"g\"\n",
+   "error": "source.yaml: mapping values are not allowed here\n  in \"<unicode string>\", line 5, column 13:\n        trig: e[: \"g\"\n                ^"
+  },
+  {
+   "yaml": "entries:\n  - id: \"GS01\"\n    title: \"T\"\n2026-10-17\n   \n url: \"https://x\"\n    trigger: \"g\"\n",
+   "error": "source.yaml: while scanning a simple key\n  in \"<unicode string>\", line 4, column 1:\n    2026-10-17\n    ^\ncould not find expected ':'\n  in \"<unicode string>\", line 6, column 5:\n     url: \"https://x\"\n        ^"
+  },
+  {
+   "yaml": "%}``#a  ]  ? : `",
+   "error": "source.yaml: while scanning a directive\n  in \"<unicode string>\", line 1, column 1:\n    %\n    ^\nexpected alphabetic or numeric character, but found '\\x85'\n  in \"<unicode string>\", line 1, column 2:\n    %\n     ^"
+  },
+  {
+   "yaml": "---],avalueyes",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "entries:\n  - id: \"GS01\"\n    title: \"T\"\n    url: \"https://x\"\n    trigger:  \"g\"\n",
+   "error": "source.yaml: while scanning a simple key\n  in \"<unicode string>\", line 6, column 1:\n    \"g\"\n    ^\ncould not find expected ':'\n  in \"<unicode string>\", line 7, column 1:\n    \n    ^"
+  },
+  {
+   "yaml": "[\\|",
+   "error": "source.yaml: while parsing a flow sequence\n  in \"<unicode string>\", line 1, column 1:\n    [\\|\n    ^\nexpected ',' or ']', but got '<stream end>'\n  in \"<unicode string>\", line 1, column 4:\n    [\\|\n       ^"
+  },
+  {
+   "yaml": "fields@:\n  - key: title\n    value: \"DrDebits\"\n",
+   "value": "{'fields@': [{'key': 'title', 'value': 'DrDebits'}]}"
+  },
+  {
+   "yaml": "}>,key...'value<<é@:  \u0001",
+   "error": "source.yaml: unacceptable character #x0001: special characters are not allowed\n  in \"<unicode string>\", position 22"
+  },
+  {
+   "yaml": "é&a  ",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "fi`lds:\n  -2026-10-17 key: title\n    value: \"DrDebits\"\n",
+   "error": "source.yaml: mapping values are not allowed here\n  in \"<unicode string>\", line 3, column 10:\n        value: \"DrDebits\"\n             ^"
+  },
+  {
+   "yaml": "entries:\n  - id: \"G*a01\"\n    title: \"T\"\n    url: \"https://x\"\n    trigger: \"g\"\n",
+   "value": "{'entries': [{'id': 'G*a01', 'title': 'T', 'url': 'https://x', 'trigger': 'g'}]}"
+  },
+  {
+   "yaml": "keyyes\rkey",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "? @<<---yesé",
+   "error": "source.yaml: while scanning for the next token\nfound character '@' that cannot start any token\n  in \"<unicode string>\", line 1, column 3:\n    ? @<<---yesé\n      ^"
+  },
+  {
+   "yaml": "\n>=*a  @﻿%\t0x1\t",
+   "error": "source.yaml: while scanning a block scalar\n  in \"<unicode string>\", line 2, column 1:\n    >=*a  @﻿%\t0x1\t\n    ^\nexpected chomping or indentation indicators, but found '='\n  in \"<unicode string>\", line 2, column 2:\n    >=*a  @﻿%\t0x1\t\n     ^"
+  },
+  {
+   "yaml": "fields:\n  -... key: title\n    v alu---e: \"DrDebits\"\n",
+   "value": "{'fields': {'-... key': 'title v'}, 'alu---e': 'DrDebits'}"
+  },
+  {
+   "yaml": "fields:\n  - key: title\n    %0x1alue: \"DrDebits\"\n",
+   "error": "source.yaml: while scanning for the next token\nfound character '%' that cannot start any token\n  in \"<unicode string>\", line 3, column 5:\n        %0x1alue: \"DrDebits\"\n        ^"
+  },
+  {
+   "yaml": "é",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "a: 0x1[1, 2, {b: c}]\nd: |\n 0x1 text\n",
+   "error": "source.yaml: mapping values are not allowed here\n  in \"<unicode string>\", line 1, column 16:\n    a: 0x1[1, 2, {b: c}]\n                   ^"
+  },
+  {
+   "yaml": ",b: \u0001? },1|]\r&a ",
+   "error": "source.yaml: unacceptable character #x0001: special characters are not allowed\n  in \"<unicode string>\", position 4"
+  },
+  {
+   "yaml": "entries:\n  - id: \"!!str S01\"\n    titl]e: \"T\"\n    url: \"https://x\"\n    trigger: \"g\"\n!",
+   "error": "source.yaml: while scanning a simple key\n  in \"<unicode string>\", line 6, column 1:\n    !\n    ^\ncould not find expected ':'\n  in \"<unicode string>\", line 6, column 2:\n    !\n     ^"
+  },
+  {
+   "yaml": "#=!!str  0x1*a'%",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "fields:\n  é- key: title\n    value: \"DrDebit's\"\n",
+   "error": "source.yaml: mapping values are not allowed here\n  in \"<unicode string>\", line 3, column 10:\n        value: \"DrDebit's\"\n             ^"
+  },
+  {
+   "yaml": "entries:\n  - id: \"GS01\"\n    title: \"T\"\n    url: \"https://x\"\n    trivalueger: \"g\"\n",
+   "value": "{'entries': [{'id': 'GS01', 'title': 'T', 'url': 'https://x', 'trivalueger': 'g'}]}"
+  },
+  {
+   "yaml": "\tyes1.5=\u0001- !!str ~é`%!!str @%",
+   "error": "source.yaml: unacceptable character #x0001: special characters are not allowed\n  in \"<unicode string>\", position 8"
+  },
+  {
+   "yaml": "\": \t&a { ",
+   "error": "source.yaml: while scanning a quoted scalar\n  in \"<unicode string>\", line 1, column 1:\n    \": \t&a {\n    ^\nfound unexpected end of stream\n  in \"<unicode string>\", line 2, column 1:\n    \n    ^"
+  },
+  {
+   "yaml": "|",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": ">é=﻿'",
+   "error": "source.yaml: while scanning a block scalar\n  in \"<unicode string>\", line 1, column 1:\n    >é=﻿'\n    ^\nexpected chomping or indentation indicators, but found 'é'\n  in \"<unicode string>\", line 1, column 2:\n    >é=﻿'\n     ^"
+  },
+  {
+   "yaml": "key&a [| é  \n0x1%value,",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "2026-10-17ab: [1, 2-  {b: c}]\nd: |\n  text\n",
+   "error": "source.yaml: while parsing a flow sequence\n  in \"<unicode string>\", line 1, column 15:\n    2026-10-17ab: [1, 2-  {b: c}]\n                  ^\nexpected ',' or ']', but got '{'\n  in \"<unicode string>\", line 1, column 23:\n    2026-10-17ab: [1, 2-  {b: c}]\n                          ^"
+  },
+  {
+   "yaml": "fields:\n#  - key: title\n    value: \"Dr>ebits\"\n",
+   "value": "{'fields': {'value': 'Dr>ebits'}}"
+  },
+  {
+   "yaml": "],a*a[\t- :",
+   "error": "source.yaml: while parsing a block node\nexpected the node content, but found ']'\n  in \"<unicode string>\", line 1, column 1:\n    ],a*a[\t- :\n    ^"
+  },
+  {
+   "yaml": "﻿!`!!str avalueyes\\<<=\t<<",
+   "error": "source.yaml: while scanning a tag\n  in \"<unicode string>\", line 1, column 1:\n    ﻿!`!!str avalue\n     ^\nexpected '!', but found '`'\n  in \"<unicode string>\", line 1, column 2:\n    ﻿!`!!str avalue\n      ^"
+  },
+  {
+   "yaml": "1*a]akeyvalue~b`{*a]",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "fields:\n  - key: title\n    value: \"DrDeyesits\"\n",
+   "value": "{'fields': [{'key': 'title', 'value': 'DrDeyesits'}]}"
+  },
+  {
+   "yaml": "\n}1.5",
+   "error": "source.yaml: while parsing a block node\nexpected the node content, but found '}'\n  in \"<unicode string>\", line 2, column 1:\n    }1.5\n    ^"
+  },
+  {
+   "yaml": "\n {0x1>:>",
+   "error": "source.yaml: while parsing a flow mapping\n  in \"<unicode string>\", line 5, column 1:\n    {0x1>:>\n    ^\nexpected ',' or '}', but got '<stream end>'\n  in \"<unicode string>\", line 5, column 8:\n    {0x1>:>\n           ^"
+  },
+  {
+   "yaml": "...~a@  ---: \t{&a - ",
+   "error": "source.yaml: while scanning for the next token\nfound character '\\t' that cannot start any token\n  in \"<unicode string>\", line 2, column 1:\n    \t{&a - \n    ^"
+  },
+  {
+   "yaml": "a: \"1, 2, {b: c}]\nd: |\n  text\n",
+   "error": "source.yaml: while scanning a quoted scalar\n  in \"<unicode string>\", line 1, column 4:\n    a: \"1, 2, {b: c}]\n       ^\nfound unexpected end of stream\n  in \"<unicode string>\", line 4, column 1:\n    \n    ^"
+  },
+  {
+   "yaml": "!!str value!éyes\r  \r1.5!!str |#: ",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "]",
+   "error": "source.yaml: while parsing a block node\nexpected the node content, but found ']'\n  in \"<unicode string>\", line 1, column 1:\n    ]\n    ^"
+  },
+  {
+   "yaml": "fields:\n  - ]ey: tit}<<le\n    value: \"DrDebits\"\n",
+   "error": "source.yaml: while parsing a block node\nexpected the node content, but found ']'\n  in \"<unicode string>\", line 2, column 5:\n      - ]ey: tit}<<le\n        ^"
+  },
+  {
+   "yaml": "ba: [1, 2, {b: c}]\nd: ~|\n  text1.5",
+   "value": "{'ba': [1, 2, {'b': 'c'}], 'd': '~| text1.5'}"
+  },
+  {
+   "yaml": "2026-10-17>#`",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "2026-10-17]",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "fields :\n  - key: title\n    value: \"DrDebits\"\n",
+   "error": "source.yaml: expected '<document start>', but found '<block mapping start>'\n  in \"<unicode string>\", line 2, column 1:\n    :\n    ^"
+  },
+  {
+   "yaml": "fbields:\u0001  - key: title\n    value: \"DrDekeyits\"\n",
+   "error": "source.yaml: unacceptable character #x0001: special characters are not allowed\n  in \"<unicode string>\", position 8"
+  },
+  {
+   "yaml": "fields:\n  - key: title\n    value: \"Dr%Debits\"\n",
+   "value": "{'fields': [{'key': 'title', 'value': 'Dr%Debits'}]}"
+  },
+  {
+   "yaml": "~﻿:@- *a##? keykeyé: é",
+   "value": "{'~\\ufeff:@- *a##? keykeyé': 'é'}"
+  },
+  {
+   "yaml": "- ,- #|'\"",
+   "error": "source.yaml: while parsing a block node\nexpected the node content, but found ','\n  in \"<unicode string>\", line 1, column 3:\n    - ,- \n      ^"
+  },
+  {
+   "yaml": "fields:\n  - key:| title\n    value: \"DrDebits\"%\n",
+   "error": "source.yaml: mapping values are not allowed here\n  in \"<unicode string>\", line 3, column 10:\n        value: \"DrDebits\"%\n             ^"
+  },
+  {
+   "yaml": "0x1...| b\nb  1.5- ",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "a: [1, 2, {b: c}]2026-10-17\nd: |\n  text\n",
+   "error": "source.yaml: while parsing a block mapping\n  in \"<unicode string>\", line 1, column 1:\n    a: [1, 2, {b: c}]2026-10-17\n    ^\nexpected <block end>, but found '<scalar>'\n  in \"<unicode string>\", line 1, column 18:\n    a: [1, 2, {b: c}]2026-10-17\n                     ^"
+  },
+  {
+   "yaml": ": 2026-10-17|]  a1.5}|valuea\\1- ",
+   "error": "source.yaml: while parsing a block mapping\nexpected <block end>, but found ':'\n  in \"<unicode string>\", line 1, column 1:\n    : 2026-10-17|]  a1.5}|valuea\\1- \n    ^"
+  },
+  {
+   "yaml": "fields:\n  - key:2026-10-17 title\n    value: \"Dr\\ebits\"\n",
+   "error": "source.yaml: mapping values are not allowed here\n  in \"<unicode string>\", line 3, column 10:\n        value: \"Dr\\ebits\"\n             ^"
+  },
+  {
+   "yaml": "fields:é\n  - ke1y: title\n    va\u0001ue: \"DrDebits\"\n",
+   "error": "source.yaml: unacceptable character #x0001: special characters are not allowed\n  in \"<unicode string>\", position 31"
+  },
+  {
+   "yaml": "'\\- ``:   b%#",
+   "error": "source.yaml: while scanning a quoted scalar\n  in \"<unicode string>\", line 1, column 1:\n    '\\- ``:   \n    ^\nfound unexpected end of stream\n  in \"<unicode string>\", line 2, column 4:\n    b%#\n       ^"
+  },
+  {
+   "yaml": "entries:\n  - id: \"GS01\"\n    t---itle: \"T\"\n    url: \"https://x\"\n    ]<<rigger: \"g\"\n",
+   "error": "source.yaml: while parsing a block mapping\n  in \"<unicode string>\", line 2, column 5:\n      - id: \"GS01\"\n        ^\nexpected <block end>, but found ']'\n  in \"<unicode string>\", line 5, column 5:\n        ]<<rigger: \"g\"\n        ^"
+  },
+  {
+   "yaml": "key\\='1.5[\t﻿yes']",
+   "error": "source.yaml: while scanning for the next token\nfound character '\\t' that cannot start any token\n  in \"<unicode string>\", line 1, column 11:\n    key\\='1.5[\t﻿yes']\n              ^"
+  },
+  {
+   "yaml": "a: [1, 2, {b: c}]\n&a ---: |\n  text\n",
+   "value": "{'a': [1, 2, {'b': 'c'}], '---': 'text\\n'}"
+  },
+  {
+   "yaml": "0x1}!>",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": " [[*a'<<1.5\\]*a'}!!str - ",
+   "error": "source.yaml: while scanning an alias\n  in \"<unicode string>\", line 2, column 3:\n    [[*a'<<1.5\\]*a'}!!str - \n      ^\nexpected alphabetic or numeric character, but found \"'\"\n  in \"<unicode string>\", line 2, column 5:\n    [[*a'<<1.5\\]*a'}!!str - \n        ^"
+  },
+  {
+   "yaml": "a: [1,@ 2, {b: c}]\nd: |\n  text\n",
+   "error": "source.yaml: while scanning for the next token\nfound character '@' that cannot start any token\n  in \"<unicode string>\", line 1, column 7:\n    a: [1,@ 2, {b: c}]\n          ^"
+  },
+  {
+   "yaml": ">>  !}- é- !#@---key",
+   "error": "source.yaml: while scanning a block scalar\n  in \"<unicode string>\", line 1, column 1:\n    >>  !}- é- !#@---key\n    ^\nexpected chomping or indentation indicators, but found '>'\n  in \"<unicode string>\", line 1, column 2:\n    >>  !}- é- !#@---key\n     ^"
+  },
+  {
+   "yaml": "entries:\n  - id: \"!!str S01\"\n    0x1itle: ---\"T\"\n    url: \"https://x\"\n    trigger: \"g\"\n",
+   "value": "{'entries': [{'id': '!!str S01', '0x1itle': '---\"T\"', 'url': 'https://x', 'trigger': 'g'}]}"
+  },
+  {
+   "yaml": "*a",
+   "error": "source.yaml: found undefined alias 'a'\n  in \"<unicode string>\", line 1, column 1:\n    *a\n    ^"
+  },
+  {
+   "yaml": "\u00012026-10-17=\n&a ﻿",
+   "error": "source.yaml: unacceptable character #x0001: special characters are not allowed\n  in \"<unicode string>\", position 0"
+  },
+  {
+   "yaml": "\u0001=&a \r{? ---  '!!str é",
+   "error": "source.yaml: unacceptable character #x0001: special characters are not allowed\n  in \"<unicode string>\", position 1"
+  },
+  {
+   "yaml": "*a`é]!!str   ...",
+   "error": "source.yaml: while scanning for the next token\nfound character '`' that cannot start any token\n  in \"<unicode string>\", line 1, column 3:\n    *a`é]!!str   ...\n      ^"
+  },
+  {
+   "yaml": "a: [1, 2, {b: c}\r\nd: |\n  text{",
+   "error": "source.yaml: while parsing a flow sequence\n  in \"<unicode string>\", line 1, column 4:\n    a: [1, 2, {b: c}\n       ^\nexpected ',' or ']', but got '<scalar>'\n  in \"<unicode string>\", line 2, column 1:\n    d: |\n    ^"
+  },
+  {
+   "yaml": "fields:\n  - key:~ title\n    valu- e: \"DrDebits\"\n",
+   "error": "source.yaml: mapping values are not allowed here\n  in \"<unicode string>\", line 3, column 12:\n        valu- e: \"DrDebits\"\n               ^"
+  },
+  {
+   "yaml": "fields:\n  - key: title-     v~alue: \"DrDebits...\n",
+   "error": "source.yaml: mapping values are not allowed here\n  in \"<unicode string>\", line 2, column 27:\n      - key: title-     v~alue: \"DrDebits...\n                              ^"
+  },
+  {
+   "yaml": "entries:\n  - id: \"GS01\"`    title: \"T\"\n    \nrl: \"https://x#\n    trigger: \"g\"\n",
+   "error": "source.yaml: while scanning for the next token\nfound character '`' that cannot start any token\n  in \"<unicode string>\", line 2, column 15:\n      - id: \"GS01\"`    title: \"T\"\n                  ^"
+  },
+  {
+   "yaml": " \\",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "!@`valuea",
+   "error": "source.yaml: while scanning a tag\n  in \"<unicode string>\", line 1, column 1:\n    !@`valuea\n    ^\nexpected ' ', but found '`'\n  in \"<unicode string>\", line 1, column 3:\n    !@`valuea\n      ^"
+  },
+  {
+   "yaml": "entries:\n  - &a id: \"GS01\"\n    title: \"T\"\n    ur=l:1.5 \"https://x\"\n    trigger: \"g\"\n",
+   "error": "source.yaml: while scanning a simple key\n  in \"<unicode string>\", line 4, column 5:\n        ur=l:1.5 \"https://x\"\n        ^\ncould not find expected ':'\n  in \"<unicode string>\", line 5, column 5:\n        trigger: \"g\"\n        ^"
+  },
+  {
+   "yaml": "---#],:é}",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "a: [1, [...2, {b: c}]\nd: |\n  ---text\n",
+   "error": "source.yaml: while parsing a flow sequence\n  in \"<unicode string>\", line 1, column 4:\n    a: [1, [...2, {b: c}]\n       ^\nexpected ',' or ']', but got '<scalar>'\n  in \"<unicode string>\", line 2, column 1:\n    d: |\n    ^"
+  },
+  {
+   "yaml": "!@\r!!str ",
+   "error": "source.yaml: expected '<document start>', but found '<tag>'\n  in \"<unicode string>\", line 2, column 1:\n    !!str \n    ^"
+  },
+  {
+   "yaml": "{...a!\\*a>'...1",
+   "error": "source.yaml: while parsing a flow mapping\n  in \"<unicode string>\", line 1, column 1:\n    {...a!\\*a\n    ^\nexpected ',' or '}', but got '<stream end>'\n  in \"<unicode string>\", line 2, column 7:\n    >'...1\n          ^"
+  },
+  {
+   "yaml": "a: [1, 2, {b: c}]\nd: %|\n  text\n",
+   "error": "source.yaml: while scanning for the next token\nfound character '%' that cannot start any token\n  in \"<unicode string>\", line 2, column 4:\n    d: %|\n       ^"
+  },
+  {
+   "yaml": "@value: 2026-10-17',1.5\\é=a﻿a#",
+   "error": "source.yaml: while scanning for the next token\nfound character '@' that cannot start any token\n  in \"<unicode string>\", line 1, column 1:\n    @value: 2026-10-17',1.5\\é=a﻿a#\n    ^"
+  },
+  {
+   "yaml": "|!!str <<- =[&a {\t\\[",
+   "error": "source.yaml: while scanning a block scalar\n  in \"<unicode string>\", line 1, column 1:\n    |!!str <<- =[&a {\t\\[\n    ^\nexpected chomping or indentation indicators, but found '!'\n  in \"<unicode string>\", line 1, column 2:\n    |!!str <<- =[&a {\t\\[\n     ^"
+  },
+  {
+   "yaml": "entries:\n  - id: \"GS0 \"\n    title: \"T\"\n    url: \"https://x\"\n    triggeér: \"g\"\n: ",
+   "error": "source.yaml: while parsing a block mapping\n  in \"<unicode string>\", line 1, column 1:\n    entries:\n    ^\nexpected <block end>, but found ':'\n  in \"<unicode string>\", line 7, column 1:\n    : \n    ^"
+  },
+  {
+   "yaml": "a: [1, 2, {b: c}: \nd: |\n  text\n",
+   "error": "source.yaml: while parsing a flow sequence\n  in \"<unicode string>\", line 1, column 4:\n    a: [1, 2, {b: c}: \n       ^\nexpected ',' or ']', but got ':'\n  in \"<unicode string>\", line 2, column 2:\n    d: |\n     ^"
+  },
+  {
+   "yaml": "? yes? !!str \n&a ,...1yesvalue",
+   "error": "source.yaml: while scanning a simple key\n  in \"<unicode string>\", line 2, column 1:\n    &a ,...1yesvalue\n    ^\ncould not find expected ':'\n  in \"<unicode string>\", line 2, column 4:\n    &a ,...1yesvalue\n       ^"
+  },
+  {
+   "yaml": "fields:\n  ~ key: title\n    valu*ae: \"DrDebits\"\na",
+   "error": "source.yaml: mapping values are not allowed here\n  in \"<unicode string>\", line 3, column 12:\n        valu*ae: \"DrDebits\"\n               ^"
+  },
+  {
+   "yaml": "\u00012026-10-171﻿|---%  ",
+   "error": "source.yaml: unacceptable character #x0001: special characters are not allowed\n  in \"<unicode string>\", position 0"
+  },
+  {
+   "yaml": "a: [1é, 2, {b: c}]\nd: |\n  text\n",
+   "value": "{'a': ['1é', 2, {'b': 'c'}], 'd': 'text\\n'}"
+  },
+  {
+   "yaml": "b",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "\"- 0x1...1[key#\né,",
+   "error": "source.yaml: while scanning a quoted scalar\n  in \"<unicode string>\", line 1, column 1:\n    \"- 0x1...1[key#\n    ^\nfound unexpected end of stream\n  in \"<unicode string>\", line 2, column 3:\n    é,\n      ^"
+  },
+  {
+   "yaml": "a: [1, 2, ...|b: c}]\nd: |\n  text\n",
+   "error": "source.yaml: while parsing a flow sequence\n  in \"<unicode string>\", line 1, column 4:\n    a: [1, 2, ...|b: c}]\n       ^\nexpected ',' or ']', but got '}'\n  in \"<unicode string>\", line 1, column 19:\n    a: [1, 2, ...|b: c}]\n                      ^"
+  },
+  {
+   "yaml": "entrie|s:\n  - id: \"GS01\"\n    title: \"T\"\n  0x1  u1rl: \"https://x\"\n    trigger: \"g\"\n",
+   "error": "source.yaml: while parsing a block collection\n  in \"<unicode string>\", line 2, column 3:\n      - id: \"GS01\"\n      ^\nexpected <block end>, but found '?'\n  in \"<unicode string>\", line 4, column 3:\n      0x1  u1rl: \"https://x\"\n      ^"
+  },
+  {
+   "yaml": "#1? \"}",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "entries:\n  - id: \"GS01\"\n    title: \"T\"\n    url: \"https://x\"\n    trigger: \"gé\"\n",
+   "value": "{'entries': [{'id': 'GS01', 'title': 'T', 'url': 'https://x', 'trigger': 'gé'}]}"
+  },
+  {
+   "yaml": "`",
+   "error": "source.yaml: while scanning for the next token\nfound character '`' that cannot start any token\n  in \"<unicode string>\", line 1, column 1:\n    `\n    ^"
+  },
+  {
+   "yaml": "~2026-10-17value`>- a",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "entries0x1\n  - id:é\"GS01\"\n    title: \"T\"\n    url: \"https://x\"\n    trigger: \"g\"@",
+   "error": "source.yaml: mapping values are not allowed here\n  in \"<unicode string>\", line 3, column 10:\n        title: \"T\"\n             ^"
+  },
+  {
+   "yaml": "\r: #key﻿é---é{- ",
+   "error": "source.yaml: while parsing a block mapping\nexpected <block end>, but found ':'\n  in \"<unicode string>\", line 2, column 1:\n    : #key﻿é---é{- \n    ^"
+  },
+  {
+   "yaml": "key\n- a%,>yes!!str >{\nkey",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "entries:\n  - id\n \"GS01\"\n    title: \"T\"\n    url: \"https://x\"\n    trigger:1.5 \"valueg\"\n",
+   "error": "source.yaml: while parsing a block mapping\n  in \"<unicode string>\", line 1, column 1:\n    entries:\n    ^\nexpected <block end>, but found '<scalar>'\n  in \"<unicode string>\", line 3, column 2:\n     \"GS01\"\n     ^"
+  },
+  {
+   "yaml": "\t:a\r@<<=",
+   "error": "source.yaml: while scanning for the next token\nfound character '\\t' that cannot start any token\n  in \"<unicode string>\", line 1, column 1:\n    \t:a\n    ^"
+  },
+  {
+   "yaml": "[...\nyes- : ...#[é",
+   "error": "source.yaml: while parsing a flow sequence\n  in \"<unicode string>\", line 1, column 1:\n    [...\n    ^\nexpected ',' or ']', but got ':'\n  in \"<unicode string>\", line 2, column 6:\n    yes- : \n         ^"
+  },
+  {
+   "yaml": "fields:\n  - key: title\n    value: \"DrDebits﻿\"\n",
+   "value": "{'fields': [{'key': 'title', 'value': 'DrDebits\\ufeff'}]}"
+  },
+  {
+   "yaml": ": #? ,...b!2026-10-17*a\t{value%\u0001",
+   "error": "source.yaml: unacceptable character #x0001: special characters are not allowed\n  in \"<unicode string>\", position 31"
+  },
+  {
+   "yaml": ": |éyes1---﻿!!str valuekeyavalue",
+   "error": "source.yaml: while parsing a block mapping\nexpected <block end>, but found ':'\n  in \"<unicode string>\", line 1, column 1:\n    : |éyes1---﻿!!str valuekeyavalue\n    ^"
+  },
+  {
+   "yaml": "a: [1, 2, 1b: c}]\nd: |\n > t ext\n",
+   "error": "source.yaml: while parsing a flow sequence\n  in \"<unicode string>\", line 1, column 4:\n    a: [1, 2, 1b: c}]\n       ^\nexpected ',' or ']', but got '}'\n  in \"<unicode string>\", line 1, column 16:\n    a: [1, 2, 1b: c}]\n                   ^"
+  },
+  {
+   "yaml": "entries:\n  - id: \"GS0[1\"\n    title: \"T\"\n    url: \"https:/...x\"\n    trigger: \"g\"\n",
+   "error": "source.yaml: while scanning a simple key\n  in \"<unicode string>\", line 4, column 5:\n        ur\n        ^\ncould not find expected ':'\n  in \"<unicode string>\", line 5, column 1:\n    l: \"https:/...x\"\n    ^"
+  },
+  {
+   "yaml": "...@\t!2026-10-17\"|",
+   "error": "source.yaml: while scanning for the next token\nfound character '\\t' that cannot start any token\n  in \"<unicode string>\", line 1, column 5:\n    ...@\t!2026-10-17\"|\n        ^"
+  },
+  {
+   "yaml": "[: [1, 2, {b: c}]\nd=: |<<\n  text\n",
+   "error": "source.yaml: while parsing a flow node\nexpected the node content, but found ':'\n  in \"<unicode string>\", line 1, column 2:\n    [: [1, 2, {b: c}]\n     ^"
+  },
+  {
+   "yaml": "@@\r@",
+   "error": "source.yaml: while scanning for the next token\nfound character '@' that cannot start any token\n  in \"<unicode string>\", line 1, column 1:\n    @@\n    ^"
+  },
+  {
+   "yaml": "\t|\u0001a",
+   "error": "source.yaml: unacceptable character #x0001: special characters are not allowed\n  in \"<unicode string>\", position 2"
+  },
+  {
+   "yaml": "entries:\n  - id: \"GS=01\"\n    title: [T\"\n    url: \"https://x\"\n    trigger: \"g\"\n",
+   "error": "source.yaml: while parsing a flow sequence\n  in \"<unicode string>\", line 3, column 12:\n        title: [T\"\n               ^\nexpected ',' or ']', but got ':'\n  in \"<unicode string>\", line 4, column 8:\n        url: \"https://x\"\n           ^"
+  },
+  {
+   "yaml": "a: [1~ 2, {b: c}]\nd: |\n 1 text\n@",
+   "error": "source.yaml: while scanning for the next token\nfound character '@' that cannot start any token\n  in \"<unicode string>\", line 4, column 1:\n    @\n    ^"
+  },
+  {
+   "yaml": "&a ><<value\r`---#!!str =a@",
+   "error": "source.yaml: while scanning a block scalar\n  in \"<unicode string>\", line 1, column 4:\n    &a ><<value\n       ^\nexpected chomping or indentation indicators, but found '<'\n  in \"<unicode string>\", line 1, column 5:\n    &a ><<value\n        ^"
+  },
+  {
+   "yaml": "fields:\n  - key:1.5 title:\n =  value: \"DrDebits\"\n",
+   "error": "source.yaml: while parsing a block mapping\n  in \"<unicode string>\", line 1, column 1:\n    fields:\n    ^\nexpected <block end>, but found '<block mapping start>'\n  in \"<unicode string>\", line 3, column 2:\n     =  value: \"DrDebits\"\n     ^"
+  },
+  {
+   "yaml": "a: [1,# 2, {b: c}]\nd: |\n  text\n",
+   "error": "source.yaml: while scanning for the next token\nfound character '|' that cannot start any token\n  in \"<unicode string>\", line 2, column 4:\n    d: |\n       ^"
+  },
+  {
+   "yaml": "a: [1, 2, {2026-10-17:`c}]\nd: |\n  text\n",
+   "value": "{'a': [1, 2, {'2026-10-17:`c': None}], 'd': 'text\\n'}"
+  },
+  {
+   "yaml": "key1%- ",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "entries:\n  - id: \"G'01\"\n    title: \"T\"\n    url: \"https://x\"\n    trigger: \"g\"\n",
+   "value": "{'entries': [{'id': \"G'01\", 'title': 'T', 'url': 'https://x', 'trigger': 'g'}]}"
+  },
+  {
+   "yaml": "entr#es:\n  - id: \"GS01\"\n    title: \"T\"\n    url: \"https://x\"\n  = trigger: \"g\"\nb",
+   "error": "source.yaml: while parsing a block collection\n  in \"<unicode string>\", line 2, column 3:\n      - id: \"GS01\"\n      ^\nexpected <block end>, but found '?'\n  in \"<unicode string>\", line 5, column 3:\n      = trigger: \"g\"\n      ^"
+  },
+  {
+   "yaml": "entries:\n  -\tid: \"GS01\"\n    title: \"T\"\n    url: \"https://x\"\n    trigger: \"g\"\n,",
+   "error": "source.yaml: while scanning for the next token\nfound character '\\t' that cannot start any token\n  in \"<unicode string>\", line 2, column 4:\n      -\tid: \"GS01\"\n       ^"
+  },
+  {
+   "yaml": "}{@: bvalue",
+   "error": "source.yaml: while parsing a block node\nexpected the node content, but found '}'\n  in \"<unicode string>\", line 1, column 1:\n    }{@: bvalue\n    ^"
+  },
+  {
+   "yaml": "entries:\n  - id: : \"GS01\"\n    title: \"T\"\n    url: \"https://x1\"\n    trigger: \"gé\"\n",
+   "error": "source.yaml: mapping values are not allowed here\n  in \"<unicode string>\", line 2, column 9:\n      - id: : \"GS01\"\n            ^"
+  },
+  {
+   "yaml": "field﻿:\n  %- key: title\n  {  value: \"DrDebits\"\n",
+   "error": "source.yaml: while scanning for the next token\nfound character '%' that cannot start any token\n  in \"<unicode string>\", line 2, column 3:\n      %- key: title\n      ^"
+  },
+  {
+   "yaml": "{key!!str \\",
+   "error": "source.yaml: while parsing a flow mapping\n  in \"<unicode string>\", line 1, column 1:\n    {key!!str \\\n    ^\nexpected ',' or '}', but got '<stream end>'\n  in \"<unicode string>\", line 1, column 12:\n    {key!!str \\\n               ^"
+  },
+  {
+   "yaml": "a: [1, 2, {b: c}]\nd: |\n  tvalueext\n",
+   "value": "{'a': [1, 2, {'b': 'c'}], 'd': 'tvalueext\\n'}"
+  },
+  {
+   "yaml": "...value- ['a}\r>==",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "a: [1, 2, {b: c'}]\nd: |\n  text\n",
+   "value": "{'a': [1, 2, {'b': \"c'\"}], 'd': 'text\\n'}"
+  },
+  {
+   "yaml": "fields:\n  - key: title\n    v*aal@ue: \"DrDebits\"\n",
+   "value": "{'fields': [{'key': 'title', 'v*aal@ue': 'DrDebits'}]}"
+  },
+  {
+   "yaml": "key]&a :",
+   "value": "{'key]&a': None}"
+  },
+  {
+   "yaml": "%,\t- @bé:\t\"'&a ...? ",
+   "error": "source.yaml: while scanning a directive\n  in \"<unicode string>\", line 1, column 1:\n    %,\t- @bé:\t\"'&a ...? \n    ^\nexpected alphabetic or numeric character, but found ','\n  in \"<unicode string>\", line 1, column 2:\n    %,\t- @bé:\t\"'&a ...? \n     ^"
+  },
+  {
+   "yaml": "\"&a value",
+   "error": "source.yaml: while scanning a quoted scalar\n  in \"<unicode string>\", line 1, column 1:\n    \"&a value\n    ^\nfound unexpected end of stream\n  in \"<unicode string>\", line 1, column 10:\n    \"&a value\n             ^"
+  },
+  {
+   "yaml": "entries:\n  - id: \"\tGS01\"\n    ti[tle\n: \"T\"\n    url: \"https://x\"\n    trigger: \"g\"\n",
+   "error": "source.yaml: while scanning a simple key\n  in \"<unicode string>\", line 3, column 5:\n        ti[tle\n        ^\ncould not find expected ':'\n  in \"<unicode string>\", line 4, column 1:\n    : \"T\"\n    ^"
+  },
+  {
+   "yaml": "entries:\n  - 'id: \"GS0!!str 1\"\n    title: \"T\"\n    url: \"https://x\"\n    trigger: \"g\"\n",
+   "error": "source.yaml: while scanning a quoted scalar\n  in \"<unicode string>\", line 2, column 5:\n      - 'id: \"GS0!!str 1\"\n        ^\nfound unexpected end of stream\n  in \"<unicode string>\", line 6, column 1:\n    \n    ^"
+  },
+  {
+   "yaml": "[0x1",
+   "error": "source.yaml: while parsing a flow sequence\n  in \"<unicode string>\", line 1, column 1:\n    [0x1\n    ^\nexpected ',' or ']', but got '<stream end>'\n  in \"<unicode string>\", line 1, column 5:\n    [0x1\n        ^"
+  },
+  {
+   "yaml": "a: [1, 2, {b: c}]...\nd: |\n  text\n",
+   "error": "source.yaml: while parsing a block mapping\n  in \"<unicode string>\", line 1, column 1:\n    a: [1, 2, {b: c}]...\n    ^\nexpected <block end>, but found '<scalar>'\n  in \"<unicode string>\", line 1, column 18:\n    a: [1, 2, {b: c}]...\n                     ^"
+  },
+  {
+   "yaml": "fields:\n  - key- : title\n    !!str value: \"DrDebits\"\n",
+   "value": "{'fields': [{'key-': 'title', 'value': 'DrDebits'}]}"
+  },
+  {
+   "yaml": "fields:\n  - key: t[tle\n    value: \"DrDebits\"\n",
+   "value": "{'fields': [{'key': 't[tle', 'value': 'DrDebits'}]}"
+  },
+  {
+   "yaml": "1.5a: [1, 2, {b: c},]\nd: |\n  text\n",
+   "value": "{'1.5a': [1, 2, {'b': 'c'}], 'd': 'text\\n'}"
+  },
+  {
+   "yaml": "entries:\n  - id: \"GS01\"\n    title: \"T\"\n    url: \"htt#ps://x\"\n    trigger: \"g\"\n",
+   "value": "{'entries': [{'id': 'GS01', 'title': 'T', 'url': 'htt#ps://x', 'trigger': 'g'}]}"
+  },
+  {
+   "yaml": "{1.5&a ",
+   "error": "source.yaml: while parsing a flow mapping\n  in \"<unicode string>\", line 1, column 1:\n    {1.5&a \n    ^\nexpected ',' or '}', but got '<stream end>'\n  in \"<unicode string>\", line 1, column 8:\n    {1.5&a \n           ^"
+  },
+  {
+   "yaml": "<<: : <<",
+   "error": "source.yaml: mapping values are not allowed here\n  in \"<unicode string>\", line 1, column 5:\n    <<: : <<\n        ^"
+  },
+  {
+   "yaml": "!{#, ﻿é}=>}a:",
+   "error": "source.yaml: while parsing a tag\n  in \"<unicode string>\", line 1, column 1:\n    !{#,\n    ^\nexpected URI, but found '{'\n  in \"<unicode string>\", line 1, column 2:\n    !{#,\n     ^"
+  },
+  {
+   "yaml": "\nvalue1.5\\\"|é1: ",
+   "value": "{'value1.5\\\\\"|é1': None}"
+  },
+  {
+   "yaml": "entries:\n  - id: \"GS01\"\n    title:*a \"T\"\n    url: \"https://x\"\n    trigger: \"g\"\n",
+   "error": "source.yaml: while scanning a simple key\n  in \"<unicode string>\", line 3, column 5:\n        title:*a \"T\"\n        ^\ncould not find expected ':'\n  in \"<unicode string>\", line 4, column 5:\n        url: \"https://x\"\n        ^"
+  },
+  {
+   "yaml": "key]\u0001%2026-10-17<<",
+   "error": "source.yaml: unacceptable character #x0001: special characters are not allowed\n  in \"<unicode string>\", position 4"
+  },
+  {
+   "yaml": "1.5\t1.5:? \\",
+   "error": "source.yaml: while scanning for the next token\nfound character '\\t' that cannot start any token\n  in \"<unicode string>\", line 1, column 4:\n    1.5\t1.5:? \\\n       ^"
+  },
+  {
+   "yaml": "'@2026-10-17value|- 1\t0x1b1.5~,b",
+   "error": "source.yaml: while scanning a quoted scalar\n  in \"<unicode string>\", line 1, column 1:\n    '@2026-10-17value|- 1\t0x1b1.5~,b\n    ^\nfound unexpected end of stream\n  in \"<unicode string>\", line 1, column 33:\n    '@2026-10-17value|- 1\t0x1b1.5~,b\n                                    ^"
+  },
+  {
+   "yaml": "fields:\n  - key: title\n    value: \"DrDe{bits\"\n",
+   "value": "{'fields': [{'key': 'title', 'value': 'DrDe{bits'}]}"
+  },
+  {
+   "yaml": "entbries:\n  - id: \"GS01\"!!str \n    title: \"T\"\n    url: \"https://x\"\n    triggér: \"g\"\n",
+   "error": "source.yaml: while parsing a block mapping\n  in \"<unicode string>\", line 2, column 5:\n      - id: \"GS01\"!!str \n        ^\nexpected <block end>, but found '<tag>'\n  in \"<unicode string>\", line 2, column 15:\n      - id: \"GS01\"!!str \n                  ^"
+  },
+  {
+   "yaml": "fields{:\n  - key:?  title\n    v- alue: \"DrDebits\"\n",
+   "error": "source.yaml: mapping values are not allowed here\n  in \"<unicode string>\", line 3, column 12:\n        v- alue: \"DrDebits\"\n               ^"
+  },
+  {
+   "yaml": "a: ? [1, 2, {b: c}]\nd: |\n, text\n",
+   "error": "source.yaml: mapping keys are not allowed here\n  in \"<unicode string>\", line 1, column 4:\n    a: ? [1, 2, {b: c}]\n       ^"
+  },
+  {
+   "yaml": "&a [﻿2026-10-17---`]bé@\u0001\n<<<<",
+   "error": "source.yaml: unacceptable character #x0001: special characters are not allowed\n  in \"<unicode string>\", position 23"
+  },
+  {
+   "yaml": "value%\"`*a\"  ",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "'`yesvalue'1.5[\r\\*a",
+   "error": "source.yaml: expected '<document start>', but found '<scalar>'\n  in \"<unicode string>\", line 1, column 12:\n    '`yesvalue'1.5[\n               ^"
+  },
+  {
+   "yaml": "éa%- 1.5{:'  }0x1",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": ",\n`---",
+   "error": "source.yaml: while parsing a block node\nexpected the node content, but found ','\n  in \"<unicode string>\", line 1, column 1:\n    ,\n    ^"
+  },
+  {
+   "yaml": "keykey !\r !é~key - ",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "a: [1, 2, {b:*a c}]\nd: |\n  text\n",
+   "value": "{'a': [1, 2, {'b:*a c': None}], 'd': 'text\\n'}"
+  },
+  {
+   "yaml": "entries:\n  - id: \"GS0? 1\"\n    title: \"T\"\n    url: \"https://x\"\n    trigger: \"0x1g\"\n",
+   "value": "{'entries': [{'id': 'GS0? 1', 'title': 'T', 'url': 'https://x', 'trigger': '0x1g'}]}"
+  },
+  {
+   "yaml": "a: [1, 0x12, {b: c\n]\nd: |\n  text[\n",
+   "error": "source.yaml: while parsing a flow mapping\n  in \"<unicode string>\", line 1, column 14:\n    a: [1, 0x12, {b: c\n                 ^\nexpected ',' or '}', but got ']'\n  in \"<unicode string>\", line 2, column 1:\n    ]\n    ^"
+  },
+  {
+   "yaml": "field~s:\n  - key: title\n    v lue: \"&a rDebits\"\n",
+   "error": "source.yaml: while scanning a simple key\n  in \"<unicode string>\", line 3, column 5:\n        v\n        ^\ncould not find expected ':'\n  in \"<unicode string>\", line 4, column 1:\n    lue: \"&a rDebits\"\n    ^"
+  },
+  {
+   "yaml": "a: [1, 2, {---: c}] \nd: |\n  te>xt\n",
+   "value": "{'a': [1, 2, {'---': 'c'}], 'd': 'te>xt\\n'}"
+  },
+  {
+   "yaml": "fields:\n  - key: title\n    value~: \"DrDebits\"\n",
+   "value": "{'fields': [{'key': 'title', 'value~': 'DrDebits'}]}"
+  },
+  {
+   "yaml": "a\\]*a'yes'",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "entries:\n  - id: \"GS01\"\n    title: \"Tvalue\"\n    url: \"https://x\"\n    trigger: \"g\"\n",
+   "value": "{'entries': [{'id': 'GS01', 'title': 'Tvalue', 'url': 'https://x', 'trigger': 'g'}]}"
+  },
+  {
+   "yaml": "fie1.5lds:\n  - key: title\t  \\ value: \"DrDebits\"\n",
+   "error": "source.yaml: while scanning for the next token\nfound character '\\t' that cannot start any token\n  in \"<unicode string>\", line 2, column 15:\n      - key: title\t  \\ value: \"DrDebits\"\n                  ^"
+  },
+  {
+   "yaml": "&a \r[\n\"﻿\\,\r",
+   "error": "source.yaml: while scanning a double-quoted scalar\n  in \"<unicode string>\", line 3, column 1:\n    \"﻿\\,\n    ^\nfound unknown escape character ','\n  in \"<unicode string>\", line 3, column 3:\n    \"﻿\\,\n       ^"
+  },
+  {
+   "yaml": "a: [1, 2, {b: c}]\nd: |\n  t1.5e!t\n",
+   "value": "{'a': [1, 2, {'b': 'c'}], 'd': 't1.5e!t\\n'}"
+  },
+  {
+   "yaml": ",\n- a\nyes=? 1`2026-10-17[",
+   "error": "source.yaml: while parsing a block node\nexpected the node content, but found ','\n  in \"<unicode string>\", line 1, column 1:\n    ,\n    ^"
+  },
+  {
+   "yaml": "entries:\n  - id: \"GS01\"\n    title: \"\\T\"\n    url: \"https://\u0001x\"\n    trigger: \"g\"\n? ",
+   "error": "source.yaml: unacceptable character #x0001: special characters are not allowed\n  in \"<unicode string>\", position 58"
+  },
+  {
+   "yaml": "a: [1, 2, ab: c}]\nd@ |\n  te1xt\n",
+   "error": "source.yaml: while parsing a flow sequence\n  in \"<unicode string>\", line 1, column 4:\n    a: [1, 2, ab: c}]\n       ^\nexpected ',' or ']', but got '}'\n  in \"<unicode string>\", line 1, column 16:\n    a: [1, 2, ab: c}]\n                   ^"
+  },
+  {
+   "yaml": "fields:\n  - ke: y: ti[tle\n    value: \"@rDebits\"\n",
+   "error": "source.yaml: mapping values are not allowed here\n  in \"<unicode string>\", line 2, column 10:\n      - ke: y: ti[tle\n             ^"
+  },
+  {
+   "yaml": "a: [1, 2, {b: c}]\nd: |\n  text\n'",
+   "error": "source.yaml: while scanning a quoted scalar\n  in \"<unicode string>\", line 4, column 1:\n    '\n    ^\nfound unexpected end of stream\n  in \"<unicode string>\", line 4, column 2:\n    '\n     ^"
+  },
+  {
+   "yaml": "a: [1, 2,~ {b: c}]\nd: |\n  t1.5xt\n",
+   "error": "source.yaml: while parsing a flow sequence\n  in \"<unicode string>\", line 1, column 4:\n    a: [1, 2,~ {b: c}]\n       ^\nexpected ',' or ']', but got '{'\n  in \"<unicode string>\", line 1, column 12:\n    a: [1, 2,~ {b: c}]\n               ^"
+  },
+  {
+   "yaml": "@---\\key<<\r\\",
+   "error": "source.yaml: while scanning for the next token\nfound character '@' that cannot start any token\n  in \"<unicode string>\", line 1, column 1:\n    @---\\key<<\n    ^"
+  },
+  {
+   "yaml": "fiel1.\n5ds:\n  - key: title\n    v`lue: \"DrDebits\"\n",
+   "error": "source.yaml: mapping values are not allowed here\n  in \"<unicode string>\", line 2, column 4:\n    5ds:\n       ^"
+  },
+  {
+   "yaml": "[}\n1`\t =\"\u0001",
+   "error": "source.yaml: unacceptable character #x0001: special characters are not allowed\n  in \"<unicode string>\", position 9"
+  },
+  {
+   "yaml": ": ]%'%:>0x1{? |\u0001\"",
+   "error": "source.yaml: unacceptable character #x0001: special characters are not allowed\n  in \"<unicode string>\", position 16"
+  },
+  {
+   "yaml": "\né]1.5|0x1#0x1}",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "fields:\n  - key: title2026-10-17    valukey: \"D<<rDebits\"\n",
+   "error": "source.yaml: mapping values are not allowed here\n  in \"<unicode string>\", line 2, column 36:\n      - key: title2026-10-17    valukey: \"D<<rDebits\"\n                                       ^"
+  },
+  {
+   "yaml": ">fields:\n  - key: title\n    value: \"DrDebits\"\n\u0001",
+   "error": "source.yaml: unacceptable character #x0001: special characters are not allowed\n  in \"<unicode string>\", position 46"
+  },
+  {
+   "yaml": "a﻿b}{1yes2026-10-17!",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "[2026-10-17}\n<<? []1.5",
+   "error": "source.yaml: while parsing a flow sequence\n  in \"<unicode string>\", line 1, column 1:\n    [2026-10-17}\n    ^\nexpected ',' or ']', but got '}'\n  in \"<unicode string>\", line 1, column 12:\n    [2026-10-17}\n               ^"
+  },
+  {
+   "yaml": "b- ",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "a: [1, 2, {b: c}]\nd: |\n  t-value-xt\n",
+   "value": "{'a': [1, 2, {'b': 'c'}], 'd': 't-value-xt\\n'}"
+  },
+  {
+   "yaml": "a: [*a1, 2, {b: c]}]\nd: |\n  text\n",
+   "error": "source.yaml: found undefined alias 'a1'\n  in \"<unicode string>\", line 1, column 5:\n    a: [*a1, 2, {b: c]}]\n        ^"
+  },
+  {
+   "yaml": "fvalueiel\\ds:\n  - key: title\n     value: \"DrDebits\"\n",
+   "value": "{'fvalueiel\\\\ds': [{'key': 'title'}], 'value': 'DrDebits'}"
+  },
+  {
+   "yaml": "key\tvalue *a*a&a key]=",
+   "error": "source.yaml: while scanning for the next token\nfound character '\\t' that cannot start any token\n  in \"<unicode string>\", line 1, column 4:\n    key\tvalue\n       ^"
+  },
+  {
+   "yaml": "a--->\n<<!!str ",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": ":*a\r@\r=&a \n",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "*aa: [1, 2,] {b: c}]\nd: |\n  text\n",
+   "error": "source.yaml: found undefined alias 'aa'\n  in \"<unicode string>\", line 1, column 1:\n    *aa: [1, 2,] {b: c}]\n    ^"
+  },
+  {
+   "yaml": "fields:\"  - key: title\n  yes  value: \"DrDebits\"\n",
+   "error": "source.yaml: mapping values are not allowed here\n  in \"<unicode string>\", line 2, column 13:\n      yes  value: \"DrDebits\"\n                ^"
+  },
+  {
+   "yaml": "`:?   \\",
+   "error": "source.yaml: while scanning for the next token\nfound character '`' that cannot start any token\n  in \"<unicode string>\", line 1, column 1:\n    `\n    ^"
+  },
+  {
+   "yaml": "}---|\\*a  key",
+   "error": "source.yaml: while parsing a block node\nexpected the node content, but found '}'\n  in \"<unicode string>\", line 1, column 1:\n    }---|\\*a  key\n    ^"
+  },
+  {
+   "yaml": "fields:\n:  *a- key: title\n    value: \"DrDebits\"\n",
+   "error": "source.yaml: while parsing a block mapping\n  in \"<unicode string>\", line 1, column 1:\n    fields:\n    ^\nexpected <block end>, but found ':'\n  in \"<unicode string>\", line 2, column 1:\n    :  *a- key: title\n    ^"
+  },
+  {
+   "yaml": "fields:\n  %- `key: title\n    v---alue: \"DrDebits\"\n",
+   "error": "source.yaml: while scanning for the next token\nfound character '%' that cannot start any token\n  in \"<unicode string>\", line 2, column 3:\n      %- `key: title\n      ^"
+  },
+  {
+   "yaml": "#>...0x1#&a \t\r,!!str ",
+   "error": "source.yaml: while parsing a block node\nexpected the node content, but found ','\n  in \"<unicode string>\", line 2, column 1:\n    ,!!str \n    ^"
+  },
+  {
+   "yaml": "=%~*a`<<0x1#",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "fields:\n  - key: @title\n    value:  \"DrDeb2026-10-17its\"\n",
+   "error": "source.yaml: while scanning for the next token\nfound character '@' that cannot start any token\n  in \"<unicode string>\", line 2, column 10:\n      - key: @title\n             ^"
+  },
+  {
+   "yaml": "entries:\n  \u0001-:id: \"GS01\"\n    'title: \"T\"\n    url: \"https://x\"\n    trigger: \"g\"\n",
+   "error": "source.yaml: unacceptable character #x0001: special characters are not allowed\n  in \"<unicode string>\", position 11"
+  },
+  {
+   "yaml": "0x1>}:>: &a |,`|\\`",
+   "error": "source.yaml: while scanning a block scalar\n  in \"<unicode string>\", line 1, column 13:\n    0x1>}:>: &a |,`|\\`\n                ^\nexpected chomping or indentation indicators, but found ','\n  in \"<unicode string>\", line 1, column 14:\n    0x1>}:>: &a |,`|\\`\n                 ^"
+  },
+  {
+   "yaml": "éé,!{b%\r",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "\\\nb﻿\u0001---*a`\\é- {",
+   "error": "source.yaml: unacceptable character #x0001: special characters are not allowed\n  in \"<unicode string>\", position 4"
+  },
+  {
+   "yaml": "entries:\n  - id: \"GS  01\"\n    \rtitle: \"T\"\n    url: \"hkeytps://x\"\n    trigger: \"g\"\n",
+   "error": "source.yaml: while parsing a block mapping\n  in \"<unicode string>\", line 1, column 1:\n    entries:\n    ^\nexpected <block end>, but found '<block mapping start>'\n  in \"<unicode string>\", line 5, column 5:\n        url: \"hkeytps://x\"\n        ^"
+  },
+  {
+   "yaml": "@keyyes",
+   "error": "source.yaml: while scanning for the next token\nfound character '@' that cannot start any token\n  in \"<unicode string>\", line 1, column 1:\n    @keyyes\n    ^"
+  },
+  {
+   "yaml": "a: [1, 2, {b: c}]\n&a : |\n  text\n",
+   "value": "{'a': [1, 2, {'b': 'c'}], None: 'text\\n'}"
+  },
+  {
+   "yaml": "a: [1, 2, {b: c}]\nd: |a\n  text  ",
+   "error": "source.yaml: while scanning a block scalar\n  in \"<unicode string>\", line 2, column 4:\n    d: |a\n       ^\nexpected chomping or indentation indicators, but found 'a'\n  in \"<unicode string>\", line 2, column 5:\n    d: |a\n        ^"
+  },
+  {
+   "yaml": "|key=<<\u0001value*a\r? key'#",
+   "error": "source.yaml: unacceptable character #x0001: special characters are not allowed\n  in \"<unicode string>\", position 8"
+  },
+  {
+   "yaml": ": \n\u0001` &a ",
+   "error": "source.yaml: unacceptable character #x0001: special characters are not allowed\n  in \"<unicode string>\", position 3"
+  },
+  {
+   "yaml": "fields:\n  - key: title\n    \tvalue: \"DrDebits0x1\n",
+   "error": "source.yaml: while scanning for the next token\nfound character '\\t' that cannot start any token\n  in \"<unicode string>\", line 3, column 5:\n        \tvalue: \"DrDebits0x1\n        ^"
+  },
+  {
+   "yaml": "éé\t0x1value\r\u0001#  \r0x1,1}",
+   "error": "source.yaml: unacceptable character #x0001: special characters are not allowed\n  in \"<unicode string>\", position 12"
+  },
+  {
+   "yaml": "a: [1é, 2{ {b: c*a}]\nd: |\n  text\n",
+   "error": "source.yaml: while parsing a flow sequence\n  in \"<unicode string>\", line 1, column 4:\n    a: [1é, 2{ {b: c*a}]\n       ^\nexpected ',' or ']', but got '{'\n  in \"<unicode string>\", line 1, column 10:\n    a: [1é, 2{ {b: c*a}]\n             ^"
+  },
+  {
+   "yaml": "entries:\n  } id: \"GS01\"\n    title: \"T\"\n,    url: \"https://x\"\n    trigger: \"g\"\n",
+   "error": "source.yaml: while parsing a block node\nexpected the node content, but found '}'\n  in \"<unicode string>\", line 2, column 3:\n      } id: \"GS01\"\n      ^"
+  },
+  {
+   "yaml": "﻿...*a*aa0x1\u0001\t",
+   "error": "source.yaml: unacceptable character #x0001: special characters are not allowed\n  in \"<unicode string>\", position 12"
+  },
+  {
+   "yaml": "a: [1, 2,={b: c}]\nd: |>\n  text\n",
+   "error": "source.yaml: while parsing a flow sequence\n  in \"<unicode string>\", line 1, column 4:\n    a: [1, 2,={b: c}]\n       ^\nexpected ',' or ']', but got '{'\n  in \"<unicode string>\", line 1, column 11:\n    a: [1, 2,={b: c}]\n              ^"
+  },
+  {
+   "yaml": "a: [1, 2, {b: c}]  \nd: |\n  text\n",
+   "value": "{'a': [1, 2, {'b': 'c'}], 'd': 'text\\n'}"
+  },
+  {
+   "yaml": "<<---`",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "\u0001|",
+   "error": "source.yaml: unacceptable character #x0001: special characters are not allowed\n  in \"<unicode string>\", position 0"
+  },
+  {
+   "yaml": "entrivaluees:\n  - id: \"GS01\"\n    title: \"T\"\n    url: \"https://x\"\n    trigger: \"g\"\n",
+   "value": "{'entrivaluees': [{'id': 'GS01', 'title': 'T', 'url': 'https://x', 'trigger': 'g'}]}"
+  },
+  {
+   "yaml": "fields:\n  '- key: ti\ttle\n    2026-10-17value: \"DrDebits\"\n",
+   "error": "source.yaml: while scanning a quoted scalar\n  in \"<unicode string>\", line 2, column 3:\n      '- key: ti\ttle\n      ^\nfound unexpected end of stream\n  in \"<unicode string>\", line 4, column 1:\n    \n    ^"
+  },
+  {
+   "yaml": "aa: [1, 2, {b: c}]\nd: |\n  text\n",
+   "value": "{'aa': [1, 2, {'b': 'c'}], 'd': 'text\\n'}"
+  },
+  {
+   "yaml": "1: \"2026-10-17!!str - 1  1}~'",
+   "error": "source.yaml: while scanning a quoted scalar\n  in \"<unicode string>\", line 1, column 4:\n    1: \"2026-10-17!!str - \n       ^\nfound unexpected end of stream\n  in \"<unicode string>\", line 2, column 8:\n    1  1}~'\n           ^"
+  },
+  {
+   "yaml": "fields:\n  - key: tétle\n    value: \"DrDebi*a\u0001ts\"\n",
+   "error": "source.yaml: unacceptable character #x0001: special characters are not allowed\n  in \"<unicode string>\", position 43"
+  },
+  {
+   "yaml": "fields:\n  - key: title\n  [  value: \"DrDebits\"\n",
+   "error": "source.yaml: while scanning a simple key\n  in \"<unicode string>\", line 3, column 3:\n      [  value: \"DrDebits\"\n      ^\ncould not find expected ':'\n  in \"<unicode string>\", line 4, column 1:\n    \n    ^"
+  },
+  {
+   "yaml": "a: [1,>2, {b: c}]\nd:@ |\n  te\rxt\n",
+   "error": "source.yaml: while scanning for the next token\nfound character '>' that cannot start any token\n  in \"<unicode string>\", line 1, column 7:\n    a: [1,>2, {b: c}]\n          ^"
+  },
+  {
+   "yaml": "'&a %,yes%",
+   "error": "source.yaml: while scanning a quoted scalar\n  in \"<unicode string>\", line 1, column 1:\n    '&a %,yes%\n    ^\nfound unexpected end of stream\n  in \"<unicode string>\", line 1, column 11:\n    '&a %,yes%\n              ^"
+  },
+  {
+   "yaml": "*avaluekey- 2026-10-17",
+   "error": "source.yaml: found undefined alias 'avaluekey-'\n  in \"<unicode string>\", line 1, column 1:\n    *avaluekey- 2026-10-17\n    ^"
+  },
+  {
+   "yaml": "`value#1  1]><<=é: [\u0001",
+   "error": "source.yaml: unacceptable character #x0001: special characters are not allowed\n  in \"<unicode string>\", position 20"
+  },
+  {
+   "yaml": "fi\telds:\n  - key: title\n    value: \"DrDeb`its\"\n",
+   "error": "source.yaml: while scanning for the next token\nfound character '\\t' that cannot start any token\n  in \"<unicode string>\", line 1, column 3:\n    fi\telds:\n      ^"
+  },
+  {
+   "yaml": "key: [1, 2, {b: c}]\nd: |\n  text\n  ",
+   "value": "{'key': [1, 2, {'b': 'c'}], 'd': 'text\\n'}"
+  },
+  {
+   "yaml": "a: [1, 2, {b: c}\n]\nd: |\n  text\n",
+   "value": "{'a': [1, 2, {'b': 'c'}], 'd': 'text\\n'}"
+  },
+  {
+   "yaml": "fields:\n  -] key: atitle\n    value: \r\"DrDebits\"\n",
+   "error": "source.yaml: mapping values are not allowed here\n  in \"<unicode string>\", line 3, column 10:\n        value: \n             ^"
+  },
+  {
+   "yaml": ": ~'1.5---  ~é",
+   "error": "source.yaml: while parsing a block mapping\nexpected <block end>, but found ':'\n  in \"<unicode string>\", line 1, column 1:\n    : ~'1.5---  ~é\n    ^"
+  },
+  {
+   "yaml": "<< : value\r\"<<",
+   "error": "source.yaml: expected '<document start>', but found '<block mapping start>'\n  in \"<unicode string>\", line 2, column 1:\n    : value\n    ^"
+  },
+  {
+   "yaml": "2026-10-17\n%...﻿,>\"1.5",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "a: [1, 2, {b: c}]\nd: |:yes\n  text\n",
+   "error": "source.yaml: while scanning a block scalar\n  in \"<unicode string>\", line 2, column 4:\n    d: |:yes\n       ^\nexpected chomping or indentation indicators, but found ':'\n  in \"<unicode string>\", line 2, column 5:\n    d: |:yes\n        ^"
+  },
+  {
+   "yaml": "1.5*a2026-10-17\t`!!str ",
+   "error": "source.yaml: while scanning for the next token\nfound character '\\t' that cannot start any token\n  in \"<unicode string>\", line 1, column 16:\n    1.5*a2026-10-17\t`!!str \n                   ^"
+  },
+  {
+   "yaml": "fields:\n  - key: title\n    value: \"? DrDebits\"\n",
+   "value": "{'fields': [{'key': 'title', 'value': '? DrDebits'}]}"
+  },
+  {
+   "yaml": "- }1.5﻿",
+   "error": "source.yaml: while parsing a block node\nexpected the node content, but found '}'\n  in \"<unicode string>\", line 2, column 3:\n    - }1.5﻿\n      ^"
+  },
+  {
+   "yaml": "entries:\n  - id: \"GS01\"\n    title: \"T\"\n    url: \"https://x\"\n    trigge---r: \"g\"\n",
+   "value": "{'entries': [{'id': 'GS01', 'title': 'T', 'url': 'https://x', 'trigge---r': 'g'}]}"
+  },
+  {
+   "yaml": "? 0x1=2026-10-17: \n\r:\t,0x1yes",
+   "error": "source.yaml: while scanning for the next token\nfound character '\\t' that cannot start any token\n  in \"<unicode string>\", line 3, column 2:\n    :\t,0x1yes\n     ^"
+  },
+  {
+   "yaml": "? é0x1- ---\r`~]}2026-10-17...: ,",
+   "error": "source.yaml: while scanning for the next token\nfound character '`' that cannot start any token\n  in \"<unicode string>\", line 2, column 1:\n    `~]}2026-10-17...: ,\n    ^"
+  },
+  {
+   "yaml": "a: [1, 2, {b*a: c}]\nd: |\n  text\n",
+   "value": "{'a': [1, 2, {'b*a': 'c'}], 'd': 'text\\n'}"
+  },
+  {
+   "yaml": "fields:\n    - key: ti? le\n    value: \"DrD#ebits\"\n",
+   "error": "source.yaml: while parsing a block collection\n  in \"<unicode string>\", line 2, column 5:\n        - key: ti? le\n        ^\nexpected <block end>, but found '?'\n  in \"<unicode string>\", line 3, column 5:\n        value: \"DrD#ebits\"\n        ^"
+  },
+  {
+   "yaml": "}2026-10-17? \\]%\"\ra!!str ? *a%0x1",
+   "error": "source.yaml: while parsing a block node\nexpected the node content, but found '}'\n  in \"<unicode string>\", line 1, column 1:\n    }2026-10-17? \\]%\"\n    ^"
+  },
+  {
+   "yaml": "1key<<\\- \\",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "<<? key\r*a!!str \\}\u0001\tb=\t",
+   "error": "source.yaml: unacceptable character #x0001: special characters are not allowed\n  in \"<unicode string>\", position 18"
+  },
+  {
+   "yaml": "fields::\n  [ key: title\n    value: \"DrDebits\"\n",
+   "error": "source.yaml: while parsing a flow sequence\n  in \"<unicode string>\", line 2, column 3:\n      [ key: title\n      ^\nexpected ',' or ']', but got ':'\n  in \"<unicode string>\", line 3, column 10:\n        value: \"DrDebits\"\n             ^"
+  },
+  {
+   "yaml": "\r﻿@[=!!str ~\u0001!\tab\"[",
+   "error": "source.yaml: unacceptable character #x0001: special characters are not allowed\n  in \"<unicode string>\", position 12"
+  },
+  {
+   "yaml": "entr:ies:\n  - id: \"GS01\"\n    title: \"T\"\n    url: \"https://x\"\n    trigger: \"g\"\n",
+   "value": "{'entr:ies': [{'id': 'GS01', 'title': 'T', 'url': 'https://x', 'trigger': 'g'}]}"
+  },
+  {
+   "yaml": "\r<<`...]\u0001\t`&a  1.5",
+   "error": "source.yaml: unacceptable character #x0001: special characters are not allowed\n  in \"<unicode string>\", position 8"
+  },
+  {
+   "yaml": "entries:\n  - id: \"GS01\"\n   ]> title: \"T\"\n    url: \"https://x\"\n    trigger: \" g\"\n",
+   "error": "source.yaml: while parsing a block collection\n  in \"<unicode string>\", line 2, column 3:\n      - id: \"GS01\"\n      ^\nexpected <block end>, but found ']'\n  in \"<unicode string>\", line 3, column 4:\n       ]> title: \"T\"\n       ^"
+  },
+  {
+   "yaml": "2026-10-17---@\\'a",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "entries:\n  - id: \"GS01\"\n    tbitle: \"T\"\n    url: \"https://<<x\"\n    trigger: \"g\"\n",
+   "value": "{'entries': [{'id': 'GS01', 'tbitle': 'T', 'url': 'https://<<x', 'trigger': 'g'}]}"
+  },
+  {
+   "yaml": "﻿[!@!:0x1!!str \\2026-10-172026-10-171.5",
+   "error": "source.yaml: while scanning a tag\n  in \"<unicode string>\", line 1, column 2:\n    ﻿[!@!:0x1!!str \\2026-10-172026-10- ... \n      ^\nexpected '!', but found '@'\n  in \"<unicode string>\", line 1, column 3:\n    ﻿[!@!:0x1!!str \\2026-10-172026-10-171.5\n       ^"
+  },
+  {
+   "yaml": "\u0001keyyes",
+   "error": "source.yaml: unacceptable character #x0001: special characters are not allowed\n  in \"<unicode string>\", position 0"
+  },
+  {
+   "yaml": "}  ",
+   "error": "source.yaml: while parsing a block node\nexpected the node content, but found '}'\n  in \"<unicode string>\", line 1, column 1:\n    }  \n    ^"
+  },
+  {
+   "yaml": "- %|*a[\r:>\"%0x1",
+   "error": "source.yaml: while scanning for the next token\nfound character '%' that cannot start any token\n  in \"<unicode string>\", line 1, column 3:\n    - %|*a[\n      ^"
+  },
+  {
+   "yaml": "\\yes`\"",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "entries:\n  - id: \"GS01\"\n    title: \"T\"\n  ...[ ur*al: \"https://x\"\n    trigger: \"g\"\n",
+   "error": "source.yaml: while parsing a block collection\n  in \"<unicode string>\", line 2, column 3:\n      - id: \"GS01\"\n      ^\nexpected <block end>, but found '?'\n  in \"<unicode string>\", line 4, column 3:\n      ...[ ur*al: \"https://x\"\n      ^"
+  },
+  {
+   "yaml": "a: [1, 2, {b\t: c}]\n]: |\n  text\n",
+   "error": "source.yaml: while scanning for the next token\nfound character '\\t' that cannot start any token\n  in \"<unicode string>\", line 1, column 13:\n    a: [1, 2, {b\t: c}]\n                ^"
+  },
+  {
+   "yaml": "entries:\n  - id: \"GS01\"\n    title: \"T\"\n!!st:r    url: \"https://x\"\n    trigyeser: \"g\"\n",
+   "error": "source.yaml: while parsing a block mapping\n  in \"<unicode string>\", line 1, column 1:\n    entries:\n    ^\nexpected <block end>, but found '<block mapping start>'\n  in \"<unicode string>\", line 5, column 5:\n        trigyeser: \"g\"\n        ^"
+  },
+  {
+   "yaml": "={",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "entries:1\n  - id: \"GS01\"\n    title: \"T\"\n    ur\u0001l: \"https://x\"\n    trigger: \"g\"\n",
+   "error": "source.yaml: unacceptable character #x0001: special characters are not allowed\n  in \"<unicode string>\", position 46"
+  },
+  {
+   "yaml": "!!str ~b]é",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "a: [1,value 2, {b: c}]\nd: |\n  text\n",
+   "value": "{'a': [1, 'value 2', {'b': 'c'}], 'd': 'text\\n'}"
+  },
+  {
+   "yaml": "a: [1,} 2, {b: c}]\nd: |\n  te0x1t\n",
+   "error": "source.yaml: while parsing a flow node\nexpected the node content, but found '}'\n  in \"<unicode string>\", line 1, column 7:\n    a: [1,} 2, {b: c}]\n          ^"
+  },
+  {
+   "yaml": "<<value: ",
+   "value": "{'<<value': None}"
+  },
+  {
+   "yaml": "a: [1, 2, {b! c}]\nd: |\n,  text\n",
+   "error": "source.yaml: while parsing a block mapping\n  in \"<unicode string>\", line 1, column 1:\n    a: [1, 2, {b! c}]\n    ^\nexpected <block end>, but found ','\n  in \"<unicode string>\", line 3, column 1:\n    ,  text\n    ^"
+  },
+  {
+   "yaml": "fields:\n  - key: tit'e\n    value: \"DrDebits\"\n",
+   "value": "{'fields': [{'key': \"tit'e\", 'value': 'DrDebits'}]}"
+  },
+  {
+   "yaml": "entries:\n  - id: \"GS01\"\n    title: \"T\"\n    {url: \"httkeyps://x\"\n    trigger: \"g\"\n",
+   "error": "source.yaml: while scanning a simple key\n  in \"<unicode string>\", line 4, column 5:\n        {url: \"httkeyps://x\"\n        ^\ncould not find expected ':'\n  in \"<unicode string>\", line 5, column 5:\n        trigger: \"g\"\n        ^"
+  },
+  {
+   "yaml": "1<<`!!str ---a",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "entries:\n  b- id: \"GS01\"\n    title: \"T\"\n value   url: \"https://x\"\n    trigger: \"\"g\"\n",
+   "error": "source.yaml: while parsing a block mapping\n  in \"<unicode string>\", line 2, column 3:\n      b- id: \"GS01\"\n      ^\nexpected <block end>, but found '<block mapping start>'\n  in \"<unicode string>\", line 3, column 5:\n        title: \"T\"\n        ^"
+  },
+  {
+   "yaml": "a: [1, 2, {%b: c}]\nd: |\n  text\n",
+   "error": "source.yaml: while scanning for the next token\nfound character '%' that cannot start any token\n  in \"<unicode string>\", line 1, column 12:\n    a: [1, 2, {%b: c}]\n               ^"
+  },
+  {
+   "yaml": "a: [1, 2, {b: c}...]\nd: &a \n  teyesxt\n",
+   "error": "source.yaml: while parsing a flow sequence\n  in \"<unicode string>\", line 1, column 4:\n    a: [1, 2, {b: c}...]\n       ^\nexpected ',' or ']', but got '<scalar>'\n  in \"<unicode string>\", line 1, column 17:\n    a: [1, 2, {b: c}...]\n                    ^"
+  },
+  {
+   "yaml": "yes---yes!",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "a: [!!str 1, 2, {b: c}]\nd: |\n  text...\n",
+   "value": "{'a': ['1', 2, {'b': 'c'}], 'd': 'text...\\n'}"
+  },
+  {
+   "yaml": "%[é&a `: b ,? value~0x1",
+   "error": "source.yaml: while scanning a directive\n  in \"<unicode string>\", line 1, column 1:\n    %[é&a `: b\n    ^\nexpected alphabetic or numeric character, but found '['\n  in \"<unicode string>\", line 1, column 2:\n    %[é&a `: b\n     ^"
+  },
+  {
+   "yaml": "fields:\n {- key: title\n    value: \"DrD%bits\"\n",
+   "error": "source.yaml: while parsing a flow node\nexpected the node content, but found '-'\n  in \"<unicode string>\", line 2, column 3:\n     {- key: title\n      ^"
+  },
+  {
+   "yaml": "]1.5b\\*a\t1#é\\@---#",
+   "error": "source.yaml: while parsing a block node\nexpected the node content, but found ']'\n  in \"<unicode string>\", line 1, column 1:\n    ]1.5b\\*a\t1#é\\@---#\n    ^"
+  },
+  {
+   "yaml": "fields:\n  - key: title\n    value: \"DrDebitas\"\n",
+   "value": "{'fields': [{'key': 'title', 'value': 'DrDebitas'}]}"
+  },
+  {
+   "yaml": "\r\\value&a 2026-10-17@\n",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "﻿é&a b!!str b!!str ",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "&a \\#'",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "!>1#2026-10-17]...!,>|",
+   "error": "source.yaml: while scanning a tag\n  in \"<unicode string>\", line 1, column 1:\n    !>1#2026-10-17]...!,>|\n    ^\nexpected '!', but found '>'\n  in \"<unicode string>\", line 1, column 2:\n    !>1#2026-10-17]...!,>|\n     ^"
+  },
+  {
+   "yaml": "fields:\n  - key]: title\n    value: \"DrDebit \"\n",
+   "value": "{'fields': [{'key]': 'title', 'value': 'DrDebit\\u2028'}]}"
+  },
+  {
+   "yaml": "=value#%",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "entries:\n  - id: \"GS01\"\n    title: \"T\"\n    url: \"https:,//x\"\n    trigger: \"g\"\n",
+   "value": "{'entries': [{'id': 'GS01', 'title': 'T', 'url': 'https:,//x', 'trigger': 'g'}]}"
+  },
+  {
+   "yaml": "? [a,>[0x1\\- ]---\r`",
+   "error": "source.yaml: while scanning for the next token\nfound character '>' that cannot start any token\n  in \"<unicode string>\", line 1, column 6:\n    ? [a,>[0x1\\- ]---\n         ^"
+  },
+  {
+   "yaml": "entries:\n  - id: \"GS01\"\n    title: \"T\"\n    url: \"h\"ttps://x\"\n    trigger: *a\"g\"\n\u0001",
+   "error": "source.yaml: unacceptable character #x0001: special characters are not allowed\n  in \"<unicode string>\", position 80"
+  },
+  {
+   "yaml": "a: [1,b 2026-10-172,: {b: c}]\nd: |\n  text\n",
+   "error": "source.yaml: while parsing a flow node\nexpected the node content, but found ':'\n  in \"<unicode string>\", line 1, column 21:\n    a: [1,b 2026-10-172,: {b: c}]\n                        ^"
+  },
+  {
+   "yaml": "entries:\n  - id: \"GS01\"\n    title: \"T\"\n    url: \"https://x\"\n    tri  gger: \"g\"\n",
+   "value": "{'entries': [{'id': 'GS01', 'title': 'T', 'url': 'https://x', 'tri  gger': 'g'}]}"
+  },
+  {
+   "yaml": "a: [é, 2, {b: c}]0x1\nd: |\n  text\n\\",
+   "error": "source.yaml: while parsing a block mapping\n  in \"<unicode string>\", line 1, column 1:\n    a: [é, 2, {b: c}]0x1\n    ^\nexpected <block end>, but found '<scalar>'\n  in \"<unicode string>\", line 1, column 18:\n    a: [é, 2, {b: c}]0x1\n                     ^"
+  },
+  {
+   "yaml": "\\#",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": ":!{a",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "fields:\n  - 0x1key: title\n    value: \"DrDebits\"\n",
+   "value": "{'fields': [{'0x1key': 'title', 'value': 'DrDebits'}]}"
+  },
+  {
+   "yaml": "a: [1, 2a, {b: c}]\nd: |\n  text\n",
+   "value": "{'a': [1, '2a', {'b': 'c'}], 'd': 'text\\n'}"
+  },
+  {
+   "yaml": "\"\u0001\n!`  '~\n",
+   "error": "source.yaml: unacceptable character #x0001: special characters are not allowed\n  in \"<unicode string>\", position 1"
+  },
+  {
+   "yaml": "fields:\n  - key: title\n \n   value: \"DrDeabits\"\n",
+   "error": "source.yaml: while parsing a block collection\n  in \"<unicode string>\", line 2, column 3:\n      - key: title\n      ^\nexpected <block end>, but found '<block mapping start>'\n  in \"<unicode string>\", line 4, column 4:\n       value: \"DrDeabits\"\n       ^"
+  },
+  {
+   "yaml": "\u0001 @*a}",
+   "error": "source.yaml: unacceptable character #x0001: special characters are not allowed\n  in \"<unicode string>\", position 0"
+  },
+  {
+   "yaml": " key",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "\r\tyes﻿'",
+   "error": "source.yaml: while scanning for the next token\nfound character '\\t' that cannot start any token\n  in \"<unicode string>\", line 3, column 1:\n    \tyes﻿'\n    ^"
+  },
+  {
+   "yaml": "a: [1, 2, {b: c}]\nd: |\n  text\n",
+   "value": "{'a': [1, 2, {'b': 'c'}], 'd': 'text\\n'}"
+  },
+  {
+   "yaml": "~@*aé@\\:`1.5!",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "':é~﻿&a  !!str !!str ...\\",
+   "error": "source.yaml: while scanning a quoted scalar\n  in \"<unicode string>\", line 1, column 1:\n    ':é~﻿&a \n    ^\nfound unexpected end of stream\n  in \"<unicode string>\", line 2, column 17:\n    !!str !!str ...\\\n                    ^"
+  },
+  {
+   "yaml": "2026-10-17&a [:1.5%1.5#",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "%*a\r{[﻿---{ékey'@%",
+   "error": "source.yaml: while scanning a directive\n  in \"<unicode string>\", line 1, column 1:\n    %*a\n    ^\nexpected alphabetic or numeric character, but found '*'\n  in \"<unicode string>\", line 1, column 2:\n    %*a\n     ^"
+  },
+  {
+   "yaml": "  ? \n[\u0001!!str @- %\\﻿1.51.5>",
+   "error": "source.yaml: unacceptable character #x0001: special characters are not allowed\n  in \"<unicode string>\", position 6"
+  },
+  {
+   "yaml": "fields:\n  - key: title\n  |  value: \"DrDebits? \"\n",
+   "error": "source.yaml: while scanning a block scalar\n  in \"<unicode string>\", line 3, column 3:\n      |  value: \"DrDebits? \"\n      ^\nexpected a comment or a line break, but found 'v'\n  in \"<unicode string>\", line 3, column 6:\n      |  value: \"DrDebits? \"\n         ^"
+  },
+  {
+   "yaml": "{1.5[a\r,%11.5﻿*a ",
+   "error": "source.yaml: while parsing a flow mapping\n  in \"<unicode string>\", line 1, column 1:\n    {1.5[a\n    ^\nexpected ',' or '}', but got '['\n  in \"<unicode string>\", line 1, column 5:\n    {1.5[a\n        ^"
+  },
+  {
+   "yaml": "entries:\n  - id: \"GS01\"\n a  titlb: \"T\"\n    url: \"https://x\"\n    trigger: \"g\"\n",
+   "error": "source.yaml: while parsing a block mapping\n  in \"<unicode string>\", line 1, column 1:\n    entries:\n    ^\nexpected <block end>, but found '<block mapping start>'\n  in \"<unicode string>\", line 3, column 2:\n     a  titlb: \"T\"\n     ^"
+  },
+  {
+   "yaml": "a: [1, 2,~ {b: c}]\nd: |\n  text\n",
+   "error": "source.yaml: while parsing a flow sequence\n  in \"<unicode string>\", line 1, column 4:\n    a: [1, 2,~ {b: c}]\n       ^\nexpected ',' or ']', but got '{'\n  in \"<unicode string>\", line 1, column 12:\n    a: [1, 2,~ {b: c}]\n               ^"
+  },
+  {
+   "yaml": "*a!!str \t: 1.5",
+   "error": "source.yaml: while scanning an alias\n  in \"<unicode string>\", line 1, column 1:\n    *a!!str \t: 1.5\n    ^\nexpected alphabetic or numeric character, but found '!'\n  in \"<unicode string>\", line 1, column 3:\n    *a!!str \t: 1.5\n      ^"
+  },
+  {
+   "yaml": ": },  | %key\t@%key|\n",
+   "error": "source.yaml: while parsing a block mapping\nexpected <block end>, but found ':'\n  in \"<unicode string>\", line 1, column 1:\n    : },  |\n    ^"
+  },
+  {
+   "yaml": "a: [1, 2 , {*ab: c}]\nd: |\n  text\n",
+   "error": "source.yaml: found undefined alias 'ab'\n  in \"<unicode string>\", line 2, column 4:\n    , {*ab: c}]\n       ^"
+  },
+  {
+   "yaml": "=%:﻿#\":: \t@`1.5\n1",
+   "error": "source.yaml: while scanning for the next token\nfound character '\\t' that cannot start any token\n  in \"<unicode string>\", line 1, column 9:\n    =%:﻿#\":: \t@`1.5\n             ^"
+  },
+  {
+   "yaml": "b- =2026-10-17------\u0001  \n...{",
+   "error": "source.yaml: unacceptable character #x0001: special characters are not allowed\n  in \"<unicode string>\", position 20"
+  },
+  {
+   "yaml": "`1,0x1a﻿&a }",
+   "error": "source.yaml: while scanning for the next token\nfound character '`' that cannot start any token\n  in \"<unicode string>\", line 1, column 1:\n    `1,0x1a﻿&a }\n    ^"
+  },
+  {
+   "yaml": "field&a s:\n  - key: tyesitl---e\n    value: \"DrDebits\"\n",
+   "value": "{'field&a s': [{'key': 'tyesitl---e', 'value': 'DrDebits'}]}"
+  },
+  {
+   "yaml": "- ",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "fieyesds:\n  - \"key: title\n    vavalueue: \"DrDebits\"\n",
+   "error": "source.yaml: while parsing a block collection\n  in \"<unicode string>\", line 2, column 3:\n      - \"key: title\n      ^\nexpected <block end>, but found '<scalar>'\n  in \"<unicode string>\", line 3, column 17:\n        vavalueue: \"DrDebits\"\n                    ^"
+  },
+  {
+   "yaml": "=,\nvalueé['\"}1.5a{~!",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "'@",
+   "error": "source.yaml: while scanning a quoted scalar\n  in \"<unicode string>\", line 1, column 1:\n    '@\n    ^\nfound unexpected end of stream\n  in \"<unicode string>\", line 1, column 3:\n    '@\n      ^"
+  },
+  {
+   "yaml": "entrie>s:\n  - id: \"GS01\"\n    ti@tle: \"T\"\n    url: \"h0x1ttps://x\"\n    trigger: \"g\"\n",
+   "value": "{'entrie>s': [{'id': 'GS01', 'ti@tle': 'T', 'url': 'h0x1ttps://x', 'trigger': 'g'}]}"
+  },
+  {
+   "yaml": ">},value#",
+   "error": "source.yaml: while scanning a block scalar\n  in \"<unicode string>\", line 1, column 1:\n    >},value#\n    ^\nexpected chomping or indentation indicators, but found '}'\n  in \"<unicode string>\", line 1, column 2:\n    >},value#\n     ^"
+  },
+  {
+   "yaml": "---﻿1=[%",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "}---yes﻿value'",
+   "error": "source.yaml: while parsing a block node\nexpected the node content, but found '}'\n  in \"<unicode string>\", line 1, column 1:\n    }---yes﻿value'\n    ^"
+  },
+  {
+   "yaml": "fields:\n  - key: &a title\n    value: \"D'rDebits\"\n",
+   "value": "{'fields': [{'key': 'title', 'value': \"D'rDebits\"}]}"
+  },
+  {
+   "yaml": "a: [1, 2, {b: c}]\nd: |\n  =ext\n",
+   "value": "{'a': [1, 2, {'b': 'c'}], 'd': '=ext\\n'}"
+  },
+  {
+   "yaml": "a: [1,# 2,   b: c}]\nd: |\n  text\n",
+   "error": "source.yaml: while scanning for the next token\nfound character '|' that cannot start any token\n  in \"<unicode string>\", line 2, column 4:\n    d: |\n       ^"
+  },
+  {
+   "yaml": "fields:\n  - key: title\n    value: \"DrD1ebits\"\n",
+   "value": "{'fields': [{'key': 'title', 'value': 'DrD1ebits'}]}"
+  },
+  {
+   "yaml": "a: [1, 2, {b: \r}]\n#: |\n]  text\n",
+   "error": "source.yaml: while parsing a block mapping\n  in \"<unicode string>\", line 1, column 1:\n    a: [1, 2, {b: \n    ^\nexpected <block end>, but found ']'\n  in \"<unicode string>\", line 4, column 1:\n    ]  text\n    ^"
+  },
+  {
+   "yaml": "#1.5- ",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "fie\nlds:\n  - key: title\n    value: \"DrDebits\"\n",
+   "error": "source.yaml: mapping values are not allowed here\n  in \"<unicode string>\", line 2, column 4:\n    lds:\n       ^"
+  },
+  {
+   "yaml": "\t\r  [value",
+   "error": "source.yaml: while scanning for the next token\nfound character '\\t' that cannot start any token\n  in \"<unicode string>\", line 1, column 1:\n    \t\n    ^"
+  },
+  {
+   "yaml": "key]\t",
+   "error": "source.yaml: while scanning for the next token\nfound character '\\t' that cannot start any token\n  in \"<unicode string>\", line 1, column 5:\n    key]\t\n        ^"
+  },
+  {
+   "yaml": "fields:\n > - key: tiyestyese\n    value: \"DrDebits\"\n",
+   "error": "source.yaml: while scanning a block scalar\n  in \"<unicode string>\", line 2, column 2:\n     > - key: tiyestyese\n     ^\nexpected a comment or a line break, but found '-'\n  in \"<unicode string>\", line 2, column 4:\n     > - key: tiyestyese\n       ^"
+  },
+  {
+   "yaml": "a: [1, 2, {bkey: c}]\nd: |\n  text\n",
+   "value": "{'a': [1, 2, {'bkey': 'c'}], 'd': 'text\\n'}"
+  },
+  {
+   "yaml": "a: [1, , {b: c}]\nd: |: \n  text\n",
+   "error": "source.yaml: while parsing a flow node\nexpected the node content, but found ','\n  in \"<unicode string>\", line 2, column 1:\n    , {b: c}]\n    ^"
+  },
+  {
+   "yaml": "a: [1, 2, {b:\"c}]\nd: |\n  text\n",
+   "value": "{'a': [1, 2, {'b:\"c': None}], 'd': 'text\\n'}"
+  },
+  {
+   "yaml": "fields:﻿\n  - key: title\n    value: \"DrDeb1.5ts\"\n",
+   "error": "source.yaml: mapping values are not allowed here\n  in \"<unicode string>\", line 2, column 8:\n      - key: title\n           ^"
+  },
+  {
+   "yaml": "en1tries:\n  - id: \"GS01\"\n1    title: \"T\"\n    url: \"https://x\"\n    trigger: \"g\"\n",
+   "error": "source.yaml: while parsing a block mapping\n  in \"<unicode string>\", line 1, column 1:\n    en1tries:\n    ^\nexpected <block end>, but found '<block mapping start>'\n  in \"<unicode string>\", line 4, column 5:\n        url: \"https://x\"\n        ^"
+  },
+  {
+   "yaml": "=~: },...!&a =>",
+   "error": "source.yaml: while parsing a block node\nexpected the node content, but found '}'\n  in \"<unicode string>\", line 1, column 5:\n    =~: },...!&a =>\n        ^"
+  },
+  {
+   "yaml": "a: [1, 2, {b: c}]\nd: |\n  text\na",
+   "error": "source.yaml: while scanning a simple key\n  in \"<unicode string>\", line 4, column 1:\n    a\n    ^\ncould not find expected ':'\n  in \"<unicode string>\", line 4, column 2:\n    a\n     ^"
+  },
+  {
+   "yaml": "fields:\n  - key: tiva\\luetle\n *a   value: \"DrDebits\"\n",
+   "error": "source.yaml: while parsing a block mapping\n  in \"<unicode string>\", line 1, column 1:\n    fields:\n    ^\nexpected <block end>, but found '<block mapping start>'\n  in \"<unicode string>\", line 3, column 2:\n     *a   value: \"DrDebits\"\n     ^"
+  },
+  {
+   "yaml": "? >:",
+   "error": "source.yaml: while scanning a block scalar\n  in \"<unicode string>\", line 1, column 3:\n    ? >:\n      ^\nexpected chomping or indentation indicators, but found ':'\n  in \"<unicode string>\", line 1, column 4:\n    ? >:\n       ^"
+  },
+  {
+   "yaml": "- yes? ]<<`---key",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "a: \n1, 2, {b: c}]\nd: |:,\n  text\n",
+   "error": "source.yaml: while scanning a block scalar\n  in \"<unicode string>\", line 3, column 4:\n    d: |:,\n       ^\nexpected chomping or indentation indicators, but found ':'\n  in \"<unicode string>\", line 3, column 5:\n    d: |:,\n        ^"
+  },
+  {
+   "yaml": "]%]﻿: \"a...>[!!str ",
+   "error": "source.yaml: while parsing a block node\nexpected the node content, but found ']'\n  in \"<unicode string>\", line 1, column 1:\n    ]%]﻿: \"a\n    ^"
+  },
+  {
+   "yaml": "fields:\n 1 - key: title\n    value: \"DrDebits\"\n",
+   "error": "source.yaml: mapping values are not allowed here\n  in \"<unicode string>\", line 3, column 10:\n        value: \"DrDebits\"\n             ^"
+  },
+  {
+   "yaml": "'---",
+   "error": "source.yaml: while scanning a quoted scalar\n  in \"<unicode string>\", line 1, column 1:\n    '---\n    ^\nfound unexpected end of stream\n  in \"<unicode string>\", line 1, column 5:\n    '---\n        ^"
+  },
+  {
+   "yaml": "a0x1: [1, 2, {b: c}]\nd:} yes|\n  text\n",
+   "error": "source.yaml: while scanning a simple key\n  in \"<unicode string>\", line 2, column 1:\n    d:} yes|\n    ^\ncould not find expected ':'\n  in \"<unicode string>\", line 4, column 1:\n    \n    ^"
+  },
+  {
+   "yaml": "~0x1*a- ",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "fields:\n  - key: title\n    value: \"DrDebits\"&a 2026-10-17\n",
+   "error": "source.yaml: while parsing a block mapping\n  in \"<unicode string>\", line 2, column 5:\n      - key: title\n        ^\nexpected <block end>, but found '<anchor>'\n  in \"<unicode string>\", line 3, column 22:\n        value: \"DrDebits\"&a 2026-10-17\n                         ^"
+  },
+  {
+   "yaml": "!!str b  ",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "a: [1, 2,2026-10-17 {b: c}]\nd: |\n  text\n",
+   "error": "source.yaml: while parsing a flow sequence\n  in \"<unicode string>\", line 1, column 4:\n    a: [1, 2,2026-10-17 {b: c}]\n       ^\nexpected ',' or ']', but got '{'\n  in \"<unicode string>\", line 1, column 21:\n    a: [1, 2,2026-10-17 {b: c}]\n                        ^"
+  },
+  {
+   "yaml": "a: [1, *a, {b: c}]\nd: |\n  text\n",
+   "error": "source.yaml: found undefined alias 'a'\n  in \"<unicode string>\", line 1, column 8:\n    a: [1, *a, {b: c}]\n           ^"
+  },
+  {
+   "yaml": "value*a:<<\"- key# ",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": ">\": ",
+   "error": "source.yaml: while scanning a block scalar\n  in \"<unicode string>\", line 1, column 1:\n    >\": \n    ^\nexpected chomping or indentation indicators, but found '\"'\n  in \"<unicode string>\", line 1, column 2:\n    >\": \n     ^"
+  },
+  {
+   "yaml": "={a'\n\nkey: ",
+   "error": "source.yaml: mapping values are not allowed here\n  in \"<unicode string>\", line 3, column 4:\n    key: \n       ^"
+  },
+  {
+   "yaml": "0x1\r]",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "entries:\n  - id: \"GS01\"\n  }  title: \"T\"\n    url: \"https://x\"\n    trigger: \"g\"\n",
+   "error": "source.yaml: while parsing a block collection\n  in \"<unicode string>\", line 2, column 3:\n      - id: \"GS01\"\n      ^\nexpected <block end>, but found '}'\n  in \"<unicode string>\", line 3, column 3:\n      }  title: \"T\"\n      ^"
+  },
+  {
+   "yaml": ":a...key11.5\":<<é:}",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "%",
+   "error": "source.yaml: while scanning a directive\n  in \"<unicode string>\", line 1, column 1:\n    %\n    ^\nexpected alphabetic or numeric character, but found '\\x00'\n  in \"<unicode string>\", line 1, column 2:\n    %\n     ^"
+  },
+  {
+   "yaml": "\\",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "1\r1,!!str \u0001>value---\r=]  ",
+   "error": "source.yaml: unacceptable character #x0001: special characters are not allowed\n  in \"<unicode string>\", position 10"
+  },
+  {
+   "yaml": "a: [!!str 1, 2,={b: c}]\nd:é |\n  text\n",
+   "error": "source.yaml: while parsing a flow sequence\n  in \"<unicode string>\", line 1, column 4:\n    a: [!!str 1, 2,={b: c}]\n       ^\nexpected ',' or ']', but got '{'\n  in \"<unicode string>\", line 1, column 17:\n    a: [!!str 1, 2,={b: c}]\n                    ^"
+  },
+  {
+   "yaml": "a: `1, 2, {b: c}]*a\nd: |\n  text\n",
+   "error": "source.yaml: while scanning for the next token\nfound character '`' that cannot start any token\n  in \"<unicode string>\", line 1, column 4:\n    a: `1, 2, {b: c}]*a\n       ^"
+  },
+  {
+   "yaml": "é\r\"@`: &a \r\"﻿<<  ",
+   "error": "source.yaml: mapping values are not allowed here\n  in \"<unicode string>\", line 2, column 4:\n    \"@`: &a \n       ^"
+  },
+  {
+   "yaml": ">",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "fields:\n  - key: title\n    val\nue: \"DrDebits\"\n",
+   "error": "source.yaml: while scanning a simple key\n  in \"<unicode string>\", line 3, column 5:\n        val\n        ^\ncould not find expected ':'\n  in \"<unicode string>\", line 4, column 1:\n    ue: \"DrDebits\"\n    ^"
+  },
+  {
+   "yaml": "[\"~#: \\`---",
+   "error": "source.yaml: while scanning a double-quoted scalar\n  in \"<unicode string>\", line 1, column 2:\n    [\"~#: \\`---\n     ^\nfound unknown escape character '`'\n  in \"<unicode string>\", line 1, column 8:\n    [\"~#: \\`---\n           ^"
+  },
+  {
+   "yaml": "\": !{\u0001",
+   "error": "source.yaml: unacceptable character #x0001: special characters are not allowed\n  in \"<unicode string>\", position 5"
+  },
+  {
+   "yaml": "﻿~*a? #\ré",
+   "error": "source.yaml: expected '<document start>', but found '<scalar>'\n  in \"<unicode string>\", line 2, column 1:\n    é\n    ^"
+  },
+  {
+   "yaml": "fields:\n  - key: \"title]\n    value: \"DrDebits\"\n",
+   "error": "source.yaml: while parsing a block mapping\n  in \"<unicode string>\", line 2, column 5:\n      - key: \"title]\n        ^\nexpected <block end>, but found '<scalar>'\n  in \"<unicode string>\", line 3, column 13:\n        value: \"DrDebits\"\n                ^"
+  },
+  {
+   "yaml": "a: [1, 2,1 {]b: c}]\nd: |\n  text\n",
+   "error": "source.yaml: while parsing a flow sequence\n  in \"<unicode string>\", line 1, column 4:\n    a: [1, 2,1 {]b: c}]\n       ^\nexpected ',' or ']', but got '{'\n  in \"<unicode string>\", line 1, column 12:\n    a: [1, 2,1 {]b: c}]\n               ^"
+  },
+  {
+   "yaml": "{",
+   "error": "source.yaml: while parsing a flow node\nexpected the node content, but found '<stream end>'\n  in \"<unicode string>\", line 1, column 2:\n    {\n     ^"
+  },
+  {
+   "yaml": "fields:\n  - key: title\r\n    value: \"D﻿rDebits\"\n",
+   "value": "{'fields': [{'key': 'title', 'value': 'D\\ufeffrDebits'}]}"
+  },
+  {
+   "yaml": "0x1﻿@,!!str ﻿\n:0x1 \"\t",
+   "error": "source.yaml: while scanning for the next token\nfound character '\\t' that cannot start any token\n  in \"<unicode string>\", line 3, column 2:\n    \"\t\n     ^"
+  },
+  {
+   "yaml": "entries:\n  - id: \"GS01\"\n    title: \"T\"\n﻿   url: 1.5https://x\"\n    trigger: \"g\"\n",
+   "error": "source.yaml: mapping values are not allowed here\n  in \"<unicode string>\", line 5, column 12:\n        trigger: \"g\"\n               ^"
+  },
+  {
+   "yaml": "value: [1, 2, {b: c%]\nd: |\n  text\n",
+   "error": "source.yaml: while parsing a flow mapping\n  in \"<unicode string>\", line 1, column 15:\n    value: [1, 2, {b: c%]\n                  ^\nexpected ',' or '}', but got ']'\n  in \"<unicode string>\", line 1, column 21:\n    value: [1, 2, {b: c%]\n                        ^"
+  },
+  {
+   "yaml": "entries:\n  - id: \"GS01\"\n    title: \"T\"\n0x1    url: \"https://x\"\n    trigger: \"---g\"\n",
+   "error": "source.yaml: while parsing a block mapping\n  in \"<unicode string>\", line 1, column 1:\n    entries:\n    ^\nexpected <block end>, but found '<block mapping start>'\n  in \"<unicode string>\", line 5, column 5:\n        trigger: \"---g\"\n        ^"
+  },
+  {
+   "yaml": ",a![}=2026-10-170x1",
+   "error": "source.yaml: while parsing a block node\nexpected the node content, but found ','\n  in \"<unicode string>\", line 1, column 1:\n    ,a![}=2026-10-170x1\n    ^"
+  },
+  {
+   "yaml": "entries:\n  - id: \"GS01\"\n    title: \"T\"\n    url: \"https://x\"\n    trigger: \"g\"\n",
+   "value": "{'entries': [{'id': 'GS01', 'title': 'T', 'url': 'https://x', 'trigger': 'g '}]}"
+  },
+  {
+   "yaml": "|~b\n",
+   "error": "source.yaml: while scanning a block scalar\n  in \"<unicode string>\", line 1, column 1:\n    |~b\n    ^\nexpected chomping or indentation indicators, but found '~'\n  in \"<unicode string>\", line 1, column 2:\n    |~b\n     ^"
+  },
+  {
+   "yaml": ": \ré@1%",
+   "error": "source.yaml: while parsing a block mapping\nexpected <block end>, but found ':'\n  in \"<unicode string>\", line 2, column 1:\n    : \n    ^"
+  },
+  {
+   "yaml": "']2026-10-171value",
+   "error": "source.yaml: while scanning a quoted scalar\n  in \"<unicode string>\", line 1, column 1:\n    ']2026-10-171value\n    ^\nfound unexpected end of stream\n  in \"<unicode string>\", line 1, column 19:\n    ']2026-10-171value\n                      ^"
+  },
+  {
+   "yaml": ",}1.5value]>",
+   "error": "source.yaml: while parsing a block node\nexpected the node content, but found ','\n  in \"<unicode string>\", line 1, column 1:\n    ,}1.5value]>\n    ^"
+  },
+  {
+   "yaml": "\r>value",
+   "error": "source.yaml: while scanning a block scalar\n  in \"<unicode string>\", line 2, column 1:\n    >value\n    ^\nexpected chomping or indentation indicators, but found 'v'\n  in \"<unicode string>\", line 2, column 2:\n    >value\n     ^"
+  },
+  {
+   "yaml": "%\u0001{!>...}",
+   "error": "source.yaml: unacceptable character #x0001: special characters are not allowed\n  in \"<unicode string>\", position 1"
+  },
+  {
+   "yaml": "`- \r!!str %`'@",
+   "error": "source.yaml: while scanning for the next token\nfound character '`' that cannot start any token\n  in \"<unicode string>\", line 1, column 1:\n    `- \n    ^"
+  },
+  {
+   "yaml": "!? # \t0x1\né",
+   "error": "source.yaml: while scanning for the next token\nfound character '\\t' that cannot start any token\n  in \"<unicode string>\", line 2, column 1:\n    \t0x1\n    ^"
+  },
+  {
+   "yaml": "entries:\n  - id: \"G!01\"\n    title: \"T\"\n    url: \"https://x\"\n    trigger: \"g\"\n",
+   "value": "{'entries': [{'id': 'G!01', 'title': 'T', 'url': 'https://x', 'trigger': 'g'}]}"
+  },
+  {
+   "yaml": "a: [1, 2, {b:: c}]\nd: |\n 1.5%text\n",
+   "value": "{'a': [1, 2, {'b:': 'c'}], 'd': '1.5%text\\n'}"
+  },
+  {
+   "yaml": "!!str \t",
+   "error": "source.yaml: while scanning for the next token\nfound character '\\t' that cannot start any token\n  in \"<unicode string>\", line 1, column 7:\n    !!str \t\n          ^"
+  },
+  {
+   "yaml": "~",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": ">\\<<%!!str *a:yes- <<",
+   "error": "source.yaml: while scanning a block scalar\n  in \"<unicode string>\", line 1, column 1:\n    >\\<<%!!str *a:yes- <<\n    ^\nexpected chomping or indentation indicators, but found '\\\\'\n  in \"<unicode string>\", line 1, column 2:\n    >\\<<%!!str *a:yes- <<\n     ^"
+  },
+  {
+   "yaml": "? >]{é\u0001",
+   "error": "source.yaml: unacceptable character #x0001: special characters are not allowed\n  in \"<unicode string>\", position 7"
+  },
+  {
+   "yaml": "entries:\n  - id: \"GS01\"\n    title: \"T\"\n    `url: \"https://x\"\n  \"  trigger: \"g\"\n",
+   "error": "source.yaml: while scanning for the next token\nfound character '`' that cannot start any token\n  in \"<unicode string>\", line 4, column 5:\n        `url: \"https://x\"\n        ^"
+  },
+  {
+   "yaml": "[~1.5\n﻿|,#\"\r:\n",
+   "error": "source.yaml: while parsing a flow node\nexpected the node content, but found ':'\n  in \"<unicode string>\", line 3, column 1:\n    :\n    ^"
+  },
+  {
+   "yaml": "fields:\n  - key: title\n    `value: \"!rDebit*a\"\n",
+   "error": "source.yaml: while scanning for the next token\nfound character '`' that cannot start any token\n  in \"<unicode string>\", line 3, column 5:\n        `value: \"!rDebit*a\"\n        ^"
+  },
+  {
+   "yaml": ",[&a ﻿*a0x1? |key@|,",
+   "error": "source.yaml: while parsing a block node\nexpected the node content, but found ','\n  in \"<unicode string>\", line 1, column 1:\n    ,[&a ﻿*a0x1? |key\n    ^"
+  },
+  {
+   "yaml": "@ !:<<<<0x1!<<#&a >",
+   "error": "source.yaml: while scanning for the next token\nfound character '@' that cannot start any token\n  in \"<unicode string>\", line 1, column 1:\n    @\n    ^"
+  },
+  {
+   "yaml": "a\u0001 [? 1, 2, {b: c}]\nd: |\n  tex: t\n",
+   "error": "source.yaml: unacceptable character #x0001: special characters are not allowed\n  in \"<unicode string>\", position 1"
+  },
+  {
+   "yaml": "entries:\n  - id: \t\"GS01\"\n    title: \"T\"\n    url: \"https://x\"\n   value triggyesr: \"g\"\n",
+   "error": "source.yaml: while scanning for the next token\nfound character '\\t' that cannot start any token\n  in \"<unicode string>\", line 2, column 9:\n      - id: \t\"GS01\"\n            ^"
+  },
+  {
+   "yaml": "...&a ",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "entries:\n  - id: \"GS01\"\n   yes title: \"T\"\n    url: \"https://x\"\n    tri2026-10-17gger: \"g\"\n",
+   "error": "source.yaml: while parsing a block collection\n  in \"<unicode string>\", line 2, column 3:\n      - id: \"GS01\"\n      ^\nexpected <block end>, but found '<block mapping start>'\n  in \"<unicode string>\", line 3, column 4:\n       yes title: \"T\"\n       ^"
+  },
+  {
+   "yaml": "a: [1, 2, {b: c}]  \nd: |b\n  text\n",
+   "error": "source.yaml: while scanning a block scalar\n  in \"<unicode string>\", line 2, column 4:\n    d: |b\n       ^\nexpected chomping or indentation indicators, but found 'b'\n  in \"<unicode string>\", line 2, column 5:\n    d: |b\n        ^"
+  },
+  {
+   "yaml": "a: [1, `2, {b: c}]\nd: |\n:  text\n",
+   "error": "source.yaml: while scanning for the next token\nfound character '`' that cannot start any token\n  in \"<unicode string>\", line 1, column 8:\n    a: [1, `2, {b: c}]\n           ^"
+  },
+  {
+   "yaml": "\n&a ﻿value%~\"﻿!!str :",
+   "value": "{'\\ufeffvalue%~\"\\ufeff!!str': None}"
+  },
+  {
+   "yaml": ",  ---\r ---}\" }",
+   "error": "source.yaml: while parsing a block node\nexpected the node content, but found ','\n  in \"<unicode string>\", line 1, column 1:\n    ,  ---\n    ^"
+  },
+  {
+   "yaml": "fields:\n  - :ey: title\n    value:b \"DrDebits\"\n",
+   "error": "source.yaml: while scanning a simple key\n  in \"<unicode string>\", line 3, column 5:\n        value:b \"DrDebits\"\n        ^\ncould not find expected ':'\n  in \"<unicode string>\", line 4, column 1:\n    \n    ^"
+  },
+  {
+   "yaml": "}!!str }yes\u0001|b b:\\#\n",
+   "error": "source.yaml: unacceptable character #x0001: special characters are not allowed\n  in \"<unicode string>\", position 11"
+  },
+  {
+   "yaml": "a: [1, 2ye2026-10-17, {b: c}]\nd: |\né text\n",
+   "error": "source.yaml: while scanning a simple key\n  in \"<unicode string>\", line 3, column 1:\n    é text\n    ^\ncould not find expected ':'\n  in \"<unicode string>\", line 4, column 1:\n    \n    ^"
+  },
+  {
+   "yaml": "entries:\n  - keyd: \"GS\u000101\"\n    title: \"T\"\n    url: \"https://x\"\n    trigger: \"g\"\n",
+   "error": "source.yaml: unacceptable character #x0001: special characters are not allowed\n  in \"<unicode string>\", position 22"
+  },
+  {
+   "yaml": "fields[:\n  - key: title\n    va1- lue: \"DrDebits\"\n",
+   "value": "{'fields[': [{'key': 'title', 'va1- lue': 'DrDebits'}]}"
+  },
+  {
+   "yaml": "'...,- 1.52026-10-17!!str 0x1@#\\!!str ﻿",
+   "error": "source.yaml: while scanning a quoted scalar\n  in \"<unicode string>\", line 1, column 1:\n    '...,- 1.52026-10-17!!str 0x1@#\\ ... \n    ^\nfound unexpected end of stream\n  in \"<unicode string>\", line 1, column 39:\n     ... 1.52026-10-17!!str 0x1@#\\!!str ﻿\n                                         ^"
+  },
+  {
+   "yaml": "fields:\n  - key: 1.5title\n ,   value: \"DrDebits@\"\n",
+   "error": "source.yaml: while parsing a block mapping\n  in \"<unicode string>\", line 1, column 1:\n    fields:\n    ^\nexpected <block end>, but found ','\n  in \"<unicode string>\", line 3, column 2:\n     ,   value: \"DrDebits@\"\n     ^"
+  },
+  {
+   "yaml": "faields:\n  - key: title\n    vkeyalue: \"Dr~Debits\"\n",
+   "value": "{'faields': [{'key': 'title', 'vkeyalue': 'Dr~Debits'}]}"
+  },
+  {
+   "yaml": ":'\" yes---1é#",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "fields:\n  - key: title\n -    value: \",DrDebits\"\n",
+   "error": "source.yaml: while parsing a block mapping\n  in \"<unicode string>\", line 1, column 1:\n    fields:\n    ^\nexpected <block end>, but found '<block sequence start>'\n  in \"<unicode string>\", line 3, column 2:\n     -    value: \",DrDebits\"\n     ^"
+  },
+  {
+   "yaml": "a: ...[1, 2, {b: c}]\nd: |\t\n  texté",
+   "error": "source.yaml: mapping values are not allowed here\n  in \"<unicode string>\", line 1, column 16:\n    a: ...[1, 2, {b: c}]\n                   ^"
+  },
+  {
+   "yaml": "a: [1, 12, {b: c}]\nd: |\n  text<<\n",
+   "value": "{'a': [1, 12, {'b': 'c'}], 'd': 'text<<\\n'}"
+  },
+  {
+   "yaml": "a: [1, 2, {b: c}]\nd: |\n  &a text\n",
+   "value": "{'a': [1, 2, {'b': 'c'}], 'd': '&a text\\n'}"
+  },
+  {
+   "yaml": "a: [1, 2, {b: c}]\nd: |\n  text\n",
+   "value": "{'a': [1, 2, {'b': 'c'}], 'd': 'text\\n'}"
+  },
+  {
+   "yaml": "fi---elds:\n  - key: title\n    value: \"DrDebits\"\n",
+   "value": "{'fi---elds': [{'key': 'title', 'value': 'DrDebits'}]}"
+  },
+  {
+   "yaml": "fi[yeslds:\n  - key: title\n    value: \n\"DrDebits\"\n",
+   "error": "source.yaml: while scanning a simple key\n  in \"<unicode string>\", line 4, column 1:\n    \"DrDebits\"\n    ^\ncould not find expected ':'\n  in \"<unicode string>\", line 5, column 1:\n    \n    ^"
+  },
+  {
+   "yaml": "fields{:\n  - key: title\n    valu'e] \"DrDebits\"\n",
+   "error": "source.yaml: while scanning a simple key\n  in \"<unicode string>\", line 3, column 5:\n        valu'e] \"DrDebits\"\n        ^\ncould not find expected ':'\n  in \"<unicode string>\", line 4, column 1:\n    \n    ^"
+  },
+  {
+   "yaml": "a:byes: 0x1",
+   "error": "source.yaml: expected '<document start>', but found '<block mapping start>'\n  in \"<unicode string>\", line 2, column 1:\n    : 0x1\n    ^"
+  },
+  {
+   "yaml": "<<~:value﻿~ |---`",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "#b{0x1---#? #",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": " : ",
+   "error": "source.yaml: while parsing a block mapping\nexpected <block end>, but found ':'\n  in \"<unicode string>\", line 2, column 1:\n    : \n    ^"
+  },
+  {
+   "yaml": "\r- : *a- : ",
+   "error": "source.yaml: while parsing a block mapping\nexpected <block end>, but found ':'\n  in \"<unicode string>\", line 2, column 3:\n    - : *a- : \n      ^"
+  },
+  {
+   "yaml": "entries:\n  - id: \"GS01\"\n    title: \"T[\"\n    url: \"https://x\"\n    trigger: \"g\"2026-10-17\n",
+   "error": "source.yaml: while parsing a block mapping\n  in \"<unicode string>\", line 2, column 5:\n      - id: \"GS01\"\n        ^\nexpected <block end>, but found '<scalar>'\n  in \"<unicode string>\", line 5, column 17:\n        trigger: \"g\"2026-10-17\n                    ^"
+  },
+  {
+   "yaml": ": ",
+   "error": "source.yaml: while parsing a block mapping\nexpected <block end>, but found ':'\n  in \"<unicode string>\", line 1, column 1:\n    : \n    ^"
+  },
+  {
+   "yaml": "fields:\n  - key: title\n    value:@ \"DrDebits\"<<\n",
+   "error": "source.yaml: while scanning a simple key\n  in \"<unicode string>\", line 4, column 1:\n    value:@ \"DrDebits\"<<\n    ^\ncould not find expected ':'\n  in \"<unicode string>\", line 5, column 1:\n    \n    ^"
+  },
+  {
+   "yaml": ": bvalueb﻿\r,  value{ |\t",
+   "error": "source.yaml: while parsing a block mapping\nexpected <block end>, but found ':'\n  in \"<unicode string>\", line 1, column 1:\n    : bvalueb﻿\n    ^"
+  },
+  {
+   "yaml": "fields:\n  - key: ti\\@tle\n    value: \"DrDebits\"\n",
+   "value": "{'fields': [{'key': 'ti\\\\@tle', 'value': 'DrDebits'}]}"
+  },
+  {
+   "yaml": "\nields:\n  - key: tit!le\n    value: \"DrDebi...s\"\n",
+   "value": "{'ields': [{'key': 'tit!le', 'value': 'DrDebi...s'}]}"
+  },
+  {
+   "yaml": "fields:\n  - key\": title\"\n    value]: \"DrDebits\"\n",
+   "value": "{'fields': [{'key\"': 'title\"', 'value]': 'DrDebits'}]}"
+  },
+  {
+   "yaml": "entries:\n  - id: \"GS01\"\n    title: \"T\"\n    %url: \"https://x\"\n    tri? gger: \"g\"\n",
+   "error": "source.yaml: while scanning for the next token\nfound character '%' that cannot start any token\n  in \"<unicode string>\", line 4, column 5:\n        %url: \"https://x\"\n        ^"
+  },
+  {
+   "yaml": "a: [1, 2, {b: c}]\nd:﻿|\n  text\n",
+   "error": "source.yaml: while scanning a simple key\n  in \"<unicode string>\", line 2, column 1:\n    d:﻿|\n    ^\ncould not find expected ':'\n  in \"<unicode string>\", line 4, column 1:\n    \n    ^"
+  },
+  {
+   "yaml": "entries:\n  - id: \"GS01\"\n  |  tit  e: \"T\"\n    url: \"https://x\"\n    trigger: \"g\"\n",
+   "error": "source.yaml: while scanning a block scalar\n  in \"<unicode string>\", line 4, column 3:\n      |  tit  e: \"T\"\n      ^\nexpected a comment or a line break, but found 't'\n  in \"<unicode string>\", line 4, column 6:\n      |  tit  e: \"T\"\n         ^"
+  },
+  {
+   "yaml": "fields:\n  \u0001 key: t`itle\n    v lue: \"DrDebits\"\n",
+   "error": "source.yaml: unacceptable character #x0001: special characters are not allowed\n  in \"<unicode string>\", position 10"
+  },
+  {
+   "yaml": "fields:\n  - key: title\n    value: \"DrDebits\"#",
+   "value": "{'fields': [{'key': 'title', 'value': 'DrDebits'}]}"
+  },
+  {
+   "yaml": "a: [<<1, 2, {b: c}]\nd: |\n>=  text\n",
+   "error": "source.yaml: while scanning a block scalar\n  in \"<unicode string>\", line 3, column 1:\n    >=  text\n    ^\nexpected chomping or indentation indicators, but found '='\n  in \"<unicode string>\", line 3, column 2:\n    >=  text\n     ^"
+  },
+  {
+   "yaml": ":fie[ds1\n  - key: title\n    value: \"DrDebits\"\n",
+   "error": "source.yaml: mapping values are not allowed here\n  in \"<unicode string>\", line 2, column 8:\n      - key: title\n           ^"
+  },
+  {
+   "yaml": "!\t{- !!str >`\n\u0001\u0001{\t",
+   "error": "source.yaml: unacceptable character #x0001: special characters are not allowed\n  in \"<unicode string>\", position 14"
+  },
+  {
+   "yaml": "---\"",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "fields:\n  - key: title\n &a    value: \"DrDebits\"\n",
+   "error": "source.yaml: while parsing a block mapping\n  in \"<unicode string>\", line 1, column 1:\n    fields:\n    ^\nexpected <block end>, but found '<block mapping start>'\n  in \"<unicode string>\", line 3, column 2:\n     &a    value: \"DrDebits\"\n     ^"
+  },
+  {
+   "yaml": "\\﻿\"! a}:: ]﻿﻿=",
+   "error": "source.yaml: mapping values are not allowed here\n  in \"<unicode string>\", line 2, column 4:\n    a}:: ]﻿﻿=\n       ^"
+  },
+  {
+   "yaml": "entri[es:\n  - id: \"GS01\"\n    title: \"T\"\n    url: \"https://x\"\n    trigger: \"g\"\n",
+   "value": "{'entri[es': [{'id': 'GS01', 'title': 'T', 'url': 'https://x', 'trigger': 'g'}]}"
+  },
+  {
+   "yaml": "fields:\n  - key: title\n    value: \"=DrDebits\"\n",
+   "error": "source.yaml: while parsing a block mapping\n  in \"<unicode string>\", line 1, column 1:\n    fields:\n    ^\nexpected <block end>, but found '<scalar>'\n  in \"<unicode string>\", line 3, column 2:\n     title\n     ^"
+  },
+  {
+   "yaml": "entries:\n  - id: \"GS01\"\n    title:, \"T\"\n    url: \"https://x\"\n    trigger: \"g\"\n",
+   "error": "source.yaml: while scanning a simple key\n  in \"<unicode string>\", line 3, column 5:\n        title:, \"T\"\n        ^\ncould not find expected ':'\n  in \"<unicode string>\", line 4, column 5:\n        url: \"https://x\"\n        ^"
+  },
+  {
+   "yaml": "a: [%, 2, {b: c}]\nd: |\n  text\n",
+   "error": "source.yaml: while scanning for the next token\nfound character '%' that cannot start any token\n  in \"<unicode string>\", line 1, column 5:\n    a: [%, 2, {b: c}]\n        ^"
+  },
+  {
+   "yaml": "entries:\n  - id: \"GS01\"\n    title: \"T\"\n    url: \"https://x\"\n    tr﻿igger: \"g\"\n",
+   "value": "{'entries': [{'id': 'GS01', 'title': 'T', 'url': 'https://x', 'tr\\ufeffigger': 'g'}]}"
+  },
+  {
+   "yaml": "]|@b&a }&a @%*a...",
+   "error": "source.yaml: while parsing a block node\nexpected the node content, but found ']'\n  in \"<unicode string>\", line 1, column 1:\n    ]|@b&a \n    ^"
+  },
+  {
+   "yaml": "fields﻿:\n  - key: title\n    value: \"DrDebits\"\n",
+   "value": "{'fields\\ufeff': [{'key': 'title', 'value': 'DrDebits'}]}"
+  },
+  {
+   "yaml": "|b...\t",
+   "error": "source.yaml: while scanning a block scalar\n  in \"<unicode string>\", line 1, column 1:\n    |b...\t\n    ^\nexpected chomping or indentation indicators, but found 'b'\n  in \"<unicode string>\", line 1, column 2:\n    |b...\t\n     ^"
+  },
+  {
+   "yaml": "fields:\n  - key: title\n  ?   value: \"1DrDebits\"\n",
+   "error": "source.yaml: while parsing a block collection\n  in \"<unicode string>\", line 2, column 3:\n      - key: title\n      ^\nexpected <block end>, but found '?'\n  in \"<unicode string>\", line 3, column 3:\n      ?   value: \"1DrDebits\"\n      ^"
+  },
+  {
+   "yaml": "fields:\n  - key: title\n    \tvalue: \"DrDebits\"\n",
+   "error": "source.yaml: while scanning for the next token\nfound character '\\t' that cannot start any token\n  in \"<unicode string>\", line 3, column 5:\n        \tvalue: \"DrDebits\"\n        ^"
+  },
+  {
+   "yaml": "fields:\n  - key\" title\n\t    value: \"DrDebits\"\n",
+   "error": "source.yaml: while scanning for the next token\nfound character '\\t' that cannot start any token\n  in \"<unicode string>\", line 3, column 1:\n    \t    value: \"DrDebits\"\n    ^"
+  },
+  {
+   "yaml": "a: [1, 2, {b: c#]\nd: |\n  text\n",
+   "error": "source.yaml: while parsing a flow mapping\n  in \"<unicode string>\", line 1, column 11:\n    a: [1, 2, {b: c#]\n              ^\nexpected ',' or '}', but got ']'\n  in \"<unicode string>\", line 1, column 17:\n    a: [1, 2, {b: c#]\n                    ^"
+  },
+  {
+   "yaml": "@? value  1.5value*a1.5]0x1'#- : ",
+   "error": "source.yaml: while scanning for the next token\nfound character '@' that cannot start any token\n  in \"<unicode string>\", line 1, column 1:\n    @? value  1.5value*a1.5]0x1'#- : \n    ^"
+  },
+  {
+   "yaml": "entries:\n  - id:: \"GS01\"\n    title: \"T\"\n-     url: \"https://x\"\n    trigger: \"g\"\n",
+   "error": "source.yaml: while parsing a block mapping\n  in \"<unicode string>\", line 1, column 1:\n    entries:\n    ^\nexpected <block end>, but found '-'\n  in \"<unicode string>\", line 4, column 1:\n    -     url: \"https://x\"\n    ^"
+  },
+  {
+   "yaml": "entries:\n  - id...: \"GS01\"\n    title: \"T\"\n    url: \"https://x\"\n    trigger: \"g\"\n",
+   "value": "{'entries': [{'id...': 'GS01', 'title': 'T', 'url': 'https://x', 'trigger': 'g'}]}"
+  },
+  {
+   "yaml": "a: [1, 2, {b: c}]\nd:|\n  text\n",
+   "value": "{'a': [1, 2, {'b': 'c'}], 'd': 'text\\n'}"
+  },
+  {
+   "yaml": "...\rkey~&a 1﻿<<,",
+   "error": "source.yaml: while parsing a block node\nexpected the node content, but found '<document end>'\n  in \"<unicode string>\", line 1, column 1:\n    ...\n    ^"
+  },
+  {
+   "yaml": "entri%s:\n  - id: \"GS01\"\u0001\n    title: \"T\"\n    url: \"https://x\"\n    trigger: \"g\"\n",
+   "error": "source.yaml: unacceptable character #x0001: special characters are not allowed\n  in \"<unicode string>\", position 23"
+  },
+  {
+   "yaml": "entr|ies:\n \t - id}: \"GS01\"\n    title: \"T\"\n    url: \"https://x\"\n    trigger: \"g\"\n",
+   "error": "source.yaml: while scanning for the next token\nfound character '\\t' that cannot start any token\n  in \"<unicode string>\", line 2, column 2:\n     \t - id}: \"GS01\"\n     ^"
+  },
+  {
+   "yaml": "}:`b\r]a%...&a ",
+   "error": "source.yaml: while parsing a block node\nexpected the node content, but found '}'\n  in \"<unicode string>\", line 1, column 1:\n    }:`b\n    ^"
+  },
+  {
+   "yaml": "entries:\n  - id: \"GS01\"\n >  } title: \"T\"\n    url: \"https://x\"\n  \r  trigger: \"g\"\n",
+   "error": "source.yaml: while scanning a block scalar\n  in \"<unicode string>\", line 3, column 2:\n     >  } title: \"T\"\n     ^\nexpected a comment or a line break, but found '}'\n  in \"<unicode string>\", line 3, column 5:\n     >  } title: \"T\"\n        ^"
+  },
+  {
+   "yaml": "entries:\n  - id: \"GS01\"\n    title: \"T\"\n    url: \"htt{ps://x\"\n    trigger: \"g\"\n",
+   "value": "{'entries': [{'id': 'GS01', 'title': 'T', 'url': 'htt{ps://x', 'trigger': 'g'}]}"
+  },
+  {
+   "yaml": "a: [1, 2, {b: c}]\n%d: |\n  text\n",
+   "error": "source.yaml: while scanning a directive\n  in \"<unicode string>\", line 2, column 1:\n    %d: |\n    ^\nexpected alphabetic or numeric character, but found ':'\n  in \"<unicode string>\", line 2, column 3:\n    %d: |\n      ^"
+  },
+  {
+   "yaml": "fields:\n  - key: title\n    value: \"DrD!!str bits\"\n",
+   "value": "{'fields': [{'key': 'title', 'value': 'DrD!!str bits'}]}"
+  },
+  {
+   "yaml": "a: [1, !2, {b: c}*a\nd: |@\n  text\n",
+   "error": "source.yaml: while parsing a flow sequence\n  in \"<unicode string>\", line 1, column 4:\n    a: [1, !2, {b: c}*a\n       ^\nexpected ',' or ']', but got '<alias>'\n  in \"<unicode string>\", line 1, column 18:\n    a: [1, !2, {b: c}*a\n                     ^"
+  },
+  {
+   "yaml": "fie]lds:\n=  - key: title\n  ]  value: \"DrDebits\"\n",
+   "error": "source.yaml: mapping values are not allowed here\n  in \"<unicode string>\", line 3, column 11:\n      ]  value: \"DrDebits\"\n              ^"
+  },
+  {
+   "yaml": "\n!!str 2026-10-17﻿&a [!\n",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "en|tries:\n  - id: \"GS01\"\n    title: \"T\"\n    url: \"https://x\"\n    trigger: \"g\"\n",
+   "value": "{'en|tries': [{'id': 'GS01', 'title': 'T', 'url': 'https://x', 'trigger': 'g'}]}"
+  },
+  {
+   "yaml": "fields:\n  - key: title\n   :value: \"DrDebits\"\n",
+   "error": "source.yaml: while parsing a block collection\n  in \"<unicode string>\", line 2, column 3:\n      - key: title\n      ^\nexpected <block end>, but found '<block mapping start>'\n  in \"<unicode string>\", line 3, column 4:\n       :value: \"DrDebits\"\n       ^"
+  },
+  {
+   "yaml": "entries:\n  - id: \"GS01\"\n    title: \"T\"\n    url: \"https://*ax\"\n    t=rigger: \"g\"\n",
+   "value": "{'entries': [{'id': 'GS01', 'title': 'T', 'url': 'https://*ax', 't=rigger': 'g'}]}"
+  },
+  {
+   "yaml": "yes}  :=!!str 2026-10-17@{",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "*a\n%1.5",
+   "error": "source.yaml: while scanning a directive\n  in \"<unicode string>\", line 3, column 1:\n    %1.5\n    ^\nexpected alphabetic or numeric character, but found '.'\n  in \"<unicode string>\", line 3, column 3:\n    %1.5\n      ^"
+  },
+  {
+   "yaml": "fie ds:\n  - key: titale\n    val#e: \"DrDebits\"\n",
+   "error": "source.yaml: mapping values are not allowed here\n  in \"<unicode string>\", line 2, column 3:\n    ds:\n      ^"
+  },
+  {
+   "yaml": "a: [1, 2, {b: c}]\nd: |\n  te: xt'\n",
+   "value": "{'a': [1, 2, {'b': 'c'}], 'd': \"te: xt'\\n\"}"
+  },
+  {
+   "yaml": ",&a %%@﻿1",
+   "error": "source.yaml: while parsing a block node\nexpected the node content, but found ','\n  in \"<unicode string>\", line 1, column 1:\n    ,&a %%@﻿1\n    ^"
+  },
+  {
+   "yaml": "&a é#",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "key0x1",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "entries:\n  - id: \"GS01\"\n    title: \"T\"\n   2026-10-17url: \"https://x\"=\n    trigger: \"g\"\n",
+   "error": "source.yaml: while parsing a block collection\n  in \"<unicode string>\", line 2, column 3:\n      - id: \"GS01\"\n      ^\nexpected <block end>, but found '<block mapping start>'\n  in \"<unicode string>\", line 4, column 4:\n       2026-10-17url: \"http\n       ^"
+  },
+  {
+   "yaml": "a\r [1, 2, {{b: c}]\nd: |\n  text\n",
+   "error": "source.yaml: mapping values are not allowed here\n  in \"<unicode string>\", line 2, column 12:\n     [1, 2, {{b: c}]\n               ^"
+  },
+  {
+   "yaml": "%? é|yes#",
+   "error": "source.yaml: while scanning a directive\n  in \"<unicode string>\", line 1, column 1:\n    %? é|yes\n    ^\nexpected alphabetic or numeric character, but found '?'\n  in \"<unicode string>\", line 1, column 2:\n    %? é|yes\n     ^"
+  },
+  {
+   "yaml": "=}%>!!str ]:<<---﻿=",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "fielads:\n  - key: title\n    value: \n!DrDebits\"\n",
+   "error": "source.yaml: while scanning a tag\n  in \"<unicode string>\", line 4, column 1:\n    !DrDebits\"\n    ^\nexpected ' ', but found '\"'\n  in \"<unicode string>\", line 4, column 10:\n    !DrDebits\"\n             ^"
+  },
+  {
+   "yaml": "fields:\n  -&a  key: title\n    value: \"DrDebits\"\n",
+   "error": "source.yaml: mapping values are not allowed here\n  in \"<unicode string>\", line 3, column 10:\n        value: \"DrDebits\"\n             ^"
+  },
+  {
+   "yaml": "ba: [1, 2, {b: c}]\nd: |\n  text\n",
+   "value": "{'ba': [1, 2, {'b': 'c'}], 'd': 'text\\n'}"
+  },
+  {
+   "yaml": "fields:\n ... - key: title\n    value: \"DrDebits\"\n",
+   "error": "source.yaml: mapping values are not allowed here\n  in \"<unicode string>\", line 3, column 10:\n        value: \"DrDebits\"\n             ^"
+  },
+  {
+   "yaml": "entries:\n  - id: \"GS01\"\n    title: \"T\n\n    url: \"https://x\"\n !!str    trigger: \"g\"\n",
+   "error": "source.yaml: while parsing a block mapping\n  in \"<unicode string>\", line 2, column 5:\n      - id: \"GS01\"\n        ^\nexpected <block end>, but found '<scalar>'\n  in \"<unicode string>\", line 5, column 11:\n        url: \"https://x\"\n              ^"
+  },
+  {
+   "yaml": "fiel ds:\n  !!str - key: title\n    value: \"DrDebits\"\n",
+   "error": "source.yaml: mapping values are not allowed here\n  in \"<unicode string>\", line 2, column 3:\n    ds:\n      ^"
+  },
+  {
+   "yaml": ",\"\"0x11",
+   "error": "source.yaml: while parsing a block node\nexpected the node content, but found ','\n  in \"<unicode string>\", line 1, column 1:\n    ,\"\"0x11\n    ^"
+  },
+  {
+   "yaml": "a&a : [1, 2, {b: c}]\nd: |\n  va@luetext\n",
+   "value": "{'a&a': [1, 2, {'b': 'c'}], 'd': 'va@luetext\\n'}"
+  },
+  {
+   "yaml": "...- :=[}\t---&a  : ﻿...",
+   "error": "source.yaml: while scanning for the next token\nfound character '\\t' that cannot start any token\n  in \"<unicode string>\", line 1, column 10:\n    ...- :=[}\t---&a \n             ^"
+  },
+  {
+   "yaml": "a}=",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "a: [1, !!str , {b: c}]\nd: |1.5  text\n",
+   "error": "source.yaml: while scanning a block scalar\n  in \"<unicode string>\", line 2, column 4:\n    d: |1.5  text\n       ^\nexpected chomping or indentation indicators, but found '.'\n  in \"<unicode string>\", line 2, column 6:\n    d: |1.5  text\n         ^"
+  },
+  {
+   "yaml": "fields:\n  - keby: title\n    value: \"DrDebits\"\n",
+   "value": "{'fields': [{'keby': 'title', 'value': 'DrDebits'}]}"
+  },
+  {
+   "yaml": "é\u0001--- ",
+   "error": "source.yaml: unacceptable character #x0001: special characters are not allowed\n  in \"<unicode string>\", position 1"
+  },
+  {
+   "yaml": "fields:\n  - key: ti﻿tle\n    value: \"DrDebits\"\n",
+   "value": "{'fields': [{'key': 'ti\\ufefftle', 'value': 'DrDebits'}]}"
+  },
+  {
+   "yaml": "fields:\n  - key: title\n    va\"ue: \"DrDebits\"\n",
+   "value": "{'fields': [{'key': 'title', 'va\"ue': 'DrDebits'}]}"
+  },
+  {
+   "yaml": ">`'1.5>value<<': |value'",
+   "error": "source.yaml: while scanning a block scalar\n  in \"<unicode string>\", line 1, column 1:\n    >`'1.5>value<<': |value'\n    ^\nexpected chomping or indentation indicators, but found '`'\n  in \"<unicode string>\", line 1, column 2:\n    >`'1.5>value<<': |value'\n     ^"
+  },
+  {
+   "yaml": "{é*a",
+   "error": "source.yaml: while parsing a flow mapping\n  in \"<unicode string>\", line 1, column 1:\n    {é*a\n    ^\nexpected ',' or '}', but got '<stream end>'\n  in \"<unicode string>\", line 1, column 5:\n    {é*a\n        ^"
+  },
+  {
+   "yaml": "fields:0x1  - key: title\n    valu%: \"DrDebits\"\n",
+   "error": "source.yaml: mapping values are not allowed here\n  in \"<unicode string>\", line 2, column 10:\n        valu%: \"DrDebits\"\n             ^"
+  },
+  {
+   "yaml": ">:- ﻿: @  ...",
+   "error": "source.yaml: while scanning a block scalar\n  in \"<unicode string>\", line 1, column 1:\n    >:- ﻿:\n    ^\nexpected chomping or indentation indicators, but found ':'\n  in \"<unicode string>\", line 1, column 2:\n    >:- ﻿:\n     ^"
+  },
+  {
+   "yaml": "a: [1, \t2, {b: c}]\nd: |~\n  text\n",
+   "error": "source.yaml: while scanning for the next token\nfound character '\\t' that cannot start any token\n  in \"<unicode string>\", line 1, column 8:\n    a: [1, \t2, {b: c}]\n           ^"
+  },
+  {
+   "yaml": "' value- ---: é!,keyyes,",
+   "error": "source.yaml: while scanning a quoted scalar\n  in \"<unicode string>\", line 1, column 1:\n    '\n    ^\nfound unexpected end of stream\n  in \"<unicode string>\", line 2, column 23:\n    value- ---: é!,keyyes,\n                          ^"
+  },
+  {
+   "yaml": "a>﻿ [1, 2, {b: c}]\nd: |\n  t1.5ext\n",
+   "value": "{'a>\\ufeff [1, 2, {b': 'c}]', 'd': 't1.5ext\\n'}"
+  },
+  {
+   "yaml": "a: [1, 2, {b: c}]\nd: |value\n  text\n",
+   "error": "source.yaml: while scanning a block scalar\n  in \"<unicode string>\", line 2, column 4:\n    d: |value\n       ^\nexpected chomping or indentation indicators, but found 'v'\n  in \"<unicode string>\", line 2, column 5:\n    d: |value\n        ^"
+  },
+  {
+   "yaml": "a: [1, 2, {b: c}- \nd: |\n  text\n",
+   "error": "source.yaml: while parsing a flow sequence\n  in \"<unicode string>\", line 1, column 4:\n    a: [1, 2, {b: c}- \n       ^\nexpected ',' or ']', but got '-'\n  in \"<unicode string>\", line 1, column 17:\n    a: [1, 2, {b: c}- \n                    ^"
+  },
+  {
+   "yaml": "fields:\n  - key{: title\n   \" value: \"DrD\nebits\"\n",
+   "error": "source.yaml: while parsing a block collection\n  in \"<unicode string>\", line 2, column 3:\n      - key{: title\n      ^\nexpected <block end>, but found '<scalar>'\n  in \"<unicode string>\", line 3, column 4:\n       \" value: \"DrD\n       ^"
+  },
+  {
+   "yaml": "fields:\n  - key:@ title\n    value: \"? DrDebits\"\n",
+   "error": "source.yaml: mapping values are not allowed here\n  in \"<unicode string>\", line 3, column 10:\n        value: \"? DrDebits\"\n             ^"
+  },
+  {
+   "yaml": "fields:\n}  - key: t---itle\n    value: \"DrDebit}\"\n",
+   "error": "source.yaml: while parsing a block node\nexpected the node content, but found '}'\n  in \"<unicode string>\", line 2, column 1:\n    }  - key: t---itle\n    ^"
+  },
+  {
+   "yaml": "a: [1, 2, {b: c}0x1]\nd: |\n  *atext\n",
+   "error": "source.yaml: while parsing a flow sequence\n  in \"<unicode string>\", line 1, column 4:\n    a: [1, 2, {b: c}0x1]\n       ^\nexpected ',' or ']', but got '<scalar>'\n  in \"<unicode string>\", line 1, column 17:\n    a: [1, 2, {b: c}0x1]\n                    ^"
+  },
+  {
+   "yaml": "[ ''{\"\r}﻿\nvaluea",
+   "error": "source.yaml: while scanning a quoted scalar\n  in \"<unicode string>\", line 2, column 4:\n    ''{\"\n       ^\nfound unexpected end of stream\n  in \"<unicode string>\", line 4, column 7:\n    valuea\n          ^"
+  },
+  {
+   "yaml": "\\a!!str <<keykey'&a '!",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "% \\`@",
+   "error": "source.yaml: while scanning a directive\n  in \"<unicode string>\", line 1, column 1:\n    %\n    ^\nexpected alphabetic or numeric character, but found '\\u2028'\n  in \"<unicode string>\", line 1, column 2:\n    %\n     ^"
+  },
+  {
+   "yaml": "fields:\n  - key: title\n    value: \"DrDebits\n\n",
+   "error": "source.yaml: while scanning a quoted scalar\n  in \"<unicode string>\", line 3, column 12:\n        value: \"DrDebits\n               ^\nfound unexpected end of stream\n  in \"<unicode string>\", line 5, column 1:\n    \n    ^"
+  },
+  {
+   "yaml": "*avalue][>!!str 0x1'",
+   "error": "source.yaml: found undefined alias 'a'\n  in \"<unicode string>\", line 1, column 1:\n    *a\n    ^"
+  },
+  {
+   "yaml": "entries:\n  - id: \"GS01\"\n    ti~le: \"T\"\n    url: \"https://x\"\n    trigger: \"g\"\n",
+   "value": "{'entries': [{'id': 'GS01', 'ti~le': 'T', 'url': 'https://x', 'trigger': 'g'}]}"
+  },
+  {
+   "yaml": "fields:\n  -' key: title\n    value: \"DrDebit~\"\n",
+   "error": "source.yaml: mapping values are not allowed here\n  in \"<unicode string>\", line 3, column 10:\n        value: \"DrDebit~\"\n             ^"
+  },
+  {
+   "yaml": "yes---\"...---#\"%*a:- ? '",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "b&a %: :1value}---é`>",
+   "error": "source.yaml: while scanning a simple key\n  in \"<unicode string>\", line 2, column 1:\n    :1value}---é`>\n    ^\ncould not find expected ':'\n  in \"<unicode string>\", line 2, column 15:\n    :1value}---é`>\n                  ^"
+  },
+  {
+   "yaml": ">éé2026-10-17...'\\",
+   "error": "source.yaml: while scanning a block scalar\n  in \"<unicode string>\", line 1, column 1:\n    >éé2026-10-17...'\\\n    ^\nexpected chomping or indentation indicators, but found 'é'\n  in \"<unicode string>\", line 1, column 2:\n    >éé2026-10-17...'\\\n     ^"
+  },
+  {
+   "yaml": "\\2026-10-17- <<=",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": ":...\t\na﻿&a ##",
+   "error": "source.yaml: while scanning for the next token\nfound character '\\t' that cannot start any token\n  in \"<unicode string>\", line 1, column 5:\n    :...\t\n        ^"
+  },
+  {
+   "yaml": "entr---es:\n  - id \"GS01\"\n    title: \"T\"\n    url: \"https://x\"\n    trigge  r: \"g\"\n",
+   "error": "source.yaml: while parsing a block mapping\n  in \"<unicode string>\", line 1, column 1:\n    entr---es:\n    ^\nexpected <block end>, but found '<scalar>'\n  in \"<unicode string>\", line 3, column 2:\n     \"GS01\"\n     ^"
+  },
+  {
+   "yaml": ": {1.5|0x1\\- ",
+   "error": "source.yaml: while parsing a block mapping\nexpected <block end>, but found ':'\n  in \"<unicode string>\", line 1, column 1:\n    : {1.5|0x1\\- \n    ^"
+  },
+  {
+   "yaml": "a: [1, 2, {b: c}]\nd: |\n é  valuetext\n",
+   "value": "{'a': [1, 2, {'b': 'c'}], 'd': 'é  valuetext\\n'}"
+  },
+  {
+   "yaml": "entries:\n  - id: \"GS01\"\n    title: \"T\"\n  >  url: \"https://x\"\n    trigger: \"g\"\n",
+   "error": "source.yaml: while scanning a block scalar\n  in \"<unicode string>\", line 4, column 3:\n      >  url: \"https://x\"\n      ^\nexpected a comment or a line break, but found 'u'\n  in \"<unicode string>\", line 4, column 6:\n      >  url: \"https://x\"\n         ^"
+  },
+  {
+   "yaml": "1~0x1",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "fields:\n  -bkey: title\n yes   value?  \"DrDebits\"\n",
+   "error": "source.yaml: while parsing a block mapping\n  in \"<unicode string>\", line 1, column 1:\n    fields:\n    ^\nexpected <block end>, but found '<scalar>'\n  in \"<unicode string>\", line 3, column 2:\n     yes   value?  \"DrDebits\"\n     ^"
+  },
+  {
+   "yaml": "fields:\n  - key: title\n    valueb \"DrDebits\"\n",
+   "error": "source.yaml: while scanning a simple key\n  in \"<unicode string>\", line 3, column 5:\n        valueb \"DrDebits\"\n        ^\ncould not find expected ':'\n  in \"<unicode string>\", line 4, column 1:\n    \n    ^"
+  },
+  {
+   "yaml": "#0x1---[yes#[[é\tb  ",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "a: [1, 2, {b: c}]\nd!: |\n  #ext\n",
+   "value": "{'a': [1, 2, {'b': 'c'}], 'd!': '#ext\\n'}"
+  },
+  {
+   "yaml": "\"]*a~!!str &a 1.5{&a <<{}=",
+   "error": "source.yaml: while scanning a quoted scalar\n  in \"<unicode string>\", line 1, column 1:\n    \"]*a~!!str &a 1.5{&a <<{}=\n    ^\nfound unexpected end of stream\n  in \"<unicode string>\", line 1, column 27:\n    \"]*a~!!str &a 1.5{&a <<{}=\n                              ^"
+  },
+  {
+   "yaml": "---<<",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "  0x1value1a",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "fields:\n  - key: title\n    value: \"\rDrDebits\"\n",
+   "value": "{'fields': [{'key': 'title', 'value': ' DrDebits'}]}"
+  },
+  {
+   "yaml": "entries:\n  - id: \"GS01\"\n   ~ title: \"T\"\n    url: \"https://x\"\n    trigger: \"g\"\n",
+   "error": "source.yaml: while parsing a block collection\n  in \"<unicode string>\", line 2, column 3:\n      - id: \"GS01\"\n      ^\nexpected <block end>, but found '<block mapping start>'\n  in \"<unicode string>\", line 3, column 4:\n       ~ title: \"T\"\n       ^"
+  },
+  {
+   "yaml": "a: [1,&a  2, {b: c}]\nd: |\n  text\n",
+   "value": "{'a': [1, 2, {'b': 'c'}], 'd': 'text\\n'}"
+  },
+  {
+   "yaml": "   >>]é",
+   "error": "source.yaml: while scanning a block scalar\n  in \"<unicode string>\", line 2, column 3:\n      >>]é\n      ^\nexpected chomping or indentation indicators, but found '>'\n  in \"<unicode string>\", line 2, column 4:\n      >>]é\n       ^"
+  },
+  {
+   "yaml": "fields:\n  - =key: title\n    value: \"DrDebits\"\n",
+   "value": "{'fields': [{'=key': 'title', 'value': 'DrDebits'}]}"
+  },
+  {
+   "yaml": "entries:\n  - id: \"GS01\"\n    title: \"T\"\n    url: \"http...s://x\"\n    trigger: \"g\"\n",
+   "value": "{'entries': [{'id': 'GS01', 'title': 'T', 'url': 'http...s://x', 'trigger': 'g'}]}"
+  }
+ ],
+ "json": [
+  {
+   "json": "{\"a\":1,}",
+   "error": "Illegal trailing comma before end of object: line 1 column 7 (char 6)"
+  },
+  {
+   "json": "[1,]",
+   "error": "Illegal trailing comma before end of array: line 1 column 3 (char 2)"
+  },
+  {
+   "json": "\"\u0001\"",
+   "error": "Invalid control character at: line 1 column 2 (char 1)"
+  },
+  {
+   "json": "\"\\q\"",
+   "error": "Invalid \\escape: line 1 column 2 (char 1)"
+  },
+  {
+   "json": "\"\\u12\"",
+   "error": "Invalid \\uXXXX escape: line 1 column 3 (char 2)"
+  },
+  {
+   "json": "\"abc",
+   "error": "Unterminated string starting at: line 1 column 1 (char 0)"
+  },
+  {
+   "json": "{\"a\" 1}",
+   "error": "Expecting ':' delimiter: line 1 column 6 (char 5)"
+  },
+  {
+   "json": "1 2",
+   "error": "Extra data: line 1 column 3 (char 2)"
+  },
+  {
+   "json": "",
+   "error": "Expecting value: line 1 column 1 (char 0)"
+  },
+  {
+   "json": "﻿{}",
+   "error": "Unexpected UTF-8 BOM (decode using utf-8-sig): line 1 column 1 (char 0)"
+  },
+  {
+   "json": "[1 2]",
+   "error": "Expecting ',' delimiter: line 1 column 4 (char 3)"
+  },
+  {
+   "json": "{1:2}",
+   "error": "Expecting property name enclosed in double quotes: line 1 column 2 (char 1)"
+  },
+  {
+   "json": "-",
+   "error": "Expecting value: line 1 column 1 (char 0)"
+  },
+  {
+   "json": "01",
+   "error": "Extra data: line 1 column 2 (char 1)"
+  },
+  {
+   "json": "{\"a\":1,\"a\":2}",
+   "error": "duplicate key 'a'"
+  },
+  {
+   "json": "\"\\",
+   "error": "Unterminated string starting at: line 1 column 1 (char 0)"
+  },
+  {
+   "json": "{\"a\":",
+   "error": "Expecting value: line 1 column 6 (char 5)"
+  },
+  {
+   "json": "{\"a\":1",
+   "error": "Expecting ',' delimiter: line 1 column 7 (char 6)"
+  },
+  {
+   "json": "[",
+   "error": "Expecting value: line 1 column 2 (char 1)"
+  },
+  {
+   "json": "99999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999",
+   "error": "Exceeds the limit (4300 digits) for integer string conversion: value has 5000 digits; use sys.set_int_max_str_digits() to increase the limit"
+  },
+  {
+   "json": "{\"a\": {\"b\": 1, \"b\": 2}}",
+   "error": "duplicate key 'b'"
+  },
+  {
+   "json": "[NaN, Infinity, -Infinity]",
+   "value": "[nan, inf, -inf]"
+  },
+  {
+   "json": "{\"a\": \"\\ud83d\\ude00\"}",
+   "value": "{'a': '😀'}"
+  },
+  {
+   "json": "1.5e300",
+   "value": "1.5e+300"
+  },
+  {
+   "json": "-0",
+   "value": "0"
+  },
+  {
+   "json": "true",
+   "value": "True"
+  },
+  {
+   "json": "null",
+   "value": "None"
+  },
+  {
+   "json": " [ ] ",
+   "value": "[]"
+  },
+  {
+   "json": "{ }",
+   "value": "{}"
+  },
+  {
+   "json": "\"\\/\\b\\f\\n\\r\\t\"",
+   "value": "'/\\x08\\x0c\\n\\r\\t'"
+  },
+  {
+   "json": "[1,\n2,\n]",
+   "error": "Illegal trailing comma before end of array: line 2 column 2 (char 5)"
+  },
+  {
+   "json": "{\"a\":1 , \"b\" : 2}",
+   "value": "{'a': 1, 'b': 2}"
+  },
+  {
+   "json": "[-Infinity]",
+   "value": "[-inf]"
+  },
+  {
+   "json": "-Inf",
+   "error": "Expecting value: line 1 column 1 (char 0)"
+  },
+  {
+   "json": "nul",
+   "error": "Expecting value: line 1 column 1 (char 0)"
+  },
+  {
+   "json": "\"\t\"",
+   "error": "Invalid control character at: line 1 column 2 (char 1)"
+  },
+  {
+   "json": "1.",
+   "error": "Extra data: line 1 column 2 (char 1)"
+  },
+  {
+   "json": "1e",
+   "error": "Extra data: line 1 column 2 (char 1)"
+  },
+  {
+   "json": "1e+",
+   "error": "Extra data: line 1 column 2 (char 1)"
+  },
+  {
+   "json": ".5",
+   "error": "Expecting value: line 1 column 1 (char 0)"
+  },
+  {
+   "json": "[1]x",
+   "error": "Extra data: line 1 column 4 (char 3)"
+  }
+ ]
+}

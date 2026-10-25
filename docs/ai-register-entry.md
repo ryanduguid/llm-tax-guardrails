@@ -4,7 +4,7 @@ The National AI Centre's Guidance for AI Adoption (October 2025) asks organisati
 
 The first seven rows follow the columns of the National AI Centre's [AI register template](https://www.ai.gov.au/staying-safe-and-responsible/essential-ai-practices/ai-systems-register), so a firm can start those columns from them; the other rows serve the rest of its register and its risk assessment. The firm adds the template's remaining columns (owner, status, purpose, registered date and screening outcome) and its own use case, deployment environment, risk and impact assessment, controls and review cycle. A firm may record DrDebits as a control on the AI assistant that loads it rather than as a register row of its own.
 
-`tools/drdebits_build/tests/test_ai_register_entry.py` fails when the release tag in `src/data/metadata.yaml` moves without this table. Supplier information is not a certification, an approval of any use or a statement that a firm's use complies with anything. The firm decides what client data may be used, under its AI-use policy and its legal, professional, contractual and privacy obligations.
+`tools/drdebits_build/tests/register_entry.rs` fails when the release tag in `src/data/metadata.yaml` moves without this table. Supplier information is not a certification, an approval of any use or a statement that a firm's use complies with anything. The firm decides what client data may be used, under its AI-use policy and its legal, professional, contractual and privacy obligations.
 
 | Field | Entry |
 | --- | --- |

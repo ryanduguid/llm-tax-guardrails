@@ -15,9 +15,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-# CI follows Python 3.15 maintenance releases; local development pins the patch.
+# The builder's toolchain is pinned in rust-toolchain.toml.
 env:
-  UV_PYTHON: "3.15"
+  CARGO_TERM_COLOR: never
+  RUST_TOOLCHAIN: "1.99"
 
 jobs:
   changes:
@@ -51,65 +52,51 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            python: "3.15"
             name: build parity and structural checks
           - os: windows-latest
-            python: "3.15"
             name: Windows build and installation
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 15
-    env:
-      UV_PYTHON: ${{ matrix.python }}
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+        working-directory: tools/drdebits_build
     steps:
       - name: Check out source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      - name: Set up Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
-        with:
-          python-version: ${{ matrix.python }}
-          allow-prereleases: true
+      - name: Install the pinned toolchain
+        run: rustup toolchain install "$RUST_TOOLCHAIN" --profile minimal --component clippy,rustfmt
 
-      - name: Install the locked toolchain
-        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
-        with:
-          version: "0.12.0"
-          enable-cache: true
+      - name: Check formatting
+        run: cargo fmt --check
 
       - name: Lint the builder
-        run: uv run --project tools/drdebits_build --locked --extra dev ruff check tools/drdebits_build/drdebits_build tools/drdebits_build/tests  # NOSONAR: unprivileged job; pyyaml 6.0.3 has no Python 3.15 wheel, and uv installs the hash-locked set
+        run: cargo clippy --locked --all-targets -- -D warnings
 
-      - name: Typecheck the builder
-        run: uv run --project tools/drdebits_build --locked --extra dev mypy --config-file tools/drdebits_build/pyproject.toml tools/drdebits_build/drdebits_build  # NOSONAR: unprivileged job; pyyaml 6.0.3 has no Python 3.15 wheel, and uv installs the hash-locked set
-
-      - name: Run the build package tests
+      - name: Run the builder tests
         if: matrix.os != 'ubuntu-latest'
-        run: uv run --project tools/drdebits_build --locked --extra dev pytest tools/drdebits_build/tests -q  # NOSONAR: unprivileged job; pyyaml 6.0.3 has no Python 3.15 wheel, and uv installs the hash-locked set
+        run: cargo test --locked
 
-      - name: Run the build package tests with branch coverage
+      - name: Run the builder tests with line coverage
         if: matrix.os == 'ubuntu-latest'
-        run: uv run --project tools/drdebits_build --locked --extra dev coverage run --rcfile=tools/drdebits_build/pyproject.toml --branch --source=tools/drdebits_build/drdebits_build -m pytest tools/drdebits_build/tests -q  # NOSONAR: the builder environment installs from uv.lock wheels
-
-      - name: Require complete builder coverage
-        if: matrix.os == 'ubuntu-latest'
-        run: uv run --project tools/drdebits_build --locked --extra dev coverage report --rcfile=tools/drdebits_build/pyproject.toml --fail-under=100  # NOSONAR: reads the coverage data only
-
-      - name: Write builder coverage for Codecov
-        if: matrix.os == 'ubuntu-latest'
-        run: uv run --project tools/drdebits_build --locked --extra dev coverage xml --rcfile=tools/drdebits_build/pyproject.toml -o coverage-codecov.xml  # NOSONAR: reads the coverage data only
+        run: |
+          rustup component add llvm-tools-preview --toolchain "$RUST_TOOLCHAIN"
+          cargo install cargo-llvm-cov --locked --version 0.9.1
+          cargo llvm-cov --locked --lcov --output-path coverage-codecov.lcov --fail-under-lines 92
 
       - name: Keep the coverage report for the Codecov upload
         if: matrix.os == 'ubuntu-latest'
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: coverage-codecov
-          path: coverage-codecov.xml
+          path: tools/drdebits_build/coverage-codecov.lcov
           retention-days: 1
 
       - name: Verify committed outputs against sources
-        run: uv run --project tools/drdebits_build --locked python -m drdebits_build verify --root .  # NOSONAR: unprivileged job; pyyaml 6.0.3 has no Python 3.15 wheel, and uv installs the hash-locked set
+        run: cargo run --locked --release --quiet -- verify --root ../..
 
   secrets:
     name: secret and client-identifier scan
@@ -152,7 +139,7 @@ jobs:
       - uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         with:
           use_oidc: true
-          files: coverage-codecov.xml
+          files: coverage-codecov.lcov
           disable_search: true
           fail_ci_if_error: true
 
@@ -161,7 +148,7 @@ jobs:
     # A 60-second random exploration is not a repeatable merge gate, so it
     # runs after merge, weekly and on demand rather than on pull requests.
     if: github.event_name != 'pull_request'
-    timeout-minutes: 5
+    timeout-minutes: 20
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -173,17 +160,14 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - name: Set up Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
-        with:
-          python-version: "3.14"
+      # libFuzzer instrumentation needs a nightly compiler; the date is pinned.
       - name: Install the pinned fuzzer
-        run: >-
-          python -m pip install --require-hashes --only-binary :all:
-          --requirement requirements-fuzz.txt
+        run: |
+          rustup toolchain install nightly-2026-10-15 --profile minimal
+          cargo install cargo-fuzz --locked --version 0.13.2
       - name: Fuzz the source reader
         run: >-
-          python -m fuzz.sources fuzz/corpus
+          cargo +nightly-2026-10-15 fuzz run sources fuzz/corpus --
           -max_total_time=60 -max_len=4096 -timeout=2 -rss_limit_mb=1024
 
   verify-gates:

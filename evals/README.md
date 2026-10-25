@@ -26,7 +26,7 @@ like this, with an entry per case id from `cases.json` that the run covered:
 }
 ```
 
-`uv run --project tools/drdebits_build --locked python -m drdebits_build digests --root ..`
+`cargo run --manifest-path ../tools/drdebits_build/Cargo.toml --locked --release -- digests --root ..`
 prints the 2 digests. Records dated before 18 September 2026 keep their original
 5 keys and are not rewritten.
 
