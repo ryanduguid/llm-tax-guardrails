@@ -407,6 +407,7 @@ impl Value {
             }
             // shortcut: Python orders a set by hash, which varies between runs
             // for strings; insertion order is shown instead.
+            // Compare order-independently if output is checked against Python's for a set.
             Value::Set(items) => {
                 let items = items.borrow();
                 if items.is_empty() {
