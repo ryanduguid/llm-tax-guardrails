@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env sh
 # Refuse AI authorship credit before a commit is written.
 #
 # Enable once per clone:
@@ -45,6 +45,7 @@ set -eu
 
 msg_file=$1
 
+PY=
 for candidate in python3 python; do
 	if command -v "$candidate" >/dev/null 2>&1; then
 		PY=$candidate
@@ -282,6 +283,7 @@ def prose_credits(text):
         if explicit or (context and not product_words.search(local)):
             bad.append("pull request title: trailing authorship credit")
     # ponytail: explicit credit grammar; ambiguous prose still needs review.
+    # Add a pattern for any attribution wording found to slip past.
     return bad
 
 
