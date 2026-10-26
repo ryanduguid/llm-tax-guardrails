@@ -1,8 +1,21 @@
 drdebits_build
-Copyright 2026 Ryan Duguid
+Copyright 2026 Ryan Duguid (https://github.com/ryanduguid)
 
-drdebits_build is licensed under the Apache License, Version 2.0, in LICENSE,
-except as stated below.
+Ryan Duguid's contributions are licensed under the Functional Source
+License, Version 1.1, ALv2 Future License (FSL-1.1-ALv2); see LICENSE.
+Retained third-party material remains under its own licence, as stated below.
+
+For each version licensed under FSL-1.1-ALv2, an additional licence under the
+Apache License, Version 2.0 becomes effective on the second anniversary of the
+date that version was made available.
+
+Versions made available before this change remain available under the
+licences they were released with.
+
+Redistribution under FSL-1.1-ALv2 requires including its terms or a link to
+them and keeping the copyright notices supplied with the software.
+Redistribution under another applicable licence follows that licence's
+conditions.
 
 drdebits_build includes src/yaml.rs, a Rust port of the reader, scanner,
 parser, composer, resolver and safe constructor of PyYAML 6.0.3, made so the

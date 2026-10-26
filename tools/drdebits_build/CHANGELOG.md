@@ -2,8 +2,10 @@
 
 ## 1.0.0 (unreleased)
 
-The builder is licensed under the Apache License 2.0 instead of MIT. Its port
-of PyYAML stays under PyYAML's MIT licence, reproduced in `NOTICE`.
+The builder is licensed under FSL-1.1-ALv2 (Functional Source License, with
+Apache-2.0 as the future licence) instead of MIT. Its port of PyYAML stays
+under PyYAML's MIT licence, reproduced in `NOTICE`. Released versions keep
+their licence.
 
 The builder is now a Rust program. It replaces the Python package
 `drdebits-build` 0.1.0, whose import package and Python API are removed. Build

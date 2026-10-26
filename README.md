@@ -107,7 +107,7 @@ Pin the approved release tag, retrieve `SHA256SUMS` at that tag and verify each 
 
 ## Licence
 
-Copyright © 2026 Ryan Duguid. Original DrDebits material is licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/); see [LICENSE](./LICENSE). The code is separately licensed under the [Apache License 2.0](./tools/drdebits_build/LICENSE): the build tooling under `tools/` and the CI helper scripts under `.github/ci/`. The builder's port of PyYAML stays under PyYAML's MIT licence, reproduced in [NOTICE](./tools/drdebits_build/NOTICE). The licences do not extend to third-party standards, quotations, logos, trade marks or source documents.
+Copyright © 2026 Ryan Duguid. Original DrDebits material is licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/); see [LICENSE](./LICENSE). The code is separately licensed under the [Functional Source License, Version 1.1, ALv2 Future License (FSL-1.1-ALv2)](./tools/drdebits_build/LICENSE): the build tooling under `tools/` and the CI helper scripts under `.github/ci/`. You may use, modify and redistribute it for any purpose except a Competing Use as defined in LICENSE (making it available to others in a competing commercial product or service), and each version becomes available under Apache-2.0 two years after it is made available. The builder's port of PyYAML stays under PyYAML's MIT licence, reproduced in [NOTICE](./tools/drdebits_build/NOTICE). The licences do not extend to third-party standards, quotations, logos, trade marks or source documents.
 
 ## Contributing and maintenance
 
