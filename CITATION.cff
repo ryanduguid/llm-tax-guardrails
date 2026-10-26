@@ -7,5 +7,5 @@ authors:
     given-names: "Ryan"
 version: 0.4.0
 repository-code: "https://github.com/ryanduguid/llm-tax-guardrails"
-license: CC-BY-4.0
+license-url: "https://github.com/ryanduguid/llm-tax-guardrails/blob/main/LICENSE"
 abstract: "Australian tax-practice and accounting-ethics guardrails for LLM-assisted work: source-linked operating controls derived from the TPB framework, APES 110, APES 220 and the sector's AML/CTF obligations."

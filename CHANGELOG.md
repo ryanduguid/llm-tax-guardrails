@@ -50,7 +50,7 @@ Changes released in `0.4.0`, merged since `v0.3.3` (6 September 2026).
 - README and diagrams recoloured to the website palette (#136, #137, #142, #143, #155, #160, #173), with README badge styling flattened (#188).
 - Contributor workflow: pull requests and pushed commits carrying an AI authorship credit are refused (#47, #70, #72).
 - README licence section names the CI helper scripts under `.github/ci/` as MIT-licensed code alongside `tools/` (#183).
-- The build tooling under `tools/` and the CI helper scripts under `.github/ci/` are licensed under FSL-1.1-ALv2 (Functional Source License, with Apache-2.0 as the future licence) instead of MIT; the guide stays CC BY 4.0. Released versions keep their licence.
+- The build tooling under `tools/` and the CI helper scripts under `.github/ci/` are licensed under FSL-1.1-ALv2 (Functional Source License, with Apache-2.0 as the future licence) instead of MIT, and the guide under FSL-1.1-ALv2 instead of CC BY 4.0. A root NOTICE joins the verified bundle. Released versions keep their licence.
 
 ### Fixed
 

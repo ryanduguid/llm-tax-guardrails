@@ -50,7 +50,7 @@ pub fn py(path: &Path) -> PyPath {
     PyPath::new(&path.to_string_lossy())
 }
 
-const CONTENT: [&str; 13] = [
+const CONTENT: [&str; 14] = [
     "src",
     "evals",
     "reference",
@@ -62,6 +62,7 @@ const CONTENT: [&str; 13] = [
     "CITATION.cff",
     "SHA256SUMS",
     "LICENSE",
+    "NOTICE",
     "DISCLAIMER.md",
     "EVALUATION-NOTES.md",
 ];

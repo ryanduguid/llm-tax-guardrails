@@ -23,10 +23,12 @@ pub const REQUIRED: [&str; 8] = [
     "reference/apes-110-map.md",
     "tests/behaviour-tests.md",
 ];
-pub const OPTIONAL: [&str; 3] = [
+// NOTICE joined the bundle with v0.4.0, so earlier manifests omit it.
+pub const OPTIONAL: [&str; 4] = [
     "reference/ai-vendor-assurance.md",
     "reference/tpb-gs55-concordance.md",
     "DISCLAIMER.md",
+    "NOTICE",
 ];
 
 static DIGEST_RE: LazyLock<Regex> =
