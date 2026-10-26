@@ -1,0 +1,29 @@
+DrDebits (llm-tax-guardrails)
+Copyright 2026 Ryan Duguid (https://github.com/ryanduguid)
+
+Ryan Duguid's contributions are licensed under the Functional Source
+License, Version 1.1, ALv2 Future License (FSL-1.1-ALv2); see LICENSE.
+Retained third-party material remains under its own licence, as stated below.
+
+For each version licensed under FSL-1.1-ALv2, an additional licence under the
+Apache License, Version 2.0 becomes effective on the second anniversary of the
+date that version was made available.
+
+Versions made available before this change remain available under the
+licences they were released with. Guide releases v0.3.3 and earlier are
+licensed under CC BY 4.0.
+
+Redistribution under FSL-1.1-ALv2 requires including its terms or a link to
+them and keeping the copyright notices supplied with the software.
+Redistribution under another applicable licence follows that licence's
+conditions.
+
+TPB website material that the guide adapts or cites is identified by the Tax
+Practitioners Board as available under the Creative Commons Attribution 3.0
+Australia licence, except for excluded logos, the Commonwealth Coat of Arms and
+material otherwise noted. The guide does not reproduce APES 110 and does not
+relicense third-party standards, quotations, logos, trade marks or source
+documents.
+
+The build tooling's port of PyYAML stays under PyYAML's MIT licence; see
+tools/drdebits_build/NOTICE.
