@@ -112,3 +112,7 @@ Copyright © 2026 Ryan Duguid. DrDebits, both the guide and its tooling, is lice
 ## Contributing and maintenance
 
 The guide, reference files, behaviour tests, `evals/cases.json` and `evals/RESULTS.md` are generated. Edit their sources under `src/` and run `cargo run --manifest-path tools/drdebits_build/Cargo.toml --locked --release -- build`; CI rejects hand edits to generated files. People write and maintain the records in `evals/results/*.json`; keep historical result records unchanged. `evals/observations/*.json` holds proposed verdicts nobody has confirmed, which the table shows separately and never counts as passes. See [CONTRIBUTING.md](CONTRIBUTING.md) for how to submit a change and the checks it must pass, and `MAINTENANCE.md` for the release protocol.
+
+---
+
+<p align="center"><sub><i>'Control is an illusion.'</i> Guardrails are not.<br>Made in Newcastle, Australia by <a href="https://duguid.com.au/">Ryan Duguid</a>.</sub></p>
