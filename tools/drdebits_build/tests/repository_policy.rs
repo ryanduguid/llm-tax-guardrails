@@ -314,7 +314,7 @@ fn builder_dependencies_are_locked_and_the_toolchain_pinned() {
     assert!(dependabot.contains("package-ecosystem: cargo"));
 }
 
-const CHECKSUM_FILES: [&str; 11] = [
+const CHECKSUM_FILES: [&str; 12] = [
     "LICENSE",
     "README.md",
     "CITATION.cff",
@@ -326,6 +326,7 @@ const CHECKSUM_FILES: [&str; 11] = [
     "reference/tpb-gs55-concordance.md",
     "tests/behaviour-tests.md",
     "DISCLAIMER.md",
+    "NOTICE",
 ];
 
 #[test]
