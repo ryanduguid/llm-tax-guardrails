@@ -12,8 +12,12 @@ parents (fetch-depth: 2). It fails when:
 - on a pull request, a job in the base copy or unique context predecessor (or,
   without one, unique same-id predecessor) of WORKFLOW is gone, and WORKFLOW
   has no comment "# removed-jobs: JOB" naming it (the declaration lives in the
-  file, so it cannot change without a new commit and a new run);
+  file, so it cannot change without a new commit and a new run; it counts only
+  at the start of a line, where it cannot be part of a YAML value);
 - a line at job-key indentation in the jobs block is not a job key it can read.
+
+Configuration errors (arguments, RESULTS, file reads, Git) exit with one line,
+"ExceptionType: message", rather than a traceback.
 """
 
 import json
@@ -150,7 +154,8 @@ def reported_names(name: str | None, lines: list[str], job: str) -> set[str] | N
         if line.startswith("    ") and line[4:5] not in ("", " ")
     }
     if "name" not in properties and "strategy" in properties:
-        names = {job + "${{ matrix }}"}
+        # GitHub reports "job (values)", or the bare id when the strategy has no matrix.
+        names = {job, job + " (${{ matrix }})"}
     if "uses" in properties:
         names = {name + " / ${{ called-job }}" for name in names}
     return names
@@ -375,6 +380,8 @@ def main(argv: list[str]) -> None:
     if "--exempt" in args:
         index = args.index("--exempt")
         args, exempt = args[:index], set(args[index + 1 :])
+    if len(args) != 2:
+        raise ValueError("expected WORKFLOW GATE [--exempt JOB ...] [--no-results]")
     workflow, gate = args
     results = json.loads(os.environ["RESULTS"])
 
@@ -394,9 +401,10 @@ def main(argv: list[str]) -> None:
 
     prefix = "# removed-jobs:"
     declared: set[str] = set()
-    for line in text.splitlines():
-        if line.strip().startswith(prefix):
-            declared.update(name.strip() for name in line.strip()[len(prefix) :].split(","))
+    # Only "\n" ends a YAML line; splitlines() would also split a value at NEL or U+2028.
+    for line in text.split("\n"):
+        if line.startswith(prefix):
+            declared.update(name.strip() for name in line[len(prefix) :].split(","))
     # A declaration naming a job that still exists would waive a later removal.
     live = sorted(declared & jobs)
     if live:
@@ -426,4 +434,7 @@ def main(argv: list[str]) -> None:
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    try:
+        main(sys.argv[1:])
+    except (OSError, ValueError, KeyError, TypeError, AttributeError, subprocess.CalledProcessError) as error:
+        sys.exit(f"{type(error).__name__}: {error}")

@@ -1,6 +1,9 @@
 """Exercise workflow predecessor selection through isolated Python/Git fixtures."""
 
+import contextlib
+import hashlib
 import importlib.util
+import io
 import json
 import os
 import shutil
@@ -12,6 +15,9 @@ from pathlib import Path
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[3]
+# The canonical checker lives in ryanduguid/release-policy, whose
+# tests/test_repository_baseline.sh pins the same digest (SHA-256 after CRLF to LF).
+POLICY_DIGEST = "8d48fa32c92d15bb476e28f2ad34400660f62ee337c527c1d9fd9b7f6230f62a"
 
 NEEDS = "    needs: [changes, verify, secrets]\n"
 SPEC = importlib.util.spec_from_file_location("check_gates", ROOT / ".github/ci/check_gates.py")
@@ -103,9 +109,15 @@ class GateReaderTests(unittest.TestCase):
                 self.assertEqual(self.names("  replacement:\n" + separator + "\n    name: protected\n  critical:\n    runs-on: linux\n"), {"replacement": {"protected"}, "critical": {"critical"}})
 
     def test_implicit_matrix_names_keep_possible_suffixes(self):
-        names = self.names("  build:\n    strategy:\n      matrix:\n        os: [linux]\n")["build"]
-        self.assertTrue(checker.possible_context(names, "build (linux)"))
-        self.assertFalse(checker.possible_context(names, "protected"))
+        jobs = "  build:\n    strategy:\n      matrix:\n        os: [linux]\n"
+        names = self.names(jobs)["build"]
+        for context, expected in (("build (linux)", True), ("build", True), ("build-gates", False), ("protected", False)):
+            with self.subTest(context=context):
+                self.assertEqual(checker.possible_context(names, context), expected)
+        for context in ("build", "build (linux)"):
+            with self.subTest(context=context), self.assertRaisesRegex(SystemExit, "Cannot resolve"):
+                self.base({".github/workflows/old.yml": workflow(jobs)}, f"  replacement:\n    name: {context}\n")
+        self.assertEqual(self.base({".github/workflows/old.yml": workflow(jobs)}, "  replacement:\n    name: build-gates\n"), set())
 
     def test_reusable_jobs_keep_possible_called_job_names(self):
         names = self.names("  call:\n    name: component\n    uses: ./.github/workflows/package.yml\n")["call"]
@@ -190,6 +202,65 @@ class GateReaderTests(unittest.TestCase):
                 path.write_text("# removed-jobs: test\n" + path.read_text(encoding="utf-8"), encoding="utf-8")
                 with self.assertRaisesRegex(SystemExit, "still exist"):
                     checker.main(["workflow", "gate", "--no-results"])
+
+    def run_main(self, text, base=None, event="push", results='{"test":{"result":"success"}}'):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "workflow.yml"
+            path.write_text(text, encoding="utf-8")
+            with patch.object(checker, "workflow_file", return_value=str(path)), \
+                    patch.object(checker, "base_jobs", return_value=base), \
+                    patch.dict(os.environ, {"GITHUB_EVENT_NAME": event, "RESULTS": results}):
+                checker.main(["workflow", "gate"])
+
+    def test_declarations_count_only_at_the_start_of_a_line(self):
+        jobs = "  gate:\n    runs-on: linux\n  test:\n    runs-on: linux\n"
+        scalar = "    env:\n      NOTE: |\n        # removed-jobs: critical\n"
+        nel = "    env:\n      NOTE: text\u0085# removed-jobs: critical\n"  # YAML 1.2 does not break lines at NEL
+        for value in (scalar, nel):
+            with self.subTest(value=value):
+                # Value text naming a live job is not a stale declaration ...
+                self.run_main(workflow("  gate:\n    runs-on: linux\n" + value + "  test:\n    runs-on: linux\n  critical:\n    runs-on: linux\n"),
+                              results='{"test":{"result":"success"},"critical":{"result":"success"}}')
+                # ... and never waives the removal of a base job.
+                with self.assertRaisesRegex(SystemExit, "These jobs were removed"):
+                    self.run_main(workflow("  gate:\n    runs-on: linux\n" + value + "  test:\n    runs-on: linux\n"),
+                                  base={"gate", "test", "critical"}, event="pull_request")
+        with self.assertRaisesRegex(SystemExit, "These jobs were removed"):
+            self.run_main("  # removed-jobs: critical\n" + workflow(jobs), base={"gate", "test", "critical"}, event="pull_request")
+        with contextlib.redirect_stdout(io.StringIO()) as output:
+            self.run_main("# removed-jobs: critical\n" + workflow(jobs), base={"gate", "test", "critical"}, event="pull_request")
+        self.assertEqual(output.getvalue(), "Declared removals from workflow: critical\n")
+
+    def test_checker_is_the_release_policy_copy(self):
+        text = (ROOT / ".github/ci/check_gates.py").read_bytes().replace(b"\r\n", b"\n")
+        self.assertEqual(hashlib.sha256(text).hexdigest(), POLICY_DIGEST,
+                         "change check_gates.py in ryanduguid/release-policy first, then copy it here unchanged")
+
+    def test_configuration_errors_exit_with_one_line(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / ".github/workflows").mkdir(parents=True)
+            (root / ".github/workflows/ci.yml").write_text(workflow("  gate:\n    runs-on: linux\n"), encoding="utf-8")
+            env = {key: os.environ[key] for key in ("PATH", "SystemRoot", "TEMP", "TMP") if key in os.environ}
+            env.update(GIT_CEILING_DIRECTORIES=str(root.parent), GIT_CONFIG_NOSYSTEM="1", GIT_CONFIG_GLOBAL=os.devnull)
+            for args, extra, expected in (
+                ([], {"RESULTS": "{}"}, "ValueError: expected WORKFLOW GATE [--exempt JOB ...] [--no-results]"),
+                (["gate"], {}, "KeyError: 'RESULTS'"),
+                (["gate"], {"RESULTS": "not JSON"}, "JSONDecodeError: Expecting value: line 1 column 1 (char 0)"),
+                (["gate"], {"RESULTS": "[]"}, "AttributeError: 'list' object has no attribute 'items'"),
+                (["gate"], {"RESULTS": "{}", "GITHUB_EVENT_NAME": "pull_request"}, "CalledProcessError: Command "),  # 3.15 drops the quotes around the list
+            ):
+                with self.subTest(expected=expected):
+                    command = [sys.executable, "-I", str(ROOT / ".github/ci/check_gates.py")]
+                    if args:
+                        command += [".github/workflows/ci.yml", *args]
+                    # Fixed checker argument list.
+                    result = subprocess.run(command, cwd=root, env=env | extra,  # nosec B603  # nosemgrep
+                                            capture_output=True, text=True, timeout=10)
+                    self.assertEqual(result.returncode, 1, result.stderr)
+                    self.assertNotIn("Traceback", result.stderr)
+                    self.assertTrue(result.stderr.startswith(expected), result.stderr)
+                    self.assertEqual(result.stderr.count("\n"), 1, result.stderr)
 
 
 def head_workflow(gate, name, declaration=""):
