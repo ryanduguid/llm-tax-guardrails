@@ -248,7 +248,7 @@ class GateReaderTests(unittest.TestCase):
                 (["gate"], {}, "KeyError: 'RESULTS'"),
                 (["gate"], {"RESULTS": "not JSON"}, "JSONDecodeError: Expecting value: line 1 column 1 (char 0)"),
                 (["gate"], {"RESULTS": "[]"}, "AttributeError: 'list' object has no attribute 'items'"),
-                (["gate"], {"RESULTS": "{}", "GITHUB_EVENT_NAME": "pull_request"}, "CalledProcessError: Command '['git', 'ls-tree'"),
+                (["gate"], {"RESULTS": "{}", "GITHUB_EVENT_NAME": "pull_request"}, "CalledProcessError: Command "),  # 3.15 drops the quotes around the list
             ):
                 with self.subTest(expected=expected):
                     command = [sys.executable, "-I", str(ROOT / ".github/ci/check_gates.py")]
