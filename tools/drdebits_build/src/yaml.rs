@@ -684,20 +684,25 @@ impl Loader {
 
     // Scanner: public methods.
 
-    fn check_token(&mut self, choices: &[Kind]) -> Result<bool> {
+    /// Scan until the next token is settled: none of the pending simple
+    /// keys can still turn it into a mapping key.
+    fn fetch_tokens(&mut self) -> Result<()> {
         while self.need_more_tokens()? {
             self.fetch_more_tokens()?;
         }
-        Ok(match self.tokens.front() {
-            Some(t) => choices.is_empty() || choices.contains(&t.kind),
-            None => false,
-        })
+        Ok(())
+    }
+
+    fn check_token(&mut self, choices: &[Kind]) -> Result<bool> {
+        self.fetch_tokens()?;
+        Ok(self
+            .tokens
+            .front()
+            .is_some_and(|t| choices.is_empty() || choices.contains(&t.kind)))
     }
 
     fn peek_token(&mut self) -> Result<Token> {
-        while self.need_more_tokens()? {
-            self.fetch_more_tokens()?;
-        }
+        self.fetch_tokens()?;
         Ok(self
             .tokens
             .front()
@@ -706,9 +711,7 @@ impl Loader {
     }
 
     fn get_token(&mut self) -> Result<Token> {
-        while self.need_more_tokens()? {
-            self.fetch_more_tokens()?;
-        }
+        self.fetch_tokens()?;
         self.tokens_taken += 1;
         Ok(self
             .tokens
@@ -1935,10 +1938,10 @@ impl Loader {
 
     fn check_event(&mut self, choices: &[EventKind]) -> Result<bool> {
         self.fill_event()?;
-        Ok(match &self.current_event {
-            Some(e) => choices.is_empty() || choices.contains(&e.kind),
-            None => false,
-        })
+        Ok(self
+            .current_event
+            .as_ref()
+            .is_some_and(|e| choices.is_empty() || choices.contains(&e.kind)))
     }
 
     fn fill_event(&mut self) -> Result<()> {
@@ -2551,7 +2554,12 @@ impl Loader {
                 self.get_event()?;
                 id
             }
-            EventKind::MappingStart => {
+            kind => {
+                assert_eq!(
+                    kind,
+                    EventKind::MappingStart,
+                    "the parser yields a node event here"
+                );
                 let start = self.get_event()?;
                 let tag = match start.tag.as_deref() {
                     None | Some("!") => "tag:yaml.org,2002:map".to_string(),
@@ -2575,7 +2583,6 @@ impl Loader {
                 self.get_event()?;
                 id
             }
-            _ => unreachable!("the parser yields a node event here"),
         };
         self.depth -= 1;
         Ok(node)
@@ -3053,7 +3060,9 @@ impl Loader {
 
     /// The builder's mapping constructor: SafeConstructor's, refusing a repeated key.
     fn construct_unique_mapping(&mut self, node: usize) -> Result<Value> {
-        if !matches!(self.nodes[node].value, NodeValue::Mapping(_)) {
+        // Flattening leaves anything but a mapping node as it is.
+        self.flatten_mapping(node)?;
+        let NodeValue::Mapping(pairs) = self.nodes[node].value.clone() else {
             return Err(self.marked(
                 None,
                 None,
@@ -3063,10 +3072,6 @@ impl Loader {
                 )),
                 Some(self.nodes[node].start),
             ));
-        }
-        self.flatten_mapping(node)?;
-        let NodeValue::Mapping(pairs) = self.nodes[node].value.clone() else {
-            unreachable!()
         };
         let mut mapping: Vec<(Value, Value)> = Vec::new();
         for (key_node, value_node) in pairs {
@@ -3262,19 +3267,20 @@ fn resolve_scalar(value: &str, implicit: (bool, bool)) -> String {
 mod tests {
     use super::*;
 
-    fn err(text: &str) -> String {
-        match load(text) {
-            Err(Error::Yaml(message)) => message,
-            other => panic!("expected a YAML error, got {other:?}"),
-        }
+    /// Whether `text` fails to load with a YAML error containing `needle`.
+    fn refused_with(text: &str, needle: &str) -> bool {
+        matches!(load(text), Err(Error::Yaml(message)) if message.contains(needle))
     }
 
     #[test]
     fn duplicate_key_message_matches_pyyaml() {
         assert_eq!(
-            err("a: 1\na: 2\n"),
-            "while constructing a mapping\n  in \"<unicode string>\", line 1, column 1:\n    a: 1\n    ^\n\
-             found duplicate key 'a'\n  in \"<unicode string>\", line 2, column 1:\n    a: 2\n    ^"
+            load("a: 1\na: 2\n").unwrap_err(),
+            Error::Yaml(
+                "while constructing a mapping\n  in \"<unicode string>\", line 1, column 1:\n    a: 1\n    ^\n\
+                 found duplicate key 'a'\n  in \"<unicode string>\", line 2, column 1:\n    a: 2\n    ^"
+                    .into()
+            )
         );
     }
 
@@ -3295,20 +3301,26 @@ mod tests {
 
     #[test]
     fn equal_numbers_are_duplicate_keys() {
-        assert!(err("1: a\ntrue: b\n").contains("found duplicate key True"));
+        assert!(refused_with("1: a\ntrue: b\n", "found duplicate key True"));
     }
 
     #[test]
     fn reader_refuses_control_characters() {
         assert_eq!(
-            err("a: \u{1}"),
-            "unacceptable character #x0001: special characters are not allowed\n  in \"<unicode string>\", position 3"
+            load("a: \u{1}").unwrap_err(),
+            Error::Yaml(
+                "unacceptable character #x0001: special characters are not allowed\n  in \"<unicode string>\", position 3"
+                    .into()
+            )
         );
     }
 
     #[test]
     fn merge_override_is_a_duplicate() {
-        assert!(err("x: &a {k: 1}\ny:\n  <<: *a\n  k: 2\n").contains("found duplicate key 'k'"));
+        assert!(refused_with(
+            "x: &a {k: 1}\ny:\n  <<: *a\n  k: 2\n",
+            "found duplicate key 'k'"
+        ));
     }
 
     #[test]
@@ -3326,5 +3338,71 @@ mod tests {
             .unwrap()
             .join()
             .unwrap();
+    }
+
+    #[test]
+    fn token_ids_are_pyyaml_token_ids() {
+        // Parser errors name the token found by its PyYAML class id.
+        let ids = [
+            (Kind::Directive, "<directive>"),
+            (Kind::DocumentStart, "<document start>"),
+            (Kind::DocumentEnd, "<document end>"),
+            (Kind::StreamStart, "<stream start>"),
+            (Kind::StreamEnd, "<stream end>"),
+            (Kind::BlockSequenceStart, "<block sequence start>"),
+            (Kind::BlockMappingStart, "<block mapping start>"),
+            (Kind::BlockEnd, "<block end>"),
+            (Kind::FlowSequenceStart, "["),
+            (Kind::FlowMappingStart, "{"),
+            (Kind::FlowSequenceEnd, "]"),
+            (Kind::FlowMappingEnd, "}"),
+            (Kind::Key, "?"),
+            (Kind::Value, ":"),
+            (Kind::BlockEntry, "-"),
+            (Kind::FlowEntry, ","),
+            (Kind::Alias, "<alias>"),
+            (Kind::Anchor, "<anchor>"),
+            (Kind::Tag, "<tag>"),
+            (Kind::Scalar, "<scalar>"),
+        ];
+        for (kind, id) in ids {
+            assert_eq!(kind.id(), id);
+        }
+    }
+
+    #[test]
+    fn crlf_and_cr_line_breaks_read_as_pyyaml_reads_them() {
+        // The loaders translate line endings first; load() itself still
+        // reads every break PyYAML's reader accepts.
+        let v = load("a: 1\r\nb: |\r\n  x\r\n  y\r\n").unwrap();
+        assert_eq!(v.repr().unwrap(), r"{'a': 1, 'b': 'x\ny\n'}");
+        let v = load("a: 1\rb: 2\r").unwrap();
+        assert_eq!(v.repr().unwrap(), "{'a': 1, 'b': 2}");
+        let v = load("a: \"x\r\n\r\n  y\"\r\n").unwrap();
+        assert_eq!(v.repr().unwrap(), r"{'a': 'x\ny'}");
+    }
+
+    #[test]
+    fn a_plain_scalar_never_starts_at_a_comment() {
+        // The scanner skips a comment before it fetches a token, so this
+        // guard is defensive: positioned at '#', a plain scalar takes nothing.
+        let mut loader = Loader::new("#x").unwrap();
+        let token = loader.scan_plain().unwrap();
+        assert_eq!(token.kind, Kind::Scalar);
+        assert_eq!(token.value, "");
+        assert_eq!(loader.peek(0), '#');
+    }
+
+    #[test]
+    fn values_answer_as_python_objects() {
+        let list = load("a: [1]\n").unwrap().get("a").unwrap();
+        assert!(list.get("a").is_none(), "only a dict has keys");
+        let one = Value::Tuple(vec![Value::Str("x".into())]);
+        let pair = |n: i64| Value::Tuple(vec![Value::Str("x".into()), Value::Int(n.into())]);
+        assert_eq!(one.repr().unwrap(), "('x',)");
+        assert_eq!(pair(1).repr().unwrap(), "('x', 1)");
+        assert!(pair(1).py_eq(&pair(1)));
+        assert!(!pair(1).py_eq(&pair(2)));
+        assert!(!one.py_eq(&pair(1)));
     }
 }

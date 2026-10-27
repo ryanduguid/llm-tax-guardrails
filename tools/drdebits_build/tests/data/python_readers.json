@@ -3512,6 +3512,454 @@
   {
    "yaml": "entries:\n  - id: \"GS01\"\n    title: \"T\"\n    url: \"http...s://x\"\n    trigger: \"g\"\n",
    "value": "{'entries': [{'id': 'GS01', 'title': 'T', 'url': 'http...s://x', 'trigger': 'g'}]}"
+  },
+  {
+   "yaml": "[a,\n%YAML 1.1\n]\n",
+   "error": "source.yaml: while parsing a flow node\nexpected the node content, but found '<directive>'\n  in \"<unicode string>\", line 2, column 1:\n    %YAML 1.1\n    ^"
+  },
+  {
+   "yaml": "[a,\n---\n]\n",
+   "error": "source.yaml: while parsing a flow node\nexpected the node content, but found '<document start>'\n  in \"<unicode string>\", line 2, column 1:\n    ---\n    ^"
+  },
+  {
+   "yaml": "{a: b,\n--- }\n",
+   "error": "source.yaml: while parsing a flow node\nexpected the node content, but found '<document start>'\n  in \"<unicode string>\", line 2, column 1:\n    --- }\n    ^"
+  },
+  {
+   "yaml": " a: 1\nb: 2\n",
+   "error": "source.yaml: expected '<document start>', but found '<block mapping start>'\n  in \"<unicode string>\", line 2, column 1:\n    b: 2\n    ^"
+  },
+  {
+   "yaml": "- a\n  - b\n- c\n",
+   "error": "source.yaml: top level must be a mapping"
+  },
+  {
+   "yaml": "a:\n  b: c\n d: e\n",
+   "error": "source.yaml: while parsing a block mapping\n  in \"<unicode string>\", line 1, column 1:\n    a:\n    ^\nexpected <block end>, but found '<block mapping start>'\n  in \"<unicode string>\", line 3, column 2:\n     d: e\n     ^"
+  },
+  {
+   "yaml": "a: b\n  c: d\n",
+   "error": "source.yaml: mapping values are not allowed here\n  in \"<unicode string>\", line 2, column 4:\n      c: d\n       ^"
+  },
+  {
+   "yaml": "? a\n: b\n:c\n",
+   "error": "source.yaml: while scanning a simple key\n  in \"<unicode string>\", line 3, column 1:\n    :c\n    ^\ncould not find expected ':'\n  in \"<unicode string>\", line 4, column 1:\n    \n    ^"
+  },
+  {
+   "yaml": "2001-12-14 21:59:43 +05: a\n2001-12-14 16:59:43 Z: b\n",
+   "error": "source.yaml: while constructing a mapping\n  in \"<unicode string>\", line 1, column 1:\n    2001-12-14 21:59:43 +05: a\n    ^\nfound duplicate key datetime.datetime(2001, 12, 14, 16, 59, 43, tzinfo=datetime.timezone.utc)\n  in \"<unicode string>\", line 2, column 1:\n    2001-12-14 16:59:43 Z: b\n    ^"
+  },
+  {
+   "yaml": "2001-12-14 21:59:43 +05:30: a\n2001-12-14 16:29:43 Z: b\n",
+   "error": "source.yaml: while constructing a mapping\n  in \"<unicode string>\", line 1, column 1:\n    2001-12-14 21:59:43 +05:30: a\n    ^\nfound duplicate key datetime.datetime(2001, 12, 14, 16, 29, 43, tzinfo=datetime.timezone.utc)\n  in \"<unicode string>\", line 2, column 1:\n    2001-12-14 16:29:43 Z: b\n    ^"
+  },
+  {
+   "yaml": "a: &x\n  b: *x\n",
+   "error": "source.yaml: found unconstructable recursive node\n  in \"<unicode string>\", line 1, column 4:\n    a: &x\n       ^"
+  },
+  {
+   "yaml": "a: !!set {1, 2}\n",
+   "value": "{'a': {1, 2}}"
+  },
+  {
+   "yaml": "a: !!set {}\n",
+   "value": "{'a': set()}"
+  },
+  {
+   "yaml": "a: !!set {1, 1}\n",
+   "value": "{'a': {1}}"
+  },
+  {
+   "yaml": "a: !!set {? [1]}\n",
+   "error": "source.yaml: while constructing a mapping\n  in \"<unicode string>\", line 1, column 4:\n    a: !!set {? [1]}\n       ^\nfound unhashable key\n  in \"<unicode string>\", line 1, column 13:\n    a: !!set {? [1]}\n                ^"
+  },
+  {
+   "yaml": "a: !!set {<<: {1: ~}, 2: ~}\n",
+   "value": "{'a': {1, 2}}"
+  },
+  {
+   "yaml": "a: !!set [1]\n",
+   "error": "source.yaml: expected a mapping node, but found sequence\n  in \"<unicode string>\", line 1, column 4:\n    a: !!set [1]\n       ^"
+  },
+  {
+   "yaml": "1.5: a\n1.5: b\n",
+   "error": "source.yaml: while constructing a mapping\n  in \"<unicode string>\", line 1, column 1:\n    1.5: a\n    ^\nfound duplicate key 1.5\n  in \"<unicode string>\", line 2, column 1:\n    1.5: b\n    ^"
+  },
+  {
+   "yaml": "? &n .nan\n: a\n? *n\n: b\n",
+   "error": "source.yaml: while constructing a mapping\n  in \"<unicode string>\", line 1, column 1:\n    ? &n .nan\n    ^\nfound duplicate key nan\n  in \"<unicode string>\", line 1, column 3:\n    ? &n .nan\n      ^"
+  },
+  {
+   "yaml": "~: a\nnull: b\n",
+   "error": "source.yaml: while constructing a mapping\n  in \"<unicode string>\", line 1, column 1:\n    ~: a\n    ^\nfound duplicate key None\n  in \"<unicode string>\", line 2, column 1:\n    null: b\n    ^"
+  },
+  {
+   "yaml": "? !!binary aGk=\n: a\n? !!binary aGk=\n: b\n",
+   "error": "source.yaml: while constructing a mapping\n  in \"<unicode string>\", line 1, column 1:\n    ? !!binary aGk=\n    ^\nfound duplicate key b'hi'\n  in \"<unicode string>\", line 3, column 3:\n    ? !!binary aGk=\n      ^"
+  },
+  {
+   "yaml": "2026-01-01: a\n2026-01-01: b\n",
+   "error": "source.yaml: while constructing a mapping\n  in \"<unicode string>\", line 1, column 1:\n    2026-01-01: a\n    ^\nfound duplicate key datetime.date(2026, 1, 1)\n  in \"<unicode string>\", line 2, column 1:\n    2026-01-01: b\n    ^"
+  },
+  {
+   "yaml": "2001-12-14 21:59:43: a\n2001-12-14 21:59:43: b\n",
+   "error": "source.yaml: while constructing a mapping\n  in \"<unicode string>\", line 1, column 1:\n    2001-12-14 21:59:43: a\n    ^\nfound duplicate key datetime.datetime(2001, 12, 14, 21, 59, 43)\n  in \"<unicode string>\", line 2, column 1:\n    2001-12-14 21:59:43: b\n    ^"
+  },
+  {
+   "yaml": "2001-12-14 21:59:43: a\n2001-12-14 21:59:43Z: b\n",
+   "value": "{datetime.datetime(2001, 12, 14, 21, 59, 43): 'a', datetime.datetime(2001, 12, 14, 21, 59, 43, tzinfo=datetime.timezone.utc): 'b'}"
+  },
+  {
+   "yaml": "1: a\n1.0: b\n",
+   "error": "source.yaml: while constructing a mapping\n  in \"<unicode string>\", line 1, column 1:\n    1: a\n    ^\nfound duplicate key 1.0\n  in \"<unicode string>\", line 2, column 1:\n    1.0: b\n    ^"
+  },
+  {
+   "yaml": "1: a\n1.5: b\n",
+   "value": "{1: 'a', 1.5: 'b'}"
+  },
+  {
+   "yaml": "%YAML 1.1x\n---\na: 1\n",
+   "error": "source.yaml: while scanning a directive\n  in \"<unicode string>\", line 1, column 1:\n    %YAML 1.1x\n    ^\nexpected a digit or ' ', but found 'x'\n  in \"<unicode string>\", line 1, column 10:\n    %YAML 1.1x\n             ^"
+  },
+  {
+   "yaml": "%TAG !a!b\n---\na: 1\n",
+   "error": "source.yaml: while scanning a directive\n  in \"<unicode string>\", line 1, column 1:\n    %TAG !a!b\n    ^\nexpected ' ', but found 'b'\n  in \"<unicode string>\", line 1, column 9:\n    %TAG !a!b\n            ^"
+  },
+  {
+   "yaml": "%TAG !a! tag:x{\n---\na: 1\n",
+   "error": "source.yaml: while scanning a directive\n  in \"<unicode string>\", line 1, column 1:\n    %TAG !a! tag:x{\n    ^\nexpected ' ', but found '{'\n  in \"<unicode string>\", line 1, column 15:\n    %TAG !a! tag:x{\n                  ^"
+  },
+  {
+   "yaml": "%TAG x y\n---\na: 1\n",
+   "error": "source.yaml: while scanning a directive\n  in \"<unicode string>\", line 1, column 1:\n    %TAG x y\n    ^\nexpected '!', but found 'x'\n  in \"<unicode string>\", line 1, column 6:\n    %TAG x y\n         ^"
+  },
+  {
+   "yaml": "%TAG ! tag:x,2000:\n---\na: !foo b\n",
+   "error": "source.yaml: could not determine a constructor for the tag 'tag:x,2000:foo'\n  in \"<unicode string>\", line 3, column 4:\n    a: !foo b\n       ^"
+  },
+  {
+   "yaml": "%TAG !e! tag:e%41,2000:\n---\na: !e!foo b\n",
+   "error": "source.yaml: could not determine a constructor for the tag 'tag:eA,2000:foo'\n  in \"<unicode string>\", line 3, column 4:\n    a: !e!foo b\n       ^"
+  },
+  {
+   "yaml": "%TAG !a!  tag:x\n---\na: 1\n",
+   "value": "{'a': 1}"
+  },
+  {
+   "yaml": "a: !<tag:x\n",
+   "error": "source.yaml: while parsing a tag\n  in \"<unicode string>\", line 1, column 4:\n    a: !<tag:x\n       ^\nexpected '>', but found '\\n'\n  in \"<unicode string>\", line 1, column 11:\n    a: !<tag:x\n              ^"
+  },
+  {
+   "yaml": "a: !<tag:x%41> b\n",
+   "error": "source.yaml: could not determine a constructor for the tag 'tag:xA'\n  in \"<unicode string>\", line 1, column 4:\n    a: !<tag:x%41> b\n       ^"
+  },
+  {
+   "yaml": "a: !<tag:x%4> b\n",
+   "error": "source.yaml: while scanning a tag\n  in \"<unicode string>\", line 1, column 4:\n    a: !<tag:x%4> b\n       ^\nexpected URI escape sequence of 2 hexadecimal numbers, but found '>'\n  in \"<unicode string>\", line 1, column 12:\n    a: !<tag:x%4> b\n               ^"
+  },
+  {
+   "yaml": "a: !<tag:x%FF> b\n",
+   "error": "source.yaml: while scanning a tag\n  in \"<unicode string>\", line 1, column 4:\n    a: !<tag:x%FF> b\n       ^\n'utf-8' codec can't decode byte 0xff in position 0: invalid start byte\n  in \"<unicode string>\", line 1, column 11:\n    a: !<tag:x%FF> b\n              ^"
+  },
+  {
+   "yaml": "a: !<tag:x%C3%A9> b\n",
+   "error": "source.yaml: could not determine a constructor for the tag 'tag:xé'\n  in \"<unicode string>\", line 1, column 4:\n    a: !<tag:x%C3%A9> b\n       ^"
+  },
+  {
+   "yaml": "a: !<tag:yaml.org,2002:str> b\n",
+   "value": "{'a': 'b'}"
+  },
+  {
+   "yaml": "a: &x !!str b\n",
+   "value": "{'a': 'b'}"
+  },
+  {
+   "yaml": "a: !!str &x b\n",
+   "value": "{'a': 'b'}"
+  },
+  {
+   "yaml": "a: ! '*'\n",
+   "error": "source.yaml: could not determine a constructor for the tag 'tag:yaml.org,2002:yaml'\n  in \"<unicode string>\", line 1, column 4:\n    a: ! '*'\n       ^"
+  },
+  {
+   "yaml": "a: ! '!'\n",
+   "error": "source.yaml: could not determine a constructor for the tag 'tag:yaml.org,2002:yaml'\n  in \"<unicode string>\", line 1, column 4:\n    a: ! '!'\n       ^"
+  },
+  {
+   "yaml": "a: ! '&'\n",
+   "error": "source.yaml: could not determine a constructor for the tag 'tag:yaml.org,2002:yaml'\n  in \"<unicode string>\", line 1, column 4:\n    a: ! '&'\n       ^"
+  },
+  {
+   "yaml": "a: !!timestamp [1]\n",
+   "error": "source.yaml: expected a scalar node, but found sequence\n  in \"<unicode string>\", line 1, column 4:\n    a: !!timestamp [1]\n       ^"
+  },
+  {
+   "yaml": "a: 2001-12-14 21:60:00\n",
+   "internal": "ValueError"
+  },
+  {
+   "yaml": "a: 2001-12-14 21:59:60\n",
+   "internal": "ValueError"
+  },
+  {
+   "yaml": "a: |+0\n  x\n",
+   "error": "source.yaml: while scanning a block scalar\n  in \"<unicode string>\", line 1, column 4:\n    a: |+0\n       ^\nexpected indentation indicator in the range 1-9, but found 0\n  in \"<unicode string>\", line 1, column 6:\n    a: |+0\n         ^"
+  },
+  {
+   "yaml": "a: |-0\n  x\n",
+   "error": "source.yaml: while scanning a block scalar\n  in \"<unicode string>\", line 1, column 4:\n    a: |-0\n       ^\nexpected indentation indicator in the range 1-9, but found 0\n  in \"<unicode string>\", line 1, column 6:\n    a: |-0\n         ^"
+  },
+  {
+   "yaml": "a: |1-\n  x\n",
+   "value": "{'a': ' x'}"
+  },
+  {
+   "yaml": "a: |1+\n  x\n\n",
+   "value": "{'a': ' x\\n\\n'}"
+  },
+  {
+   "yaml": "a: |2\n   x\n",
+   "value": "{'a': ' x\\n'}"
+  },
+  {
+   "yaml": "a: \"\\b\\v\\f\\ \\\\\"\n",
+   "value": "{'a': '\\x08\\x0b\\x0c \\\\'}"
+  },
+  {
+   "yaml": "a: \"\\U00110000\"\n",
+   "internal": "ValueError"
+  },
+  {
+   "yaml": "a: \"\\U0001F600\"\n",
+   "value": "{'a': '😀'}"
+  },
+  {
+   "yaml": "a: b #c\n",
+   "value": "{'a': 'b'}"
+  },
+  {
+   "yaml": "a: b\n  #c\n",
+   "value": "{'a': 'b'}"
+  },
+  {
+   "yaml": "a: b\n  c #d\n",
+   "value": "{'a': 'b c'}"
+  },
+  {
+   "yaml": "a: b\n\n  c\n",
+   "value": "{'a': 'b\\nc'}"
+  },
+  {
+   "yaml": "- a\n---\n- b\n",
+   "error": "source.yaml: expected a single document in the stream\n  in \"<unicode string>\", line 1, column 1:\n    - a\n    ^\nbut found another document\n  in \"<unicode string>\", line 2, column 1:\n    ---\n    ^"
+  },
+  {
+   "yaml": "a: b\n---\n",
+   "error": "source.yaml: expected a single document in the stream\n  in \"<unicode string>\", line 1, column 1:\n    a: b\n    ^\nbut found another document\n  in \"<unicode string>\", line 2, column 1:\n    ---\n    ^"
+  },
+  {
+   "yaml": "a: b\n...\n",
+   "value": "{'a': 'b'}"
+  },
+  {
+   "yaml": "...\na: 1\n",
+   "error": "source.yaml: while parsing a block node\nexpected the node content, but found '<document end>'\n  in \"<unicode string>\", line 1, column 1:\n    ...\n    ^"
+  },
+  {
+   "yaml": "---\n...\n---\na: 1\n",
+   "error": "source.yaml: expected a single document in the stream\n  in \"<unicode string>\", line 2, column 1:\n    ...\n    ^\nbut found another document\n  in \"<unicode string>\", line 3, column 1:\n    ---\n    ^"
+  },
+  {
+   "yaml": "a:\n- \n- b\n",
+   "value": "{'a': [None, 'b']}"
+  },
+  {
+   "yaml": "a:\n-\n- b\n",
+   "value": "{'a': [None, 'b']}"
+  },
+  {
+   "yaml": "a: [? : x]\n",
+   "value": "{'a': [{None: 'x'}]}"
+  },
+  {
+   "yaml": "a: [? x]\n",
+   "value": "{'a': [{'x': None}]}"
+  },
+  {
+   "yaml": "a: [b: ]\n",
+   "value": "{'a': [{'b': None}]}"
+  },
+  {
+   "yaml": "a: [b: , c]\n",
+   "value": "{'a': [{'b': None}, 'c']}"
+  },
+  {
+   "yaml": "a: [? b]\n",
+   "value": "{'a': [{'b': None}]}"
+  },
+  {
+   "yaml": "a: [? b, c]\n",
+   "value": "{'a': [{'b': None}, 'c']}"
+  },
+  {
+   "yaml": "?\n: b\n",
+   "value": "{None: 'b'}"
+  },
+  {
+   "yaml": "? \n: b\n",
+   "value": "{None: 'b'}"
+  },
+  {
+   "yaml": "{? : b}\n",
+   "value": "{None: 'b'}"
+  },
+  {
+   "yaml": "{? a}\n",
+   "value": "{'a': None}"
+  },
+  {
+   "yaml": "{a: }\n",
+   "value": "{'a': None}"
+  },
+  {
+   "yaml": "{a, b: c}\n",
+   "value": "{'a': None, 'b': 'c'}"
+  },
+  {
+   "yaml": "a: !!binary +/8=\n",
+   "value": "{'a': b'\\xfb\\xff'}"
+  },
+  {
+   "yaml": "a: !!binary 'a$GVsbG8='\n",
+   "value": "{'a': b'hello'}"
+  },
+  {
+   "yaml": "a: !!binary aaaaa\n",
+   "error": "source.yaml: failed to decode base64 data: Invalid base64-encoded string: number of data characters (5) cannot be 1 more than a multiple of 4\n  in \"<unicode string>\", line 1, column 4:\n    a: !!binary aaaaa\n       ^"
+  },
+  {
+   "yaml": "a: !!binary aaaa\n",
+   "value": "{'a': b'i\\xa6\\x9a'}"
+  },
+  {
+   "yaml": "a: !!binary aaa\n",
+   "error": "source.yaml: failed to decode base64 data: Incorrect padding\n  in \"<unicode string>\", line 1, column 4:\n    a: !!binary aaa\n       ^"
+  },
+  {
+   "yaml": "a: !!binary aa\n",
+   "error": "source.yaml: failed to decode base64 data: Incorrect padding\n  in \"<unicode string>\", line 1, column 4:\n    a: !!binary aa\n       ^"
+  },
+  {
+   "yaml": "a: !!binary a\n",
+   "error": "source.yaml: failed to decode base64 data: Invalid base64-encoded string: number of data characters (1) cannot be 1 more than a multiple of 4\n  in \"<unicode string>\", line 1, column 4:\n    a: !!binary a\n       ^"
+  },
+  {
+   "yaml": "a: !!binary aGk\n",
+   "error": "source.yaml: failed to decode base64 data: Incorrect padding\n  in \"<unicode string>\", line 1, column 4:\n    a: !!binary aGk\n       ^"
+  },
+  {
+   "yaml": "a: !!binary 'é'\n",
+   "error": "source.yaml: failed to convert base64 data into ascii: 'ascii' codec can't encode character '\\xe9' in position 0: ordinal not in range(128)\n  in \"<unicode string>\", line 1, column 4:\n    a: !!binary 'é'\n       ^"
+  },
+  {
+   "yaml": "a: !!binary 'ꯍ'\n",
+   "error": "source.yaml: failed to convert base64 data into ascii: 'ascii' codec can't encode character '\\uabcd' in position 0: ordinal not in range(128)\n  in \"<unicode string>\", line 1, column 4:\n    a: !!binary 'ꯍ'\n       ^"
+  },
+  {
+   "yaml": "a: !!binary '😀'\n",
+   "error": "source.yaml: failed to convert base64 data into ascii: 'ascii' codec can't encode character '\\U0001f600' in position 0: ordinal not in range(128)\n  in \"<unicode string>\", line 1, column 4:\n    a: !!binary '😀'\n       ^"
+  },
+  {
+   "yaml": "a: !!binary 'éé'\n",
+   "error": "source.yaml: failed to convert base64 data into ascii: 'ascii' codec can't encode characters in position 0-1: ordinal not in range(128)\n  in \"<unicode string>\", line 1, column 4:\n    a: !!binary 'éé'\n       ^"
+  },
+  {
+   "yaml": "a: !!pairs [x: 1]\n",
+   "value": "{'a': [('x', 1)]}"
+  },
+  {
+   "yaml": "a: !!omap [x: 1, y: 2]\n",
+   "value": "{'a': [('x', 1), ('y', 2)]}"
+  },
+  {
+   "yaml": "a: !!binary '=aGk='\n",
+   "value": "{'a': b'hi'}"
+  },
+  {
+   "yaml": "a: !!binary 'a=Gk='\n",
+   "value": "{'a': b'hi'}"
+  },
+  {
+   "yaml": "a: !!binary 'aG=k'\n",
+   "error": "source.yaml: failed to decode base64 data: Incorrect padding\n  in \"<unicode string>\", line 1, column 4:\n    a: !!binary 'aG=k'\n       ^"
+  },
+  {
+   "yaml": "a: !!binary 'aG='\n",
+   "error": "source.yaml: failed to decode base64 data: Incorrect padding\n  in \"<unicode string>\", line 1, column 4:\n    a: !!binary 'aG='\n       ^"
+  },
+  {
+   "yaml": "a: !!binary 'a='\n",
+   "error": "source.yaml: failed to decode base64 data: Invalid base64-encoded string: number of data characters (1) cannot be 1 more than a multiple of 4\n  in \"<unicode string>\", line 1, column 4:\n    a: !!binary 'a='\n       ^"
+  },
+  {
+   "yaml": "a: !!binary '='\n",
+   "value": "{'a': b''}"
+  },
+  {
+   "yaml": "a: !!binary 'aGk'\n",
+   "error": "source.yaml: failed to decode base64 data: Incorrect padding\n  in \"<unicode string>\", line 1, column 4:\n    a: !!binary 'aGk'\n       ^"
+  },
+  {
+   "yaml": "a: !!binary 'a GVs bG8='\n",
+   "value": "{'a': b'hello'}"
+  },
+  {
+   "yaml": "a: &x {b: [*x]}\n",
+   "value": "{'a': {'b': [{...}]}}"
+  },
+  {
+   "yaml": "a: &x [{b: *x}]\n",
+   "value": "{'a': [{'b': [...]}]}"
+  },
+  {
+   "yaml": "a: b\n\n---\n",
+   "error": "source.yaml: expected a single document in the stream\n  in \"<unicode string>\", line 1, column 1:\n    a: b\n    ^\nbut found another document\n  in \"<unicode string>\", line 3, column 1:\n    ---\n    ^"
+  },
+  {
+   "yaml": "a: b\n \n---\n",
+   "error": "source.yaml: expected a single document in the stream\n  in \"<unicode string>\", line 1, column 1:\n    a: b\n    ^\nbut found another document\n  in \"<unicode string>\", line 3, column 1:\n    ---\n    ^"
+  },
+  {
+   "yaml": "a: 1\n...\n...\n",
+   "value": "{'a': 1}"
+  },
+  {
+   "yaml": "a: {b: 1, }\n",
+   "value": "{'a': {'b': 1}}"
+  },
+  {
+   "yaml": "a: {b: 1,}\n",
+   "value": "{'a': {'b': 1}}"
+  },
+  {
+   "yaml": "a: {? b: 1, }\n",
+   "value": "{'a': {'b': 1}}"
+  },
+  {
+   "yaml": "{a: 1, }\n",
+   "value": "{'a': 1}"
+  },
+  {
+   "yaml": "a: !!timestamp {=: 2001-12-14}\n",
+   "internal": "TypeError"
+  },
+  {
+   "yaml": "a: !!str {=: x}\n",
+   "value": "{'a': 'x'}"
+  },
+  {
+   "yaml": "a: !!int {=: 1}\n",
+   "value": "{'a': 1}"
   }
  ],
  "json": [
@@ -3678,6 +4126,30 @@
   {
    "json": "[1]x",
    "error": "Extra data: line 1 column 4 (char 3)"
+  },
+  {
+   "json": "[true, false]",
+   "value": "[True, False]"
+  },
+  {
+   "json": "1.25",
+   "value": "1.25"
+  },
+  {
+   "json": "1e+5",
+   "value": "100000.0"
+  },
+  {
+   "json": "1E-5",
+   "value": "1e-05"
+  },
+  {
+   "json": "-1.5e-3",
+   "value": "-0.0015"
+  },
+  {
+   "json": "[0.125, 10]",
+   "value": "[0.125, 10]"
   }
  ]
 }

@@ -234,10 +234,8 @@ pub fn loads(text: &str) -> Result<Json, DecodeError> {
                     idx = skip(idx);
                     if idx < len && s[idx] == ']' {
                         idx += 1;
-                        let Some(Frame::Array(items)) = stack.pop() else {
-                            unreachable!()
-                        };
-                        value = Json::Array(items);
+                        value = Json::Array(std::mem::take(items));
+                        stack.pop();
                         continue;
                     }
                     if idx >= len || s[idx] != ',' {
@@ -259,9 +257,8 @@ pub fn loads(text: &str) -> Result<Json, DecodeError> {
                     idx = skip(idx);
                     if idx < len && s[idx] == '}' {
                         idx += 1;
-                        let Some(Frame::Object(pairs, _)) = stack.pop() else {
-                            unreachable!()
-                        };
+                        let pairs = std::mem::take(pairs);
+                        stack.pop();
                         // The builder's object_pairs_hook.
                         for (i, (k, _)) in pairs.iter().enumerate() {
                             if pairs[..i].iter().any(|(earlier, _)| earlier == k) {
@@ -590,5 +587,80 @@ mod tests {
             "{\n  \"b\": [\n    1,\n    2.5,\n    \"\u{e9}\\n\\u0001\"\n  ],\n  \"a\": {},\n  \"c\": []\n}"
         );
         assert!(dumps(&value, true).starts_with("{\n  \"a\": {}"));
+    }
+
+    #[test]
+    fn dumps_escapes_and_non_finite_floats_match_python() {
+        // json.dumps(v, indent=2, ensure_ascii=False) in CPython 3.15.
+        let value = Json::Object(vec![
+            ("s".into(), Json::str_obj("a\\b\"c\r\t\x08\x0c\n\x01")),
+            (
+                "f".into(),
+                Json::Array(vec![
+                    Json::Float(f64::INFINITY),
+                    Json::Float(f64::NEG_INFINITY),
+                    Json::Float(f64::NAN),
+                    Json::Float(1.5),
+                ]),
+            ),
+            ("t".into(), Json::Bool(true)),
+            ("n".into(), Json::Null),
+        ]);
+        assert_eq!(
+            dumps(&value, false),
+            "{\n  \"s\": \"a\\\\b\\\"c\\r\\t\\b\\f\\n\\u0001\",\n  \"f\": [\n    Infinity,\n    -Infinity,\n    NaN,\n    1.5\n  ],\n  \"t\": true,\n  \"n\": null\n}"
+        );
+    }
+
+    #[test]
+    fn str_and_truth_follow_python() {
+        assert_eq!(Json::str_obj("x").py_str(), "x");
+        assert_eq!(Json::Int(1.into()).py_str(), "1");
+        assert_eq!(Json::Null.py_str(), "None");
+        assert_eq!(Json::Bool(false).py_str(), "False");
+        assert_eq!(loads("[1, \"a\"]").unwrap().py_str(), "[1, 'a']");
+        for (text, truth) in [
+            ("null", false),
+            ("true", true),
+            ("false", false),
+            ("0", false),
+            ("2", true),
+            ("0.0", false),
+            ("-0.0", false),
+            ("0.5", true),
+            ("\"\"", false),
+            ("\"x\"", true),
+            ("[]", false),
+            ("[0]", true),
+            ("{}", false),
+            ("{\"a\": 0}", true),
+        ] {
+            assert_eq!(loads(text).unwrap().truthy(), truth, "{text}");
+        }
+    }
+
+    #[test]
+    fn a_lone_surrogate_escape_is_refused() {
+        // Documented divergence: Python keeps the lone surrogate, which no
+        // later step could write out; the port refuses it at the escape.
+        for (text, column) in [
+            ("\"\\ud800\"", 2),
+            ("\"\\udc00\"", 2),
+            ("\"\\ud800\\u0041\"", 2),
+            ("\"x\\ud800\"", 3),
+        ] {
+            assert_eq!(
+                err(text),
+                format!(
+                    "Unpaired surrogate in \\uXXXX escape: line 1 column {column} (char {})",
+                    column - 1
+                ),
+                "{text}"
+            );
+        }
+        assert_eq!(
+            loads("\"\\ud83d\\ude00\"").unwrap(),
+            Json::str_obj("\u{1f600}")
+        );
     }
 }

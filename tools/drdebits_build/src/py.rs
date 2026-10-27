@@ -745,12 +745,14 @@ impl PyPath {
         out
     }
 
+    #[cfg(windows)]
     pub fn is_absolute(&self) -> bool {
-        if cfg!(windows) {
-            self.anchor.len() > 2 || self.anchor.starts_with("\\\\")
-        } else {
-            !self.anchor.is_empty()
-        }
+        self.anchor.len() > 2 || self.anchor.starts_with("\\\\")
+    }
+
+    #[cfg(not(windows))]
+    pub fn is_absolute(&self) -> bool {
+        !self.anchor.is_empty()
     }
 }
 
@@ -780,13 +782,15 @@ pub fn resolve(path: &Path) -> PathBuf {
             _ => break absolute.clone(),
         }
     };
-    let text = resolved.to_string_lossy();
+    without_verbatim_prefix(&resolved.to_string_lossy()).unwrap_or(resolved)
+}
+
+/// `text` without Windows' verbatim `\\?\` prefix, or None when it has none.
+fn without_verbatim_prefix(text: &str) -> Option<PathBuf> {
     if let Some(rest) = text.strip_prefix(r"\\?\UNC\") {
-        PathBuf::from(format!(r"\\{rest}"))
-    } else if let Some(rest) = text.strip_prefix(r"\\?\") {
-        PathBuf::from(rest)
+        Some(PathBuf::from(format!(r"\\{rest}")))
     } else {
-        resolved
+        text.strip_prefix(r"\\?\").map(PathBuf::from)
     }
 }
 
@@ -857,13 +861,12 @@ impl Date {
         if !(1..=MAX_DATE.ordinal()).contains(&ordinal) {
             return None;
         }
-        // Estimate the year, then correct it.
+        // Estimate the year, then correct it upwards: the estimate is never
+        // too late (every_ordinal_round_trips checks the whole range).
         let mut year = ((ordinal - 1) * 400 / 146_097 + 1) as i32;
+        debug_assert!(days_before_year(year) < ordinal);
         while days_before_year(year + 1) < ordinal {
             year += 1;
-        }
-        while days_before_year(year) >= ordinal {
-            year -= 1;
         }
         let mut rest = ordinal - days_before_year(year);
         let mut month = 1;
@@ -1094,11 +1097,177 @@ mod tests {
                 (actual != expected).then(|| format!("{bits}: python {expected}, rust {actual}"))
             })
             .collect();
-        assert!(
-            wrong.is_empty(),
-            "{} wrong: {:?}",
-            wrong.len(),
-            &wrong[..wrong.len().min(10)]
+        let first = &wrong[..wrong.len().min(10)];
+        assert!(wrong.is_empty(), "{} wrong: {first:?}", wrong.len());
+    }
+
+    #[test]
+    fn float_repr_keeps_the_shortest_spelling_when_the_nearest_misreads() {
+        // At a power of two the gap below is half the gap above, so the
+        // correctly rounded 16-digit spelling can fall outside it; CPython
+        // then prints the shortest spelling that reads back.
+        assert_eq!(float_repr(2f64.powi(-1017)), "7.120236347223045e-307");
+        assert_eq!(float_repr(2f64.powi(-957)), "8.209073602596753e-289");
+    }
+
+    #[test]
+    fn repr_escapes_match_python() {
+        assert_eq!(repr_str("\u{e0001}"), "'\\U000e0001'");
+        assert_eq!(repr_str("\u{10ffff}"), "'\\U0010ffff'");
+        assert_eq!(
+            repr_bytes(b"'\\\t\n\r\x00\x7f"),
+            "b\"'\\\\\\t\\n\\r\\x00\\x7f\""
         );
+        assert_eq!(repr_bytes(b"\"'"), "b'\"\\''");
+        assert_eq!(repr_bytes(b"\"x\""), "b'\"x\"'");
+    }
+
+    #[test]
+    fn int_repr_refuses_more_than_4300_digits() {
+        let limit = BigInt::from(10).pow(4299);
+        assert_eq!(int_repr(&limit).unwrap().len(), 4300);
+        assert_eq!(
+            int_repr(&(limit * 10)).unwrap_err(),
+            "Exceeds the limit (4300 digits) for integer string conversion; use \
+             sys.set_int_max_str_digits() to increase the limit"
+        );
+    }
+
+    #[test]
+    fn int_and_float_parse_as_python() {
+        assert_eq!(parse_int("+5", 10).unwrap(), BigInt::from(5));
+        assert_eq!(parse_int("-5", 10).unwrap(), BigInt::from(-5));
+        assert_eq!(parse_int("0x_1f", 16).unwrap(), BigInt::from(31));
+        assert_eq!(
+            parse_int("\u{bd}", 10).unwrap_err(),
+            "invalid literal for int() with base 10: '\u{bd}'"
+        );
+        assert_eq!(parse_float("-inf").unwrap(), f64::NEG_INFINITY);
+        assert_eq!(parse_float("+iNf").unwrap(), f64::INFINITY);
+        assert_eq!(parse_float("-Infinity").unwrap(), f64::NEG_INFINITY);
+        assert!(parse_float("+nan").unwrap().is_nan());
+        assert_eq!(parse_float("-1.5").unwrap(), -1.5);
+        assert_eq!(parse_float("+.5").unwrap(), 0.5);
+        assert_eq!(parse_float("\u{661}.5").unwrap(), 1.5);
+        for bad in ["1e", "1e+", "1e5x", "-", "--1", "x", "\u{bd}"] {
+            assert_eq!(
+                parse_float(bad).unwrap_err(),
+                format!("could not convert string to float: {}", repr_str(bad)),
+                "{bad}"
+            );
+        }
+    }
+
+    #[test]
+    fn iso_week_dates_follow_cpython() {
+        let ok = |s: &str| Date::fromisoformat(s).map(|d| d.isoformat());
+        assert_eq!(ok("2026W01").as_deref(), Some("2025-12-29"));
+        assert_eq!(ok("2015-W53-7").as_deref(), Some("2016-01-03"));
+        for bad in [
+            "2026-W01x1",
+            "2026-01x01",
+            "0000-W01-1",
+            "2026-W01-8",
+            "2026-W01-0",
+            "2021-W53-1",
+            "2026-W00-1",
+        ] {
+            assert_eq!(ok(bad), None, "{bad}");
+        }
+    }
+
+    #[test]
+    fn every_ordinal_round_trips() {
+        // date.fromordinal and toordinal over the whole range, 0001-01-01 to 9999-12-31.
+        let mut previous = Date::from_ordinal(1).unwrap();
+        assert_eq!(previous.isoformat(), "0001-01-01");
+        for ordinal in 2..=MAX_DATE.ordinal() {
+            let date = Date::from_ordinal(ordinal).unwrap();
+            assert_eq!(date.ordinal(), ordinal);
+            assert!(date > previous, "{ordinal}");
+            previous = date;
+        }
+        assert_eq!(previous, MAX_DATE);
+        assert_eq!(Date::from_ordinal(0), None);
+        assert_eq!(Date::from_ordinal(MAX_DATE.ordinal() + 1), None);
+    }
+
+    #[test]
+    fn oserror_without_an_os_code_is_its_message() {
+        let error = io::Error::other("no code here");
+        assert_eq!(oserror_str(&error, "x", OsStyle::Errno), "no code here");
+        assert_eq!(strip_os_suffix("Access is denied"), "Access is denied");
+        assert_eq!(strip_os_suffix("Gone (os error 2)"), "Gone");
+    }
+
+    #[test]
+    fn joining_an_absolute_path_replaces_the_base() {
+        let base = PyPath::new("a");
+        let absolute = PyPath::new(&std::env::temp_dir().to_string_lossy());
+        assert!(absolute.is_absolute());
+        assert!(!base.is_absolute());
+        assert_eq!(base.join(&absolute.display()), absolute);
+    }
+
+    #[cfg(not(windows))]
+    #[test]
+    fn two_leading_slashes_stay_an_anchor_on_posix() {
+        // PurePosixPath keeps exactly two leading slashes; three collapse to one.
+        assert_eq!(PyPath::new("//x/y").display(), "//x/y");
+        assert_eq!(PyPath::new("///x").display(), "/x");
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn windows_errors_print_as_the_c_runtime_errno() {
+        // CPython 3.15.0's winerror-to-errno mapping and os.strerror.
+        for (winerror, expected) in [
+            (2, "[Errno 2] No such file or directory: 'x'"),
+            (4, "[Errno 24] Too many open files: 'x'"),
+            (5, "[Errno 13] Permission denied: 'x'"),
+            (32, "[Errno 13] Permission denied: 'x'"),
+            (6, "[Errno 9] Bad file descriptor: 'x'"),
+            (8, "[Errno 12] Not enough space: 'x'"),
+            (80, "[Errno 17] File exists: 'x'"),
+            (183, "[Errno 17] File exists: 'x'"),
+            (87, "[Errno 22] Invalid argument: 'x'"),
+        ] {
+            let error = io::Error::from_raw_os_error(winerror);
+            assert_eq!(oserror_str(&error, "x", OsStyle::Errno), expected);
+        }
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn windows_anchors_follow_pure_windows_path() {
+        // PureWindowsPath(text).anchor and str(), Python 3.15.0.
+        for (text, anchor, shown) in [
+            ("C:rel", "C:", "C:rel"),
+            ("C:", "C:", "C:"),
+            ("c:/x", r"c:\", r"c:\x"),
+            ("/rest", r"\", r"\rest"),
+            (r"\rest", r"\", r"\rest"),
+            ("//server/share/x", r"\\server\share\", r"\\server\share\x"),
+        ] {
+            let path = PyPath::new(text);
+            assert_eq!(
+                (path.anchor.as_str(), path.display()),
+                (anchor, shown.to_string()),
+                "{text}"
+            );
+        }
+    }
+
+    #[test]
+    fn the_verbatim_prefix_is_removed() {
+        assert_eq!(
+            without_verbatim_prefix(r"\\?\C:\a"),
+            Some(PathBuf::from(r"C:\a"))
+        );
+        assert_eq!(
+            without_verbatim_prefix(r"\\?\UNC\server\share\a"),
+            Some(PathBuf::from(r"\\server\share\a"))
+        );
+        assert_eq!(without_verbatim_prefix("/a/b"), None);
     }
 }

@@ -313,21 +313,27 @@ pub fn system_lookup(host: &str, port: u16) -> Result<Vec<SocketAddr>, DnsError>
         ..Default::default()
     };
     let host = host.trim_start_matches('[').trim_end_matches(']');
-    match dns_lookup::getaddrinfo(Some(host), Some(&port.to_string()), Some(hints)) {
-        Ok(infos) => {
-            let addrs: Vec<SocketAddr> = infos.filter_map(Result::ok).map(|i| i.sockaddr).collect();
-            if addrs.is_empty() {
-                Err(DnsError::NoName)
-            } else {
-                Ok(addrs)
-            }
+    let infos = dns_lookup::getaddrinfo(Some(host), Some(&port.to_string()), Some(hints))
+        .map_err(|e| dns_error(e.kind()))?;
+    some_addresses(infos.filter_map(Result::ok).map(|i| i.sockaddr).collect())
+}
+
+/// NXDOMAIN and no-data answers are definitive; anything else may pass.
+fn dns_error(kind: dns_lookup::LookupErrorKind) -> DnsError {
+    match kind {
+        dns_lookup::LookupErrorKind::NoName | dns_lookup::LookupErrorKind::NoData => {
+            DnsError::NoName
         }
-        Err(e) => match e.kind() {
-            dns_lookup::LookupErrorKind::NoName | dns_lookup::LookupErrorKind::NoData => {
-                Err(DnsError::NoName)
-            }
-            _ => Err(DnsError::Other),
-        },
+        _ => DnsError::Other,
+    }
+}
+
+/// An answer with no usable address is no answer.
+fn some_addresses(addrs: Vec<SocketAddr>) -> Result<Vec<SocketAddr>, DnsError> {
+    if addrs.is_empty() {
+        Err(DnsError::NoName)
+    } else {
+        Ok(addrs)
     }
 }
 
@@ -434,26 +440,48 @@ impl Network for Live {
             ureq::unversioned::transport::DefaultConnector::new(),
             resolver,
         );
-        match agent.get(url).call() {
-            Ok(response) => Ok(Reply {
-                status: response.status().as_u16(),
-                location: response
-                    .headers()
-                    .get("location")
-                    .or_else(|| response.headers().get("uri"))
-                    .and_then(|v| v.to_str().ok())
-                    .map(str::to_string),
-            }),
-            Err(ureq::Error::Io(e)) => Err(io_error_name(&e)),
-            Err(ureq::Error::Timeout(_)) => Err(GetError::Timeout),
-            Err(ureq::Error::HostNotFound) => Err(GetError::Dns(DnsError::Other)),
-            Err(ureq::Error::Tls(_)) => Err(GetError::Other("SSLError")),
-            Err(_) => Err(GetError::Other("OSError")),
-        }
+        outcome(agent.get(url).call())
+    }
+}
+
+/// One request's answer as the checker classifies it: the status and any
+/// redirect target, or the failure's name.
+fn outcome<B>(result: Result<ureq::http::Response<B>, ureq::Error>) -> Result<Reply, GetError> {
+    match result {
+        Ok(response) => Ok(Reply {
+            status: response.status().as_u16(),
+            location: response
+                .headers()
+                .get("location")
+                .or_else(|| response.headers().get("uri"))
+                .and_then(|v| v.to_str().ok())
+                .map(str::to_string),
+        }),
+        Err(ureq::Error::Io(e)) => Err(io_error_name(&e)),
+        Err(ureq::Error::Timeout(_)) => Err(GetError::Timeout),
+        Err(ureq::Error::HostNotFound) => Err(GetError::Dns(DnsError::Other)),
+        Err(ureq::Error::Tls(_)) => Err(GetError::Other("SSLError")),
+        Err(_) => Err(GetError::Other("OSError")),
     }
 }
 
 pub fn main(root: &Option<String>, args: Args) -> u8 {
+    run(
+        root,
+        &Live::default(),
+        Duration::from_secs(args.timeout),
+        &mut crate::PyText::stdout(),
+    )
+}
+
+/// Check every URL the sources and hand-written files carry through
+/// `network`, and return the exit code `report` gives.
+pub fn run(
+    root: &Option<String>,
+    network: &dyn Network,
+    timeout: Duration,
+    out: &mut dyn std::io::Write,
+) -> u8 {
     let urls = match crate::root_for(root).and_then(|root| collect_urls(&root)) {
         Ok(urls) => urls,
         Err(e) => {
@@ -461,10 +489,143 @@ pub fn main(root: &Option<String>, args: Args) -> u8 {
             return 1;
         }
     };
-    report(
-        &Live::default(),
-        &urls,
-        Duration::from_secs(args.timeout),
-        &mut crate::PyText::stdout(),
-    )
+    report(network, &urls, timeout, out)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io::{Error as IoError, ErrorKind};
+    use ureq::unversioned::resolver::Resolver as _;
+
+    fn response(status: u16, headers: &[(&str, &str)]) -> ureq::http::Response<()> {
+        let mut builder = ureq::http::Response::builder().status(status);
+        for (name, value) in headers {
+            builder = builder.header(*name, *value);
+        }
+        builder.body(()).unwrap()
+    }
+
+    #[test]
+    fn a_response_gives_its_status_and_redirect_target() {
+        assert_eq!(
+            outcome(Ok(response(200, &[]))),
+            Ok(Reply {
+                status: 200,
+                location: None
+            })
+        );
+        assert_eq!(
+            outcome(Ok(response(301, &[("Location", "https://y.invalid/")]))),
+            Ok(Reply {
+                status: 301,
+                location: Some("https://y.invalid/".into())
+            })
+        );
+        // urllib also follows the obsolete URI header.
+        assert_eq!(
+            outcome(Ok(response(302, &[("uri", "/next")]))),
+            Ok(Reply {
+                status: 302,
+                location: Some("/next".into())
+            })
+        );
+    }
+
+    #[test]
+    fn a_failed_request_is_named_never_quoted() {
+        let failures = [
+            (
+                ureq::Error::Timeout(ureq::Timeout::Global),
+                GetError::Timeout,
+            ),
+            (ureq::Error::HostNotFound, GetError::Dns(DnsError::Other)),
+            (
+                ureq::Error::Tls("server said something"),
+                GetError::Other("SSLError"),
+            ),
+            (ureq::Error::ConnectionFailed, GetError::Other("OSError")),
+            (
+                ureq::Error::Io(IoError::from(ErrorKind::ConnectionRefused)),
+                GetError::Other("ConnectionRefusedError"),
+            ),
+        ];
+        for (error, expected) in failures {
+            assert_eq!(outcome::<()>(Err(error)), Err(expected));
+        }
+    }
+
+    #[test]
+    fn io_errors_take_python_exception_names() {
+        let cases = [
+            (IoError::from(ErrorKind::TimedOut), GetError::Timeout),
+            (IoError::from(ErrorKind::WouldBlock), GetError::Timeout),
+            (
+                IoError::from(ErrorKind::ConnectionReset),
+                GetError::Other("ConnectionResetError"),
+            ),
+            (
+                IoError::from(ErrorKind::ConnectionAborted),
+                GetError::Other("ConnectionAbortedError"),
+            ),
+            (
+                IoError::from(ErrorKind::UnexpectedEof),
+                GetError::Other("RemoteDisconnected"),
+            ),
+            (
+                IoError::new(ErrorKind::InvalidData, "invalid peer Certificate: expired"),
+                GetError::Other("SSLCertVerificationError"),
+            ),
+            (
+                IoError::new(ErrorKind::InvalidData, "bad record mac"),
+                GetError::Other("SSLError"),
+            ),
+            (
+                IoError::from(ErrorKind::PermissionDenied),
+                GetError::Other("OSError"),
+            ),
+            (
+                IoError::other(Refusal(GetError::Blocked("non-public-address"))),
+                GetError::Blocked("non-public-address"),
+            ),
+        ];
+        for (error, expected) in cases {
+            assert_eq!(io_error_name(&error), expected, "{error}");
+        }
+        assert_eq!(Refusal(GetError::Timeout).to_string(), "Timeout");
+    }
+
+    #[test]
+    fn lookup_failures_are_definitive_only_for_no_name() {
+        use dns_lookup::LookupErrorKind;
+        assert_eq!(dns_error(LookupErrorKind::NoName), DnsError::NoName);
+        assert_eq!(dns_error(LookupErrorKind::NoData), DnsError::NoName);
+        assert_eq!(dns_error(LookupErrorKind::Again), DnsError::Other);
+        assert_eq!(dns_error(LookupErrorKind::IO), DnsError::Other);
+        assert_eq!(some_addresses(Vec::new()), Err(DnsError::NoName));
+    }
+
+    #[test]
+    fn the_connection_resolver_yields_the_public_answer() {
+        fn public(_: &str, port: u16) -> Result<Vec<SocketAddr>, DnsError> {
+            Ok((1..=20)
+                .map(|n| SocketAddr::new(IpAddr::from([93, 184, 216, n]), port))
+                .collect())
+        }
+        let resolver = PublicResolver { lookup: public };
+        let uri: ureq::http::Uri = "https://public.example:8443/x".parse().unwrap();
+        let timeout = ureq::unversioned::transport::NextTimeout {
+            after: Duration::from_secs(5).into(),
+            reason: ureq::Timeout::Global,
+        };
+        let addrs = resolver
+            .resolve(&uri, &agent_config(Duration::from_secs(5)), timeout)
+            .unwrap();
+        // ureq keeps at most 16 addresses.
+        assert_eq!(addrs.len(), 16);
+        assert_eq!(
+            addrs[0],
+            SocketAddr::new(IpAddr::from([93, 184, 216, 1]), 8443)
+        );
+    }
 }

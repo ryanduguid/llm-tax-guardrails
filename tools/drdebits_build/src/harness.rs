@@ -393,10 +393,8 @@ struct Responses {
 fn read_responses(root: &PyPath, responses_path: &str) -> Result<Responses, Fail> {
     let sources = builder::load_sources(root)?;
     let path = PyPath::new(responses_path);
-    let text = builder::read_text(&path).map_err(|e| match e {
-        Fail::Os(m) | Fail::Decode(m) => harness(format!("responses file: cannot read ({m})")),
-        other => other,
-    })?;
+    let text = builder::read_text_or_reason(&path)
+        .map_err(|m| harness(format!("responses file: cannot read ({m})")))?;
     let payload =
         pyjson::loads(&text).map_err(|e| harness(format!("responses file: cannot read ({e})")))?;
     if !matches!(payload, Json::Object(_)) {
@@ -570,16 +568,15 @@ pub fn score_from_file(
     drop(output);
     // A record this wrote can never be one the build then rejects. One that
     // fails is removed, or it would break the next build and every load.
-    if let Err(e) = evals::load_observations(root, &r.sources) {
-        if let Fail::Model(message) = &e {
+    match evals::load_observations(root, &r.sources) {
+        Err(Fail::Model(message)) => {
             let _ = std::fs::remove_file(target.fs());
-            return Err(harness(format!(
+            Err(harness(format!(
                 "refused an invalid observation record: {message}"
-            )));
+            )))
         }
-        return Err(e);
+        other => other.map(|_| target),
     }
-    Ok(target)
 }
 
 /// One line per case: its status and boundary checks and the markers it hit.

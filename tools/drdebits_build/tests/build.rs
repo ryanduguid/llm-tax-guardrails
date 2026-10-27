@@ -224,6 +224,86 @@ fn stamp_version_applies_re_sub_template_escapes() {
 }
 
 #[test]
+fn stamp_version_template_grammar_matches_re_sub() {
+    // re.sub(r"1\.0\.0", template, "1.0.0") in CPython 3.15.
+    let stamp = |template: &str| builder::stamp_version("Version: `1.0.0`", template);
+    for (template, expected) in [
+        (r"\g<00>", "1.0.0"),
+        (r"v\g<0>", "v1.0.0"),
+        (r"\0", "\x00"),
+        (r"\012", "\n"),
+        (r"\0129", "\n9"),
+        (r"\08", "\x008"),
+        (r"\101", "A"),
+        (r"\177", "\x7f"),
+        (r"\a\b\f\n\r\t\v", "\x07\x08\x0c\n\r\t\x0b"),
+        (r"\-", r"\-"),
+        (r"\.", r"\."),
+    ] {
+        assert_eq!(
+            stamp(template).unwrap(),
+            format!("Version: `{expected}`"),
+            "{template}"
+        );
+    }
+    // Python raises re.PatternError for these; the reason is kept, the
+    // position is not.
+    for (template, reason) in [
+        (r"\", "bad escape (end of pattern)"),
+        (r"\g0", "missing <"),
+        (r"\g<0", "missing >, unterminated name"),
+        (r"\g<1>", "invalid group reference 1"),
+        (r"\400", r"octal escape value \400 outside of range 0-0o377"),
+        (r"\777", r"octal escape value \777 outside of range 0-0o377"),
+        (r"\18", "invalid group reference 18"),
+        (r"\8", "invalid group reference 8"),
+        (r"\17", "invalid group reference 17"),
+    ] {
+        assert_eq!(
+            stamp(template),
+            Err(Fail::Internal(format!("re.PatternError: {reason}"))),
+            "{template}"
+        );
+    }
+    // A named group the pattern lacks escapes too (Python: IndexError).
+    assert!(matches!(stamp(r"\g<x>"), Err(Fail::Internal(_))));
+}
+
+#[test]
+fn guide_fragments_must_exist_and_be_utf8() {
+    let (dir, root) = fixture();
+    let guide = dir.path().join("src").join("guide");
+    std::fs::write(guide.join("015-bad.md"), b"\xff\n").unwrap();
+    assert!(matches!(
+        builder::load_sources(&root),
+        Err(Fail::Decode(m)) if m.contains("can't decode byte 0xff")
+    ));
+    std::fs::remove_dir_all(&guide).unwrap();
+    assert_eq!(
+        builder::load_sources(&root).err(),
+        Some(Fail::Build("src/guide/ has no fragments".into()))
+    );
+}
+
+#[test]
+fn only_markdown_fragments_are_read() {
+    // Path.glob("*.md") matches case-insensitively on Windows only.
+    let (dir, root) = fixture();
+    let guide = dir.path().join("src").join("guide");
+    std::fs::write(guide.join("015-upper.MD"), "## Upper\n").unwrap();
+    std::fs::write(guide.join("016-notes.txt"), "## Notes\n").unwrap();
+    std::fs::write(guide.join("md"), "## Bare\n").unwrap();
+    let names: Vec<String> = builder::load_sources(&root)
+        .unwrap()
+        .fragments
+        .into_iter()
+        .map(|(name, _)| name)
+        .collect();
+    assert_eq!(names.contains(&"015-upper.MD".to_string()), cfg!(windows));
+    assert!(!names.iter().any(|n| n == "016-notes.txt" || n == "md"));
+}
+
+#[test]
 fn frontmatter_verbatim_values_in_order() {
     let meta = vec![
         ("title".to_string(), "DrDebits".to_string()),

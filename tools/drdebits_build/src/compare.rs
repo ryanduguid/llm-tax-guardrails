@@ -34,12 +34,14 @@ pub struct Args {
     check: bool,
 }
 
+#[cfg(windows)]
 fn same_component(a: &std::ffi::OsStr, b: &std::ffi::OsStr) -> bool {
-    if cfg!(windows) {
-        a.to_string_lossy().to_lowercase() == b.to_string_lossy().to_lowercase()
-    } else {
-        a == b
-    }
+    a.to_string_lossy().to_lowercase() == b.to_string_lossy().to_lowercase()
+}
+
+#[cfg(not(windows))]
+fn same_component(a: &std::ffi::OsStr, b: &std::ffi::OsStr) -> bool {
+    a == b
 }
 
 /// `path.relative_to(root)` as POSIX text, or None when `path` is not under `root`.

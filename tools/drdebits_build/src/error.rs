@@ -43,3 +43,29 @@ impl Fail {
         matches!(self, Fail::Decode(_) | Fail::Bundle(_))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn each_failure_prints_its_message() {
+        for (fail, shown, value_error) in [
+            (Fail::Model("m".into()), "m", false),
+            (Fail::Build("b".into()), "b", false),
+            (Fail::Os("o".into()), "o", false),
+            (Fail::Decode("d".into()), "d", true),
+            (Fail::Harness("h".into()), "h", false),
+            (Fail::Bundle("u".into()), "u", true),
+            (
+                Fail::Internal("KeyError: 'x'".into()),
+                "unexpected error: KeyError: 'x'",
+                false,
+            ),
+        ] {
+            assert_eq!(fail.to_string(), shown);
+            // UnicodeDecodeError and BundleError are the ValueError family.
+            assert_eq!(fail.is_value_error(), value_error, "{fail:?}");
+        }
+    }
+}

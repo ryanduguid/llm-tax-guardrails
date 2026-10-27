@@ -517,3 +517,67 @@ fn check_flags_candidate_cases_outside_the_current_suite() {
             .contains(&"candidate has cases outside the current suite".to_string())
     );
 }
+
+#[test]
+fn a_record_outside_the_result_directories_is_refused() {
+    let (dir, root) = fixture();
+    let sources = builder::load_sources(&root).unwrap();
+    std::fs::write(dir.path().join("top.json"), pyjson::dumps(&bound(), false)).unwrap();
+    match load_record(&root, &sources, "top.json") {
+        Err(Fail::Model(m)) => assert_eq!(
+            m,
+            "comparison records must be files under evals/results or evals/observations"
+        ),
+        other => panic!("expected a ModelError, got {other:?}"),
+    }
+}
+
+#[test]
+fn a_comparison_without_a_limitations_list_adds_none() {
+    // The port reads a missing list as empty; compare_records always writes one.
+    let sources = fixture_sources(false);
+    let before = merged(
+        &with_digests(&sources, &bound()),
+        &[("results", results(&[("A-001", "pass")]))],
+    );
+    let after = merged(&before, &[("results", results(&[("A-001", "fail")]))]);
+    let (before, after) = (record(before), record(after));
+    let with = |limitations: Json| -> Json {
+        let mut comparison = compare_records(&before, &after);
+        for (key, value) in comparison.iter_mut() {
+            if key == "limitations" {
+                *value = limitations.clone();
+            }
+        }
+        check_regressions(&comparison, &after, &sources)
+    };
+    let out = with(Json::Null);
+    assert_eq!(out, with(Json::Array(Vec::new())));
+    assert_eq!(status(&out), "failed");
+    assert!(strings(&out, "limitations").is_empty());
+}
+
+#[test]
+fn a_record_path_through_a_missing_directory_follows_the_platform() {
+    // POSIX cannot open a path through a missing directory, so Python's
+    // is_file() refused it; Windows folds the `..` first and opens the record.
+    let (dir, root) = fixture();
+    write_result(dir.path(), "2026-02-01-example-model.json", &[]);
+    let sources = builder::load_sources(&root).unwrap();
+    let result = load_record(
+        &root,
+        &sources,
+        "missing/../evals/results/2026-02-01-example-model.json",
+    );
+    if cfg!(windows) {
+        assert!(result.is_ok(), "{result:?}");
+    } else {
+        match result {
+            Err(Fail::Model(m)) => assert_eq!(
+                m,
+                "comparison records must be files under evals/results or evals/observations"
+            ),
+            other => panic!("expected a ModelError, got {other:?}"),
+        }
+    }
+}

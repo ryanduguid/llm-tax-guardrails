@@ -741,3 +741,79 @@ fn deeply_nested_yaml_is_a_model_error_not_a_crash() {
     let result = big_stack(move || model::load_metadata(&p));
     assert_refused(result, "is nested too deeply to read");
 }
+
+#[test]
+fn a_value_python_cannot_print_escapes_as_an_internal_error() {
+    // A hexadecimal int has no digit limit, but its repr in the refusal
+    // message does: Python's ValueError escaped the builder.
+    let tmp = tempfile::tempdir().unwrap();
+    let huge = format!("0x1{}", "0".repeat(3600));
+    let p = write(
+        tmp.path(),
+        "metadata.yaml",
+        &format!("fields:\n  - key: title\n    value: {{a: {huge}}}\n"),
+    );
+    assert_eq!(
+        model::load_metadata(&p).unwrap_err(),
+        Fail::Internal(
+            "ValueError: Exceeds the limit (4300 digits) for integer string conversion; use \
+             sys.set_int_max_str_digits() to increase the limit"
+                .into()
+        )
+    );
+}
+
+#[test]
+fn concordance_dates_must_be_present() {
+    let tmp = tempfile::tempdir().unwrap();
+    let source = CONCORDANCE_SOURCE.replacen("issued: \"2026-07-22\"\n", "", 1);
+    assert_ne!(source, CONCORDANCE_SOURCE);
+    assert_refused(
+        model::load_concordance(&write(tmp.path(), "c.yaml", &source)),
+        "c.yaml: issued must be a non-empty string, got None",
+    );
+}
+
+#[test]
+fn behaviour_entries_name_their_optional_fields() {
+    let tmp = tempfile::tempdir().unwrap();
+    assert_refused(
+        model::load_behaviour_tests(&write(
+            tmp.path(),
+            "b.yaml",
+            &format!("{BEHAVIOUR_ROW}    unknown: \"x\"\n"),
+        )),
+        "entry 0 must have exactly fields ('id', 'scenario', 'expected_status', \
+         'required_behaviour', 'side_effect_check'), optionally with \
+         ('prohibited_anywhere', 'prompt', 'system_instruction')",
+    );
+}
+
+#[test]
+fn whole_response_strings_must_be_non_empty() {
+    let tmp = tempfile::tempdir().unwrap();
+    for (old, new, needle) in [
+        (
+            "rule: \"r\"",
+            "rule: \"\"",
+            "whole_response field 'rule' must be a non-empty string, got ''",
+        ),
+        (
+            "label: \"a\"",
+            "label: 7",
+            "prohibited conclusion 0 field 'label' must be a non-empty string, got 7",
+        ),
+        (
+            "markers: [\"m\"]",
+            "markers: \"m\"",
+            "prohibited conclusion 'a' markers must be a non-empty list of strings",
+        ),
+    ] {
+        let content = WHOLE_RESPONSE.replacen(old, new, 1);
+        assert_ne!(content, WHOLE_RESPONSE);
+        assert_refused(
+            model::load_whole_response(&write(tmp.path(), "w.yaml", &content)),
+            needle,
+        );
+    }
+}

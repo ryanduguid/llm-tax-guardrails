@@ -200,4 +200,22 @@ mod tests {
             "titleId%20eq%20%27C1%27%20and%20x%3Ay"
         );
     }
+
+    #[test]
+    fn urlsplit_reads_bracketed_ipv6_hosts() {
+        let s = urlsplit("https://[2001:DB8::1]:8443/x").unwrap();
+        assert_eq!(s.hostname.as_deref(), Some("2001:db8::1"));
+        assert_eq!(port_number(&s.port), Ok(Some(8443)));
+        let s = urlsplit("https://[::1]/x").unwrap();
+        assert_eq!((s.hostname.as_deref(), s.port), (Some("::1"), None));
+        // urlsplit raises "Invalid IPv6 URL" for an unclosed bracket.
+        assert!(urlsplit("https://[::1/x").is_none());
+    }
+
+    #[test]
+    fn a_zero_prefix_network_holds_every_address() {
+        assert!(v4_in(Ipv4Addr::new(203, 0, 113, 7), [0, 0, 0, 0], 0));
+        assert!(v6_in("2606:4700::1111".parse().unwrap(), "::", 0));
+        assert!(!v4_in(Ipv4Addr::new(11, 0, 0, 1), [10, 0, 0, 0], 8));
+    }
 }

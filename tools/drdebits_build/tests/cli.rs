@@ -277,3 +277,43 @@ fn printed_lines_use_the_platform_line_ending() {
         if cfg!(windows) { 2 } else { 0 }
     );
 }
+
+#[test]
+fn an_error_python_did_not_catch_exits_1_from_every_command() {
+    // PyYAML's KeyError for an unknown boolean escaped each command's handler,
+    // so Python stopped with a traceback and exit 1, even under compare --check.
+    let (dir, _root) = fixture();
+    let metadata = dir.path().join("src/data/metadata.yaml");
+    let mut text = std::fs::read_to_string(&metadata).unwrap();
+    text.push_str("unexpected: !!bool maybe\n");
+    std::fs::write(&metadata, text).unwrap();
+    for args in [
+        &["build"][..],
+        &["digests"],
+        &["compare", "a.json", "b.json", "--check"],
+    ] {
+        let out = run(dir.path(), args);
+        assert_eq!(
+            (out.code, out.stderr),
+            (
+                1,
+                format!("{}: unexpected error: KeyError: 'maybe'\n", args[0])
+            ),
+            "{args:?}"
+        );
+    }
+}
+
+#[test]
+fn linkcheck_reports_a_missing_root_without_requesting_anything() {
+    let dir = tempfile::tempdir().unwrap();
+    let out = run_in(dir.path(), &["linkcheck"], false);
+    assert_eq!(out.code, 1);
+    assert!(
+        out.stderr
+            .starts_with("linkcheck: no DrDebits root found above "),
+        "{}",
+        out.stderr
+    );
+    assert_eq!(out.stdout, "");
+}
