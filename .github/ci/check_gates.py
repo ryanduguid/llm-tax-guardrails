@@ -9,8 +9,8 @@ parents (fetch-depth: 2). It fails when:
 - a needed job did not succeed (skipped with --no-results, where the gate
   applies its own result rules);
 - a job in WORKFLOW other than GATE and the exempt jobs is missing from needs;
-- on a pull request, a job in the base copy or unique context predecessor of
-  WORKFLOW is gone, and WORKFLOW
+- on a pull request, a job in the base copy or unique context predecessor (or,
+  without one, unique same-id predecessor) of WORKFLOW is gone, and WORKFLOW
   has no comment "# removed-jobs: JOB" naming it (the declaration lives in the
   file, so it cannot change without a new commit and a new run);
 - a line at job-key indentation in the jobs block is not a job key it can read.
@@ -46,6 +46,8 @@ def job_key(text: str) -> str | None:
 
 def literal_name(text: str) -> str | None:
     """Read a single-line literal name; unsupported YAML stays unknown."""
+    if any(char.isspace() and char not in " \t" for char in text):
+        return None  # YAML separates with space and tab only, so other whitespace stays unknown
     text = text.strip()
     if text.startswith('"'):
         try:
@@ -263,8 +265,10 @@ def workflow_modes(text: str) -> set[str] | None:
 def base_jobs(workflow: str, gate: str, head: str) -> set[str]:
     """Keep both destination and uniquely established context-source removal obligations."""
     required: set[str] = set()
+    destination: set[str] = set()
     if git("ls-tree", "--name-only", "HEAD^1", "--", workflow).strip():
-        required.update(job_ids(git("show", f"HEAD^1:{workflow}")))
+        destination = job_ids(git("show", f"HEAD^1:{workflow}"))
+        required.update(destination)
     names = parse_jobs(head)[0][gate]
     if names is None or len(names) != 1 or any("${{" in name for name in names):
         sys.exit("Cannot determine the gate context; use a single-line literal name")
@@ -275,6 +279,7 @@ def base_jobs(workflow: str, gate: str, head: str) -> set[str]:
     # shortcut: only static include rows and literal-result conditionals resolve;
     # keep other expressions possible and use a maintained parser for broader YAML.
     candidates = []
+    same_id = []
     for path in base_workflow_paths():
         # GitHub reads workflows only from the top level of .github/workflows.
         if path.count("/") == 2 and path.endswith((".yml", ".yaml")):
@@ -285,6 +290,8 @@ def base_jobs(workflow: str, gate: str, head: str) -> set[str]:
             parsed = parse_jobs(text)
             if parsed is None or not parsed[0] or parsed[1]:
                 sys.exit(f"Cannot read base workflow {path}; the gate check needs updating")
+            if gate in parsed[0] and path != workflow:
+                same_id.append(set(parsed[0]))
             for names in parsed[0].values():
                 if possible_context(names, context):
                     if base_modes is None:
@@ -298,6 +305,12 @@ def base_jobs(workflow: str, gate: str, head: str) -> set[str]:
         )
     if candidates:
         required.update(candidates[0])
+    elif gate not in destination:
+        # A gate that kept its id but changed file and context still owes the base jobs.
+        if len(same_id) > 1:
+            sys.exit(f"More than one base workflow can precede {gate}; the gate check needs updating")
+        if same_id:
+            required.update(same_id[0])
     return required
 
 

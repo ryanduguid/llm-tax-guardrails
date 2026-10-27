@@ -132,6 +132,19 @@ class GateReaderTests(unittest.TestCase):
         correct = workflow("  original:\n    name: protected\n")
         self.assertEqual(self.base({".github/workflows/other.yml": workflow("  replacement:\n    name: other\n"), ".github/workflows/old.yml": correct}), {"original"})
 
+    def test_non_yaml_whitespace_names_stay_unknown(self):
+        for text in ("protected\u00a0#gate", '"protected\u00a0#gate"', "protected\u2003"):
+            with self.subTest(text=text):
+                self.assertIsNone(checker.literal_name(text))
+        with self.assertRaisesRegex(SystemExit, "Cannot determine"):
+            self.base({}, "  replacement:\n    name: protected\u00a0#gate\n")
+
+    def test_same_id_predecessor_binds_when_file_and_context_change(self):
+        old = workflow("  replacement:\n    name: old-context\n  critical:\n    runs-on: linux\n")
+        self.assertEqual(self.base({".github/workflows/old.yml": old}), {"replacement", "critical"})
+        with self.assertRaisesRegex(SystemExit, "More than one base workflow"):
+            self.base({".github/workflows/old.yml": old, ".github/workflows/two.yml": old})
+
     def test_unknown_head_name_and_unreadable_base_fail(self):
         with self.assertRaisesRegex(SystemExit, "Cannot determine"):
             self.base({}, "  replacement:\n    name: ${{ inputs.name }}\n")
