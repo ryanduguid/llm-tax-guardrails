@@ -44,6 +44,14 @@ def job_key(text: str) -> str | None:
     return name
 
 
+def without_comment(text: str) -> str:
+    """Drop a trailing comment (a # after whitespace) in one linear pass, then strip."""
+    for index in range(1, len(text)):
+        if text[index] == "#" and text[index - 1].isspace():
+            return text[:index].strip()
+    return text.strip()
+
+
 def literal_name(text: str) -> str | None:
     """Read a single-line literal name; unsupported YAML stays unknown."""
     if any(char.isspace() and char not in " \t" for char in text):
@@ -61,7 +69,7 @@ def literal_name(text: str) -> str | None:
     if text.startswith("'"):
         match = re.fullmatch(r"'((?:[^']|'')*)'\s*(?:#.*)?", text)
         return match[1].replace("''", "'") if match and match[1] else None
-    text = re.split(r"\s+#", text, maxsplit=1)[0].strip()
+    text = without_comment(text)
     if (not text or text[0] in "!&*[]{}>|%@`#.+-0123456789" or re.search(r":\s|[\r\n]", text)
             or text.lower() in {"null", "true", "false", "yes", "no", "on", "off", "~"}
             or re.fullmatch(r"[-+]?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?", text)):
@@ -148,6 +156,22 @@ def reported_names(name: str | None, lines: list[str], job: str) -> set[str] | N
     return names
 
 
+def start_job(line: str, names: dict[str, str | None], bodies: dict[str, list[str]],
+              unreadable: list[str]) -> tuple[str | None, bool]:
+    """Record a job-key line; return its id (None if unreadable) and whether its value is unknown."""
+    job = job_key(line[2:])
+    if job is None:
+        unreadable.append(line)
+        return None, False
+    if job in names:
+        unreadable.append(line)
+    tail = line.split(":", 1)[1].strip()
+    unknown = bool(tail and not tail.startswith("#"))
+    names[job] = None if unknown else job
+    bodies[job] = []
+    return job, unknown
+
+
 def parse_jobs(text: str) -> tuple[dict[str, set[str] | None], list[str]] | None:
     """Return job ids mapped to possible reported names, plus unreadable job-level lines."""
     parts = text.split("\njobs:\n", 1)
@@ -167,18 +191,9 @@ def parse_jobs(text: str) -> tuple[dict[str, set[str] | None], list[str]] | None
         if line[:1] not in ("", " ", "#"):
             break  # the next top-level key ends the jobs block
         if line.startswith("  ") and line[2:3] not in ("", " ", "#"):
-            job = job_key(line[2:])
+            job, unknown = start_job(line, names, bodies, unreadable)
             in_name = has_property = False
             properties = set()
-            if job is None:
-                unreadable.append(line)
-            else:
-                tail = line.split(":", 1)[1].strip()
-                if job in names:
-                    unreadable.append(line)
-                unknown = bool(tail and not tail.startswith("#"))
-                names[job] = None if unknown else job
-                bodies[job] = []
         elif job is not None and line.strip() and not line.lstrip().startswith("#"):
             bodies[job].append(line)
             indent = len(line) - len(line.lstrip(" "))
@@ -253,7 +268,7 @@ def workflow_modes(text: str) -> set[str] | None:
             elif not events:
                 return None
     else:
-        tail = re.split(r"\s+#", tail, maxsplit=1)[0].strip()
+        tail = without_comment(tail)
         values = tail[1:-1].split(",") if tail.startswith("[") and tail.endswith("]") else [tail]
         names = [literal_name(value) for value in values]
         if any(name is None or job_key(name + ":") != name for name in names):
@@ -268,6 +283,20 @@ def gate_kept(path: str, gate: str) -> bool:
         return False
     parsed = parse_jobs(git("show", f"HEAD:{path}"))
     return parsed is not None and not parsed[1] and gate in parsed[0]
+
+
+def context_sources(path: str, jobs: dict[str, set[str] | None], base_modes: set[str] | None,
+                    context: str) -> int:
+    """Count the jobs in a base workflow that can report CONTEXT; unresolvable ones fail."""
+    count = 0
+    for names in jobs.values():
+        if possible_context(names, context):
+            if base_modes is None:
+                sys.exit(f"Cannot determine the invocation namespace in {path}; update the reader")
+            if names is None or any("${{" in name for name in names):
+                sys.exit(f"Cannot resolve a possible gate context in {path}; update the reader")
+            count += 1
+    return count
 
 
 def base_jobs(workflow: str, gate: str, head: str) -> set[str]:
@@ -300,13 +329,7 @@ def base_jobs(workflow: str, gate: str, head: str) -> set[str]:
                 sys.exit(f"Cannot read base workflow {path}; the gate check needs updating")
             if gate in parsed[0] and path != workflow and not gate_kept(path, gate):
                 same_id.append(set(parsed[0]))
-            for names in parsed[0].values():
-                if possible_context(names, context):
-                    if base_modes is None:
-                        sys.exit(f"Cannot determine the invocation namespace in {path}; update the reader")
-                    if names is None or any("${{" in name for name in names):
-                        sys.exit(f"Cannot resolve a possible gate context in {path}; update the reader")
-                    candidates.append(set(parsed[0]))
+            candidates += [set(parsed[0])] * context_sources(path, parsed[0], base_modes, context)
     if len(candidates) > 1:
         sys.exit(
             f"More than one base job can precede {gate}; the gate check needs updating"
