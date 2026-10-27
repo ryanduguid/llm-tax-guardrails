@@ -359,15 +359,11 @@ fn number_text(s: &str) -> Option<String> {
 
 /// `int(s, base)`; the error is the `ValueError` message.
 pub fn parse_int(s: &str, base: u32) -> Result<BigInt, String> {
+    // CPython formats the input with `%.200R`: the repr, cut to 200 characters.
     let invalid = || {
-        let shown: String = if char_len(s) > 200 {
-            prefix_chars(s, 200).to_string()
-        } else {
-            s.to_string()
-        };
         format!(
             "invalid literal for int() with base {base}: {}",
-            repr_str(&shown)
+            prefix_chars(&repr_str(s), 200)
         )
     };
     let text = number_text(s).ok_or_else(invalid)?;
@@ -1142,6 +1138,12 @@ mod tests {
             parse_int("\u{bd}", 10).unwrap_err(),
             "invalid literal for int() with base 10: '\u{bd}'"
         );
+        // %.200R cuts the repr, so its closing quote goes from 199 characters.
+        let prefix = "invalid literal for int() with base 10: ";
+        let at = |n: usize| parse_int(&"x".repeat(n), 10).unwrap_err();
+        assert_eq!(at(198), format!("{prefix}'{}'", "x".repeat(198)));
+        assert_eq!(at(199), format!("{prefix}'{}", "x".repeat(199)));
+        assert_eq!(at(201), format!("{prefix}'{}", "x".repeat(199)));
         assert_eq!(parse_float("-inf").unwrap(), f64::NEG_INFINITY);
         assert_eq!(parse_float("+iNf").unwrap(), f64::INFINITY);
         assert_eq!(parse_float("-Infinity").unwrap(), f64::NEG_INFINITY);
