@@ -262,6 +262,14 @@ def workflow_modes(text: str) -> set[str] | None:
     return {"callable" if event == "workflow_call" else "standalone" for event in events} or None
 
 
+def gate_kept(path: str, gate: str) -> bool:
+    """Whether HEAD still runs GATE from PATH, which then keeps its own obligations."""
+    if not git("ls-tree", "--name-only", "HEAD", "--", path).strip():
+        return False
+    parsed = parse_jobs(git("show", f"HEAD:{path}"))
+    return parsed is not None and not parsed[1] and gate in parsed[0]
+
+
 def base_jobs(workflow: str, gate: str, head: str) -> set[str]:
     """Keep both destination and uniquely established context-source removal obligations."""
     required: set[str] = set()
@@ -290,7 +298,7 @@ def base_jobs(workflow: str, gate: str, head: str) -> set[str]:
             parsed = parse_jobs(text)
             if parsed is None or not parsed[0] or parsed[1]:
                 sys.exit(f"Cannot read base workflow {path}; the gate check needs updating")
-            if gate in parsed[0] and path != workflow:
+            if gate in parsed[0] and path != workflow and not gate_kept(path, gate):
                 same_id.append(set(parsed[0]))
             for names in parsed[0].values():
                 if possible_context(names, context):

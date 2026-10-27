@@ -145,6 +145,17 @@ class GateReaderTests(unittest.TestCase):
         with self.assertRaisesRegex(SystemExit, "More than one base workflow"):
             self.base({".github/workflows/old.yml": old, ".github/workflows/two.yml": old})
 
+    def test_same_id_gate_left_in_place_is_not_a_predecessor(self):
+        old = workflow("  replacement:\n    name: old-context\n  critical:\n    runs-on: linux\n")
+        path = ".github/workflows/old.yml"
+
+        def git(*args):
+            if args[0] == "ls-tree":
+                return path if args[2] == "HEAD" and args[-1] == path else ""
+            return old
+        with patch.object(checker, "git", side_effect=git), patch.object(checker, "base_workflow_paths", return_value=[path]):
+            self.assertEqual(checker.base_jobs(".github/workflows/new.yml", "replacement", workflow("  replacement:\n    name: new-context\n")), set())
+
     def test_unknown_head_name_and_unreadable_base_fail(self):
         with self.assertRaisesRegex(SystemExit, "Cannot determine"):
             self.base({}, "  replacement:\n    name: ${{ inputs.name }}\n")
