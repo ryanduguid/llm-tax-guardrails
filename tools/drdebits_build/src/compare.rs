@@ -411,6 +411,12 @@ pub fn main(root: &Option<String>, args: Args) -> u8 {
             errln!("compare: {e}");
             if args.check { 2 } else { 1 }
         }
+        // Python's `except ValueError` also caught one escaping a reader,
+        // such as `int()` refusing `!!int x` in a source.
+        Err(Fail::Internal(m)) if m.starts_with("ValueError: ") => {
+            errln!("compare: {}", &m["ValueError: ".len()..]);
+            if args.check { 2 } else { 1 }
+        }
         Err(e) => {
             errln!("compare: {e}");
             1

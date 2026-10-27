@@ -3144,12 +3144,13 @@ fn base64_decode(data: &[u8]) -> std::result::Result<Vec<u8>, String> {
     let mut quad = 0;
     let mut left = 0u32;
     let mut pads = 0;
+    // Padding that completes a group ends the data only when nothing follows:
+    // CPython decodes later data characters as if the padding were absent.
+    let mut padded = false;
     for &ch in data {
         if ch == b'=' {
             pads += 1;
-            if quad >= 2 && quad + pads >= 4 {
-                return Ok(out);
-            }
+            padded |= quad >= 2 && quad + pads >= 4;
             continue;
         }
         let value = match ch {
@@ -3161,6 +3162,7 @@ fn base64_decode(data: &[u8]) -> std::result::Result<Vec<u8>, String> {
             _ => continue,
         } as u32;
         pads = 0;
+        padded = false;
         match quad {
             0 => {
                 quad = 1;
@@ -3185,6 +3187,7 @@ fn base64_decode(data: &[u8]) -> std::result::Result<Vec<u8>, String> {
     }
     match quad {
         0 => Ok(out),
+        _ if padded => Ok(out),
         1 => Err(format!(
             "Invalid base64-encoded string: number of data characters ({}) cannot be 1 more than a multiple of 4",
             out.len() / 3 * 4 + 1
@@ -3297,6 +3300,38 @@ mod tests {
         assert_eq!(get("f"), "0.5");
         assert_eq!(get("g"), "'1'");
         assert_eq!(get("h"), "31");
+    }
+
+    #[test]
+    fn binary_data_after_padding_reads_as_cpython_reads_it() {
+        // yaml.safe_load(f'!!binary "{text}"') with PyYAML 6.0.3, CPython 3.15.0.
+        let padding = "failed to decode base64 data: Incorrect padding";
+        let one_more = "failed to decode base64 data: Invalid base64-encoded string: \
+                        number of data characters (5) cannot be 1 more than a multiple of 4";
+        for (text, expected) in [
+            ("aGk=", Ok("b'hi'")),
+            ("aGk=x", Ok("b'hi1'")),
+            ("aGk==x", Ok("b'hi1'")),
+            ("aGk=!x", Ok("b'hi1'")),
+            ("aG==k=", Ok("b'hi'")),
+            ("aG==aG==", Ok(r"b'hf\x86'")),
+            ("YQ=Y=", Ok(r"b'a\x06'")),
+            ("aGk=!", Ok("b'hi'")),
+            ("aGk=aGk=", Err(padding)),
+            ("aGk=xyz", Err(padding)),
+            ("YQ=x", Err(padding)),
+            ("aGk=xy", Err(one_more)),
+            (r"aGk=\nYQ==", Err(one_more)),
+        ] {
+            let got = load(&format!("!!binary \"{text}\"\n"));
+            match expected {
+                Ok(repr) => assert_eq!(got.unwrap().repr().unwrap(), repr, "{text}"),
+                Err(reason) => assert!(
+                    matches!(&got, Err(Error::Yaml(m)) if m.starts_with(reason)),
+                    "{text}: {got:?}"
+                ),
+            }
+        }
     }
 
     #[test]

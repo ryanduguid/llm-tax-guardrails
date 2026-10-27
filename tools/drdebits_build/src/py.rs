@@ -592,7 +592,7 @@ fn crt_errno(winerror: i32) -> (i32, &'static str) {
     match winerror {
         2 | 3 | 15 | 206 => (2, "No such file or directory"),
         4 => (24, "Too many open files"),
-        5 | 32 | 33 | 1920 => (13, "Permission denied"),
+        5 | 32 | 33 => (13, "Permission denied"),
         6 => (9, "Bad file descriptor"),
         8 => (12, "Not enough space"),
         80 | 183 => (17, "File exists"),
@@ -1233,6 +1233,8 @@ mod tests {
             (80, "[Errno 17] File exists: 'x'"),
             (183, "[Errno 17] File exists: 'x'"),
             (87, "[Errno 22] Invalid argument: 'x'"),
+            // ERROR_CANT_ACCESS_FILE, as open() reports an app execution alias.
+            (1920, "[Errno 22] Invalid argument: 'x'"),
         ] {
             let error = io::Error::from_raw_os_error(winerror);
             assert_eq!(oserror_str(&error, "x", OsStyle::Errno), expected);
