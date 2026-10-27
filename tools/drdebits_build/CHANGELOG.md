@@ -46,7 +46,10 @@ suite replays it on every platform.
 - **Unhandled errors.** Where the Python builder let an exception escape, it
   printed a traceback. The binary prints one `<command>: unexpected error: …`
   line instead, with the same exit code: `verify` still exits 2 and prints its
-  `VERIFIER ERROR` line; `build` and `digests` exit 1.
+  `VERIFIER ERROR` line; `build` and `digests` exit 1. For a `guide_version`
+  that is an invalid `re.sub` replacement template, the line omits Python's
+  ` at position N`, and a malformed `\g<…>` group reference can name another
+  exception or reason.
 - **Nesting depth.** Python's recursion limit made the deepest readable YAML
   nesting depend on the syntax and the command: 489 to 492 levels in
   measurement. The binary reads up to 490 composed levels and refuses deeper
@@ -66,6 +69,14 @@ suite replays it on every platform.
   platform verifier, and a redirect target is joined with WHATWG URL rules
   before it is checked. Dead, unreachable and manual classifications, the
   destination guard and the exit codes are unchanged.
+- **Unparsable links.** `linkcheck` reports a URL whose IPv6 host bracket is
+  unclosed, such as `https://[::1/`, as `UNREACHABLE unparsable-url` without
+  requesting it, and the run exits 2. Python's `urlsplit` raised outside the
+  request's handler, so the whole run stopped with a traceback and exit 1.
+- **Malformed paths.** A path through a missing directory and back with `..`
+  (POSIX), a UNC path with no share such as `//server`, or a drive that is not
+  a letter such as `1:x` (Windows) is still refused, but the refusal can give
+  a different reason from Python's.
 - **Response size.** `sources` reads at most 64 MiB of a Federal Register
   API response and reports a larger one as unreachable. Python read the whole
   response.

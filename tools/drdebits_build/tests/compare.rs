@@ -581,3 +581,31 @@ fn a_record_path_through_a_missing_directory_follows_the_platform() {
         }
     }
 }
+
+#[test]
+fn a_source_value_error_is_invalid_evidence_as_python_caught_it() {
+    // Python's handler caught ValueError with ModelError, BuildError and
+    // OSError, exiting 2 under --check and 1 without it. KeyError escaped as
+    // a traceback, which exits 1 either way.
+    let rec = "evals/results/2026-02-01-example-model.json";
+    for (value, check_code, message) in [
+        ("!!int x", 2, "invalid literal for int() with base 10: 'x'"),
+        ("!!float x", 2, "could not convert string to float: 'x'"),
+        ("!!bool x", 1, "unexpected error: KeyError: 'x'"),
+    ] {
+        let (dir, _root) = fixture();
+        write_result(dir.path(), "2026-02-01-example-model.json", &[]);
+        let meta = dir.path().join("src/data/metadata.yaml");
+        let text = std::fs::read_to_string(&meta).unwrap();
+        std::fs::write(&meta, format!("{text}bogus: {value}\n")).unwrap();
+        let shown = format!("compare: {message}\n");
+        for (args, code) in [
+            (vec!["compare", rec, rec, "--check"], check_code),
+            (vec!["compare", rec, rec], 1),
+        ] {
+            let out = run_in(dir.path(), &args, true);
+            assert_eq!((out.code, &out.stderr), (code, &shown), "{value} {args:?}");
+            assert_eq!(out.stdout, "", "{value} {args:?}");
+        }
+    }
+}
