@@ -16,6 +16,8 @@
 
 At the source-check date, the filtered TPB library index exposed 55 live Guidance Statements, GS01 to GS55, across 3 result pages. This count and every statement’s status must be rechecked rather than assumed to continue.
 
+The TPB’s [Annual Report 2025–26](https://www.tpb.gov.au/sites/default/files/2026-10/TPB%20annual%20report%20202526_digital_0.pdf), retrieved on 27 October 2026, records 10 new guidance products (printed page 19) and describes the consolidation of 4 guidance product types into Guidance Statements alongside 8 new factsheets (printed page 32). The factsheets cover topics including reasonable care, continuing professional education, outsourcing and the meanings of tax agent and BAS services. The report’s product totals are not additions to the Guidance Statement count above. Check the relevant factsheet and underlying authority when reviewing a topic. The report describes activity during 2025–26; it does not establish the law operative for a client event or replace the current guidance. This contextual review does not advance the guide-wide source-check date.
+
 The July 2025 APES 110 compilation includes amendments with different operative triggers. These dates are headlines only; check the official transitional provisions on compiled pages 512 to 515 before deciding which text applies:
 
 - technology revisions to Parts 1 to 3 apply as of 1 January 2025; Part 4A uses audit/review period triggers, and Part 4B uses period triggers for period-based underlying subject matters and otherwise an as-of trigger
