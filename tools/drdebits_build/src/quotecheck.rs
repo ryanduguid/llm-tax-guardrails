@@ -106,10 +106,9 @@ fn read_utf8(path: &str) -> Result<String, String> {
 pub fn main(args: Args) -> u8 {
     let result = (|| -> Result<Json, String> {
         let source = read_utf8(&args.source)?;
-        let quote = match (&args.quote, &args.quote_file) {
-            (Some(q), _) => q.clone(),
-            (None, Some(file)) => read_utf8(file)?,
-            (None, None) => unreachable!("clap requires one"),
+        let quote = match &args.quote {
+            Some(q) => q.clone(),
+            None => read_utf8(args.quote_file.as_deref().expect("clap requires one"))?,
         };
         assess_quote(
             &source,

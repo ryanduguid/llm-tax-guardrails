@@ -133,13 +133,7 @@ fn markdown_names(dir: &Path) -> Vec<String> {
         .filter_map(|e| e.file_name().into_string().ok())
         .filter(|name| {
             let tail = name.len().checked_sub(3).and_then(|i| name.get(i..));
-            tail.is_some_and(|t| {
-                if cfg!(windows) {
-                    t.eq_ignore_ascii_case(".md")
-                } else {
-                    t == ".md"
-                }
-            })
+            tail.is_some_and(is_markdown_suffix)
         })
         .collect();
     // Sort by name, not path: path ordering casefolds on Windows.
@@ -147,11 +141,30 @@ fn markdown_names(dir: &Path) -> Vec<String> {
     names
 }
 
+#[cfg(windows)]
+fn is_markdown_suffix(tail: &str) -> bool {
+    tail.eq_ignore_ascii_case(".md")
+}
+
+#[cfg(not(windows))]
+fn is_markdown_suffix(tail: &str) -> bool {
+    tail == ".md"
+}
+
 /// A text read whose failure is an `OSError` or a `UnicodeDecodeError`.
 pub fn read_text(path: &PyPath) -> Result<String, Fail> {
     py::read_text(&path.fs()).map_err(|e| match e {
         py::ReadError::Os(e) => Fail::Os(py::oserror_str(&e, &path.display(), OsStyle::Errno)),
         py::ReadError::Decode(e) => Fail::Decode(e.to_string()),
+    })
+}
+
+/// A text read for a caller that reports either failure alike: the
+/// reason is the `OSError` or `UnicodeDecodeError` as Python renders it.
+pub fn read_text_or_reason(path: &PyPath) -> Result<String, String> {
+    py::read_text(&path.fs()).map_err(|e| match e {
+        py::ReadError::Os(e) => py::oserror_str(&e, &path.display(), OsStyle::Errno),
+        py::ReadError::Decode(e) => e.to_string(),
     })
 }
 

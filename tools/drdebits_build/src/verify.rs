@@ -86,10 +86,9 @@ fn rel_text(root: &PyPath, rel: &str) -> Result<Option<String>, Fail> {
 /// CITATION.cff as one YAML mapping, read as the source files are. `Ok(Err)`
 /// carries the reason it could not be read, which verify reports as a finding.
 fn read_citation(path: &PyPath) -> Result<Result<Vec<(Value, Value)>, String>, Fail> {
-    let text = match builder::read_text(path) {
+    let text = match builder::read_text_or_reason(path) {
         Ok(text) => text,
-        Err(Fail::Os(message) | Fail::Decode(message)) => return Ok(Err(message)),
-        Err(e) => return Err(e),
+        Err(message) => return Ok(Err(message)),
     };
     Ok(match yaml::load(&text) {
         Ok(Value::Dict(pairs)) => Ok(pairs.borrow().clone()),
@@ -104,32 +103,32 @@ fn read_citation(path: &PyPath) -> Result<Result<Vec<(Value, Value)>, String>, F
     })
 }
 
+/// A malformed source, a missing file or an unreadable one is a finding,
+/// carried in the inner `Err`; any other failure stops verify.
+fn as_finding<T>(result: Result<T, Fail>) -> Result<Result<T, Fail>, Fail> {
+    match result {
+        Err(e @ (Fail::Model(_) | Fail::Build(_) | Fail::Os(_))) => Ok(Err(e)),
+        other => other.map(Ok),
+    }
+}
+
 pub fn run_verify(root: &PyPath, today: Date) -> Result<Vec<String>, Fail> {
-    let s = match builder::load_sources(root) {
+    let s = match as_finding(builder::load_sources(root))? {
         Ok(s) => s,
-        Err(e @ (Fail::Model(_) | Fail::Build(_) | Fail::Os(_))) => {
-            return Ok(vec![format!("sources: {e}")]);
-        }
-        Err(e) => return Err(e),
+        Err(e) => return Ok(vec![format!("sources: {e}")]),
     };
     let mut failures: Vec<String> = Vec::new();
     let mut built = builder::render_generated(&s);
 
     // A missing checksum_files member is a finding, not a crash.
-    match builder::build_sha256sums(root, &s, &built) {
+    match as_finding(builder::build_sha256sums(root, &s, &built))? {
         Ok(sums) => built.push(("SHA256SUMS".into(), sums)),
-        Err(e @ (Fail::Model(_) | Fail::Build(_) | Fail::Os(_))) => {
-            failures.push(format!("SHA256SUMS: cannot rebuild ({e})"));
-        }
-        Err(e) => return Err(e),
+        Err(e) => failures.push(format!("SHA256SUMS: cannot rebuild ({e})")),
     }
     // A malformed result file is a finding too.
-    match evals::build_results_md(root, &s) {
+    match as_finding(evals::build_results_md(root, &s))? {
         Ok(text) => built.push((evals::RESULTS_FILE.into(), text)),
-        Err(e @ (Fail::Model(_) | Fail::Build(_) | Fail::Os(_))) => {
-            failures.push(format!("{}: cannot rebuild ({e})", evals::RESULTS_FILE));
-        }
-        Err(e) => return Err(e),
+        Err(e) => failures.push(format!("{}: cannot rebuild ({e})", evals::RESULTS_FILE)),
     }
 
     for (rel, content) in &built {
@@ -210,27 +209,27 @@ pub fn run_verify(root: &PyPath, today: Date) -> Result<Vec<String>, Fail> {
 
     // (e) the guide header, README and llms.txt carry hand-written copies of
     // the source-check date, so a metadata bump that misses one is caught.
+    // load_metadata requires sources_checked_at to start with an ISO date, so
+    // the date is never empty.
     let checked_date = py::prefix_chars(s.meta("sources_checked_at"), 10).to_string();
-    if !checked_date.is_empty() {
-        // Substring: the real header line carries a timezone suffix.
-        let guide_line = format!("> Sources last checked: `{checked_date}`");
-        if committed_text
-            .as_ref()
-            .is_some_and(|t| !t.contains(&guide_line))
-        {
+    // Substring: the real header line carries a timezone suffix.
+    let guide_line = format!("> Sources last checked: `{checked_date}`");
+    if committed_text
+        .as_ref()
+        .is_some_and(|t| !t.contains(&guide_line))
+    {
+        failures.push(format!(
+            "drdebits.md: header source-check date line does not match sources_checked_at ({checked_date})"
+        ));
+    }
+    for rel in SOURCE_CHECK_DATE_FILES {
+        let Some(text) = rel_text(root, rel)? else {
+            continue;
+        };
+        if !text.contains(&format!("Sources last checked: {checked_date}")) {
             failures.push(format!(
-                "drdebits.md: header source-check date line does not match sources_checked_at ({checked_date})"
+                "{rel}: source-check date does not match sources_checked_at ({checked_date})"
             ));
-        }
-        for rel in SOURCE_CHECK_DATE_FILES {
-            let Some(text) = rel_text(root, rel)? else {
-                continue;
-            };
-            if !text.contains(&format!("Sources last checked: {checked_date}")) {
-                failures.push(format!(
-                    "{rel}: source-check date does not match sources_checked_at ({checked_date})"
-                ));
-            }
         }
     }
 

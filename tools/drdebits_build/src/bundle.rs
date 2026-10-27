@@ -176,13 +176,28 @@ pub fn main(args: Args) -> u8 {
             outln!("bundle: OK (approved manifest and file digests; host loading not checked)");
             0
         }
-        Err(e @ (Fail::Os(_) | Fail::Bundle(_) | Fail::Decode(_))) => {
-            errln!("bundle: {e}");
-            1
-        }
+        // Python caught OSError and ValueError here; anything else escaped
+        // as a traceback, which also exited 1.
         Err(e) => {
             errln!("bundle: {e}");
             1
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn the_redirect_walk_stops_at_the_top_when_root_is_not_an_ancestor() {
+        // Members are relative names, so the walk normally ends at the root.
+        // Named absolutely under a root spelt another way, it still ends.
+        let dir = tempfile::tempdir().unwrap();
+        std::fs::create_dir(dir.path().join("sub")).unwrap();
+        std::fs::write(dir.path().join("member"), b"bytes").unwrap();
+        let root = PyPath::new(&dir.path().join("sub").join("..").to_string_lossy());
+        let member = dir.path().join("member").to_string_lossy().into_owned();
+        assert_eq!(read(&root, &member).unwrap(), b"bytes");
     }
 }

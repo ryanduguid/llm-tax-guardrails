@@ -302,6 +302,66 @@ fn published_citation_accepts_quoted_mapping_keys() {
 }
 
 #[test]
+fn an_unreadable_or_too_deep_citation_is_a_finding() {
+    let (dir, root) = fixture();
+    sync(&root);
+    let citation = dir.path().join("CITATION.cff");
+    std::fs::write(&citation, b"version: \xff\n").unwrap();
+    assert!(
+        verify(&root).contains(
+            &"CITATION.cff: cannot parse YAML ('utf-8' codec can't decode byte 0xff in position 9: \
+              invalid start byte)"
+                .to_string()
+        ),
+        "{:?}",
+        verify(&root)
+    );
+    let depth = 2000;
+    std::fs::write(
+        &citation,
+        format!("version: {}{}\n", "[".repeat(depth), "]".repeat(depth)),
+    )
+    .unwrap();
+    let failures = common::big_stack(move || verify(&root));
+    assert!(
+        failures
+            .contains(&"CITATION.cff: cannot parse YAML (maximum recursion depth exceeded)".into()),
+        "{failures:?}"
+    );
+}
+
+#[test]
+fn a_citation_error_python_did_not_catch_stops_verify() {
+    // PyYAML's KeyError for an unknown boolean escaped the citation check,
+    // so verify reported that it could not run.
+    let (dir, root) = fixture();
+    sync(&root);
+    std::fs::write(dir.path().join("CITATION.cff"), "version: !!bool maybe\n").unwrap();
+    assert_eq!(
+        run_verify(&root, today()),
+        Err(drdebits::error::Fail::Internal("KeyError: 'maybe'".into()))
+    );
+}
+
+#[test]
+fn a_release_date_that_is_neither_text_nor_a_date_does_not_match() {
+    let (dir, root) = fixture();
+    std::fs::write(
+        dir.path().join("CITATION.cff"),
+        "version: 0.9.9-test\ndate-released: 7\n",
+    )
+    .unwrap();
+    sync(&root);
+    assert!(
+        verify(&root)
+            .iter()
+            .any(|f| f.starts_with("CITATION.cff: date-released does not match")),
+        "{:?}",
+        verify(&root)
+    );
+}
+
+#[test]
 fn malformed_or_duplicate_citation_is_a_finding_not_a_crash() {
     for document in [
         "[not, a, mapping]\n",

@@ -76,19 +76,32 @@ impl PyText {
     }
 }
 
+/// `buf` as text mode writes it here: on Windows each `\n` becomes `\r\n`.
+#[cfg(windows)]
+fn text_mode(buf: &[u8]) -> std::borrow::Cow<'_, [u8]> {
+    if buf.contains(&b'\n') {
+        String::from_utf8_lossy(buf)
+            .replace('\n', "\r\n")
+            .into_bytes()
+            .into()
+    } else {
+        buf.into()
+    }
+}
+
+/// `buf` as text mode writes it here: unchanged.
+#[cfg(not(windows))]
+fn text_mode(buf: &[u8]) -> std::borrow::Cow<'_, [u8]> {
+    buf.into()
+}
+
 impl std::io::Write for PyText {
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-        let translated;
-        let bytes = if cfg!(windows) && buf.contains(&b'\n') {
-            translated = String::from_utf8_lossy(buf).replace('\n', "\r\n");
-            translated.as_bytes()
-        } else {
-            buf
-        };
+        let bytes = text_mode(buf);
         if self.stderr {
-            std::io::stderr().write_all(bytes)?;
+            std::io::stderr().write_all(&bytes)?;
         } else {
-            std::io::stdout().write_all(bytes)?;
+            std::io::stdout().write_all(&bytes)?;
         }
         Ok(buf.len())
     }
@@ -165,11 +178,16 @@ pub fn root_for(root: &Option<String>) -> Result<PyPath, Fail> {
 
 /// Report an error the Python builder did not catch, which it showed as a traceback.
 fn emit_internal(command: &str, error: &Fail) {
+    errln!("{}", internal_line(command, error));
+}
+
+/// The line `emit_internal` prints, naming the Python exception class.
+fn internal_line(command: &str, error: &Fail) -> String {
     match error {
-        Fail::Internal(_) => errln!("{command}: {error}"),
-        Fail::Decode(m) => errln!("{command}: unexpected error: UnicodeDecodeError: {m}"),
-        Fail::Os(m) => errln!("{command}: unexpected error: OSError: {m}"),
-        other => errln!("{command}: unexpected error: {other}"),
+        Fail::Internal(_) => format!("{command}: {error}"),
+        Fail::Decode(m) => format!("{command}: unexpected error: UnicodeDecodeError: {m}"),
+        Fail::Os(m) => format!("{command}: unexpected error: OSError: {m}"),
+        other => format!("{command}: unexpected error: {other}"),
     }
 }
 
@@ -304,4 +322,44 @@ pub fn run() -> ExitCode {
         .join()
         .unwrap_or(EXIT_COULD_NOT_RUN);
     ExitCode::from(code)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io::Write as _;
+
+    #[test]
+    fn text_mode_translates_newlines_only_on_windows() {
+        let expected: &[u8] = if cfg!(windows) { b"a\r\nb" } else { b"a\nb" };
+        assert_eq!(&*text_mode(b"a\nb"), expected);
+        assert_eq!(&*text_mode(b"no break \xff"), b"no break \xff");
+    }
+
+    #[test]
+    fn both_streams_flush() {
+        assert!(PyText::stdout().flush().is_ok());
+        assert!(PyText::stderr().flush().is_ok());
+    }
+
+    #[test]
+    fn uncaught_errors_name_the_python_exception() {
+        let line = |e: Fail| internal_line("verify", &e);
+        assert_eq!(
+            line(Fail::Internal("ValueError: x".into())),
+            "verify: unexpected error: ValueError: x"
+        );
+        assert_eq!(
+            line(Fail::Decode("bad byte".into())),
+            "verify: unexpected error: UnicodeDecodeError: bad byte"
+        );
+        assert_eq!(
+            line(Fail::Os("[Errno 13] Permission denied: 'x'".into())),
+            "verify: unexpected error: OSError: [Errno 13] Permission denied: 'x'"
+        );
+        assert_eq!(
+            line(Fail::Model("src/x: bad".into())),
+            "verify: unexpected error: src/x: bad"
+        );
+    }
 }

@@ -188,3 +188,30 @@ fn the_command_reads_files_and_prints_the_assessment() {
     );
     assert_eq!(typed.code, 2);
 }
+
+#[test]
+fn the_quote_may_come_from_a_file() {
+    let dir = tempfile::tempdir().unwrap();
+    std::fs::write(dir.path().join("s.txt"), "Records are required.").unwrap();
+    std::fs::write(dir.path().join("q.txt"), "are required").unwrap();
+    let out = run_in(
+        dir.path(),
+        &["quote", "--source", "s.txt", "--quote-file", "q.txt"],
+        false,
+    );
+    assert_eq!(out.code, 0, "{}", out.stderr);
+    assert!(out.stdout.starts_with("{\n  \"status\": \"EXACT_MATCH\","));
+    std::fs::write(dir.path().join("bad.txt"), b"\xff").unwrap();
+    let bad = run_in(
+        dir.path(),
+        &["quote", "--source", "s.txt", "--quote-file", "bad.txt"],
+        false,
+    );
+    assert_eq!(
+        (bad.code, bad.stderr.as_str()),
+        (
+            1,
+            "quote: 'utf-8' codec can't decode byte 0xff in position 0: invalid start byte\n"
+        )
+    );
+}

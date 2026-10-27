@@ -800,3 +800,15 @@ pub fn validate_counts(meta: &Meta, catalogue: &[Row]) -> Result<(), Fail> {
     }
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn field_tuples_print_as_python_tuples() {
+        assert_eq!(tuple_repr(&["id"]), "('id',)");
+        assert_eq!(tuple_repr(&["id", "title"]), "('id', 'title')");
+        assert_eq!(tuple_repr(&[]), "()");
+    }
+}

@@ -480,3 +480,102 @@ fn the_date_is_taken_in_australia_not_on_the_runner() {
         day("2026-09-30")
     );
 }
+
+#[test]
+fn a_version_without_a_reasons_list_records_no_reason() {
+    let Json::Array(versions) = pyjson::loads(
+        r#"[{"titleId": "C2009A00013", "start": "2026-10-01T00:00:00"},
+            {"titleId": "C2009A00013", "start": "2026-10-02T00:00:00", "reasons": "Amend"}]"#,
+    )
+    .unwrap() else {
+        panic!("a JSON array")
+    };
+    let details: Vec<String> = upcoming(&example(), Some(&versions), day("2026-09-27"), 120)
+        .into_iter()
+        .map(|f| f.detail)
+        .collect();
+    assert_eq!(
+        details,
+        [
+            "a registered change comes into force on 2026-10-01: the Register records no reason",
+            "a registered change comes into force on 2026-10-02: the Register records no reason",
+        ]
+    );
+}
+
+/// Serve one HTTP response to the first request on a local port; return its URL.
+fn serve_once(body: &'static [u8]) -> (String, std::thread::JoinHandle<String>) {
+    use std::io::{Read, Write};
+    let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let url = format!("http://{}/v1/Titles", listener.local_addr().unwrap());
+    let server = std::thread::spawn(move || {
+        let (mut stream, _) = listener.accept().unwrap();
+        let mut request = Vec::new();
+        let mut byte = [0u8; 1];
+        while !request.ends_with(b"\r\n\r\n") {
+            stream.read_exact(&mut byte).unwrap();
+            request.push(byte[0]);
+        }
+        let head = format!(
+            "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",
+            body.len()
+        );
+        stream.write_all(head.as_bytes()).unwrap();
+        stream.write_all(body).unwrap();
+        String::from_utf8_lossy(&request).into_owned()
+    });
+    (url, server)
+}
+
+#[test]
+fn the_live_register_returns_the_body_as_text() {
+    let (url, server) = serve_once(br#"{"value": []}"#);
+    assert_eq!(
+        sources::Live.get(&url, Duration::from_secs(10)).as_deref(),
+        Some(r#"{"value": []}"#)
+    );
+    let request = server.join().unwrap();
+    assert!(
+        request.starts_with("GET /v1/Titles HTTP/1.1\r\n"),
+        "{request}"
+    );
+    assert!(
+        request.contains("llm-tax-guardrails source-check"),
+        "the request names its user agent: {request}"
+    );
+}
+
+#[test]
+fn the_live_register_treats_an_undecodable_or_missing_answer_as_no_answer() {
+    let (url, server) = serve_once(b"\xff\xfe");
+    assert_eq!(sources::Live.get(&url, Duration::from_secs(10)), None);
+    server.join().unwrap();
+    // Nothing listens on a port once its listener is dropped.
+    let closed = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let url = format!("http://{}/", closed.local_addr().unwrap());
+    drop(closed);
+    assert_eq!(sources::Live.get(&url, Duration::from_secs(10)), None);
+}
+
+#[test]
+fn the_sources_command_reports_a_missing_or_empty_source_table() {
+    let (dir, _root) = common::fixture();
+    let out = common::run_in(dir.path(), &["sources"], true);
+    assert_eq!(out.code, 1);
+    assert!(
+        out.stderr.starts_with("sources: [Errno 2] ")
+            && out.stderr.contains("040-source-status.md"),
+        "{}",
+        out.stderr
+    );
+    std::fs::write(
+        dir.path().join("src/guide/040-source-status.md"),
+        "## Source status\n\nNo Register sources this release.\n",
+    )
+    .unwrap();
+    let out = common::run_in(dir.path(), &["sources"], true);
+    assert_eq!(
+        (out.code, out.stdout.as_str()),
+        (1, "no Register sources found in the source-status table\n")
+    );
+}

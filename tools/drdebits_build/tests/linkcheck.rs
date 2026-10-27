@@ -11,7 +11,7 @@ use common::fixture;
 use drdebits::builder;
 use drdebits::linkcheck::{
     DnsError, GetError, Live, Network, Reply, agent_config, check, collect_urls,
-    needs_manual_check, report, resolve_public,
+    needs_manual_check, report, resolve_public, run, system_lookup,
 };
 
 const PUBLIC: &str = "93.184.216.34";
@@ -558,4 +558,105 @@ fn an_environment_proxy_is_not_used() {
     }
     assert!(agent_config(T).proxy().is_none());
     assert_eq!(agent_config(T).max_redirects(), 0);
+}
+
+#[test]
+fn a_refusal_while_connecting_is_unreachable_and_retried() {
+    let blocked = || Err(GetError::Blocked("non-public-address"));
+    let net = Fake::new(vec![blocked(), blocked()]);
+    assert_eq!(
+        check(&net, "https://x.invalid/a", T),
+        ("unreachable", "non-public-address".into())
+    );
+    assert_eq!(net.calls(), 2);
+}
+
+#[test]
+fn a_final_address_that_is_not_lower_case_https_is_refused() {
+    // urlsplit lower-cases the scheme for the guard, but the final URL must
+    // still start with "https://".
+    let net = Fake::new(vec![status(200), status(200)]);
+    assert_eq!(
+        check(&net, "HTTPS://x.invalid/a", T),
+        ("unreachable", "non-https-redirect".into())
+    );
+    assert_eq!(net.calls(), 2);
+}
+
+#[test]
+fn a_redirect_to_an_unparsable_url_is_not_followed() {
+    let net = Fake::new(vec![
+        redirect(302, "https://y.invalid:notaport/"),
+        redirect(302, "https://y.invalid:notaport/"),
+    ]);
+    assert_eq!(
+        check(&net, "https://x.invalid/a", T),
+        ("unreachable", "unparsable-url".into())
+    );
+    assert_eq!(net.calls(), 2, "each attempt made only the first request");
+}
+
+#[test]
+fn an_unclosed_ipv6_bracket_is_never_requested() {
+    // Python's urlsplit raised ValueError here, outside the request's handler.
+    let net = Fake::new(vec![]);
+    assert_eq!(
+        check(&net, "https://[::1/", T),
+        ("unreachable", "unparsable-url".into())
+    );
+    assert_eq!(net.calls(), 0);
+}
+
+#[test]
+fn the_live_guard_resolves_before_any_request() {
+    fn private(_: &str, port: u16) -> Result<Vec<SocketAddr>, DnsError> {
+        Ok(vec![SocketAddr::new("10.0.0.5".parse().unwrap(), port)])
+    }
+    assert_eq!(
+        check(&Live { lookup: private }, "https://internal.example/", T),
+        ("unreachable", "non-public-address".into())
+    );
+}
+
+#[test]
+fn the_system_resolver_answers_numeric_hosts_offline() {
+    for host in ["127.0.0.1", "[127.0.0.1]"] {
+        assert_eq!(
+            system_lookup(host, 8443).unwrap(),
+            [SocketAddr::new("127.0.0.1".parse().unwrap(), 8443)],
+            "{host}"
+        );
+    }
+    assert_eq!(system_lookup("bad\0host", 443), Err(DnsError::Other));
+}
+
+#[test]
+fn run_checks_every_collected_url() {
+    struct AllOk;
+    impl Network for AllOk {
+        fn resolve(&self, _: &str, _: u16) -> Result<Vec<IpAddr>, DnsError> {
+            Ok(vec![PUBLIC.parse().unwrap()])
+        }
+        fn get(&self, _: &str, _: Duration) -> Result<Reply, GetError> {
+            Ok(Reply {
+                status: 200,
+                location: None,
+            })
+        }
+    }
+    let (dir, root) = fixture();
+    let count = collect_urls(&root).unwrap().len();
+    assert!(count > 0);
+    let mut out = Vec::new();
+    let root_arg = Some(dir.path().to_string_lossy().into_owned());
+    assert_eq!(run(&root_arg, &AllOk, T, &mut out), 0);
+    assert_eq!(
+        String::from_utf8(out).unwrap(),
+        format!("checked {count}: ok {count}, dead 0, unreachable 0, manual 0\n")
+    );
+    let empty = tempfile::tempdir().unwrap();
+    let mut out = Vec::new();
+    let missing = Some(empty.path().to_string_lossy().into_owned());
+    assert_eq!(run(&missing, &AllOk, T, &mut out), 1);
+    assert!(out.is_empty());
 }

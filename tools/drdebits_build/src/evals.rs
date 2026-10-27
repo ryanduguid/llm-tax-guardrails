@@ -229,10 +229,8 @@ pub fn load_result(
             "{rel}: file name date must be an ISO date (YYYY-MM-DD)"
         )));
     };
-    let text = builder::read_text(path).map_err(|e| match e {
-        Fail::Os(m) | Fail::Decode(m) => model(format!("{rel}: not valid JSON ({m})")),
-        other => other,
-    })?;
+    let text = builder::read_text_or_reason(path)
+        .map_err(|m| model(format!("{rel}: not valid JSON ({m})")))?;
     let data = pyjson::loads(&text).map_err(|e| model(format!("{rel}: not valid JSON ({e})")))?;
     // Only the recorded results have history to preserve: every observation
     // carries the current schema whatever date it names.

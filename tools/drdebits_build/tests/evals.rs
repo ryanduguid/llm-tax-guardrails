@@ -299,6 +299,26 @@ fn impossible_observation_file_date_is_rejected() {
 }
 
 #[test]
+fn undecodable_or_non_object_result_files_are_rejected() {
+    let (dir, root) = fixture();
+    let directory = dir.path().join("evals/results");
+    std::fs::create_dir_all(&directory).unwrap();
+    let target = directory.join("2026-02-01-example-model.json");
+    std::fs::write(&target, b"{\"model\": \"\xff\"}").unwrap();
+    assert_eq!(
+        model_error(results(&root)),
+        "evals/results/2026-02-01-example-model.json: not valid JSON ('utf-8' codec can't decode \
+         byte 0xff in position 11: invalid start byte)"
+    );
+    std::fs::write(&target, "[]").unwrap();
+    assert_eq!(
+        model_error(results(&root)),
+        "evals/results/2026-02-01-example-model.json: keys must be exactly model, run_date, \
+         guide_version, runner, results; prompts, outputs and transcripts do not belong in a result file"
+    );
+}
+
+#[test]
 fn invalid_json_duplicate_keys_and_stray_entries_are_rejected() {
     let (dir, root) = fixture();
     let directory = dir.path().join("evals/results");
@@ -557,4 +577,34 @@ fn result_loader_rejects_a_name_outside_the_pattern() {
         "human-confirmed",
     ));
     assert!(message.contains("file name must be YYYY-MM-DD-<slug>.json"));
+}
+
+#[test]
+fn a_record_without_a_results_map_has_no_results() {
+    // Loaded records always carry one; the accessor reads anything else as none.
+    for results in [None, Some(Json::Null), Some(Json::Array(vec![s("A-001")]))] {
+        let record = evals::Record(
+            results
+                .map(|r| ("results".to_string(), r))
+                .into_iter()
+                .collect(),
+        );
+        assert!(record.results().is_empty());
+        assert_eq!(record.result("A-001"), None);
+    }
+}
+
+#[test]
+fn only_the_two_record_directories_give_a_basis() {
+    assert_eq!(
+        evals::directory_basis("evals/results"),
+        Some(evals::HUMAN_CONFIRMED)
+    );
+    assert_eq!(
+        evals::directory_basis("evals/observations"),
+        Some(evals::MODEL_PROPOSED)
+    );
+    for directory in [".", "evals", "evals/results/old", "Evals/Results"] {
+        assert_eq!(evals::directory_basis(directory), None, "{directory}");
+    }
 }
