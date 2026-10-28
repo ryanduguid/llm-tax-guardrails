@@ -361,7 +361,7 @@ pub fn check_regressions(
     ])
 }
 
-pub fn main(root: &Option<String>, args: Args) -> u8 {
+pub fn main(root: Option<&str>, args: Args) -> u8 {
     let result = (|| -> Result<Json, Fail> {
         let root = crate::root_for(root)?;
         let sources = builder::load_sources(&root)?;

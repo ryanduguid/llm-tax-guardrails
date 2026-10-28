@@ -486,7 +486,7 @@ pub struct Args {
     timeout: u64,
 }
 
-pub fn main(root: &Option<String>, args: Args) -> u8 {
+pub fn main(root: Option<&str>, args: Args) -> u8 {
     let text = match crate::root_for(root).and_then(|root| {
         builder::read_text(&root.join("src").join("guide").join("040-source-status.md"))
     }) {
