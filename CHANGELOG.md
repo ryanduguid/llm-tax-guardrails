@@ -8,6 +8,10 @@ release.
 
 ## [Unreleased]
 
+### Added
+
+- `verify` checks that the release-status lines in the guide header, README and `llms.txt`, and the first line of `MAINTENANCE.md`, agree with the metadata `status` and release tag, and that the bundle file counts `MAINTENANCE.md` states match `checksum_files` and the installer's lists.
+
 ## [v0.4.0] - 2026-10-28
 
 Changes released in `0.4.0`, merged since `v0.3.3` (6 September 2026).

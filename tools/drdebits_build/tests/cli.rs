@@ -128,7 +128,10 @@ fn build_stamps_every_hand_written_file_before_checksums() {
     .unwrap();
     std::fs::write(
         p.join("MAINTENANCE.md"),
-        "Part of [DrDebits](./drdebits.md) `0.0.1`.\n",
+        "Part of [DrDebits](./drdebits.md) `0.0.1`.\n\n\
+         The manifest covers the first 3 files. The installer accepts the 8\n\
+         required files plus any subset of the 4 optional files. The current\n\
+         manifest hashes all 3 files.\n",
     )
     .unwrap();
     assert_eq!(run(p, &["build"]).code, 0);
