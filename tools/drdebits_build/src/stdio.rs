@@ -55,11 +55,27 @@ fn python_stdout(unbuffered: bool) -> Box<dyn Write + Send> {
         let handle = std::os::windows::io::AsHandle::as_handle(&stdout)
             .try_clone_to_owned()
             .map(std::fs::File::from);
-        if let Ok(file) = handle {
-            return Box::new(file);
-        }
+        return match handle {
+            Ok(file) => Box::new(file),
+            Err(_) => Box::new(FlushEach(stdout)),
+        };
     }
     Box::new(io::BufWriter::with_capacity(128 * 1024, stdout))
+}
+
+/// Unbuffered stdout when the handle cannot be cloned: each write is flushed.
+struct FlushEach(io::Stdout);
+
+impl Write for FlushEach {
+    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+        let written = self.0.write(buf)?;
+        self.0.flush()?;
+        Ok(written)
+    }
+
+    fn flush(&mut self) -> io::Result<()> {
+        self.0.flush()
+    }
 }
 
 fn stdout() -> MutexGuard<'static, Box<dyn Write + Send>> {

@@ -96,3 +96,28 @@ fn clap_preserves_forced_colour_and_no_colour() {
         }
     }
 }
+
+#[test]
+fn forced_colour_help_still_fails_when_buffered_stdout_is_lost() {
+    for (unbuffered, expected) in [(false, 120), (true, 0)] {
+        let mut command = Command::new(env!("CARGO_BIN_EXE_drdebits_build"));
+        command
+            .arg("--help")
+            .env("CLICOLOR_FORCE", "1")
+            .env_remove("NO_COLOR")
+            .env_remove("PYTHONUNBUFFERED");
+        if unbuffered {
+            command.env("PYTHONUNBUFFERED", "1");
+        }
+        let result = command
+            .stdout(closed_pipe())
+            .stderr(Stdio::piped())
+            .output()
+            .unwrap();
+        assert_eq!(
+            result.status.code(),
+            Some(expected),
+            "unbuffered={unbuffered}"
+        );
+    }
+}
