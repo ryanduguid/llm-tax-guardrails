@@ -267,6 +267,12 @@ fn every_link_of_a_chain_is_checked() {
         ("1 + 1 = 3 + 2 = 5", false),
         ("2 × 3 = 6 + 1 = 8", false),
         ("Item 2 = $500 + $300 = $800", true),
+        // An intermediate expression keeps its own written precision.
+        ("100 / 3 = 33.35 + 0 = 33", false),
+        ("100 / 3 = 33.33 + 0 = 33", true),
+        // A bracket opened by the surrounding prose.
+        ("(GST: 1,100 / 11 = 100)", true),
+        ("(2 + 3 = 6)", false),
     ] {
         let found = calculations(text);
         assert_eq!(found.len(), 1, "{text}");
@@ -277,6 +283,21 @@ fn every_link_of_a_chain_is_checked() {
         calculations("Item 2 = $500 + $300 = $800")[0].text,
         "$500 + $300 = $800"
     );
+}
+
+#[test]
+fn a_bracketed_amount_is_ambiguous_and_blocks() {
+    for text in [
+        "($100) + $50 = $150",
+        "($100) + $50 = ($50)",
+        "100 + 20 = (120) + 5 = 125",
+    ] {
+        let found = calculations(text);
+        assert_eq!(found.len(), 1, "{text}");
+        assert!(!found[0].matches, "{text}");
+        assert!(found[0].computed.starts_with("ambiguous"), "{text}");
+    }
+    assert!(calculations("(2 + 3) × 4 = 20")[0].matches);
 }
 
 #[test]
@@ -305,6 +326,11 @@ fn an_empty_section_counts_as_missing() {
         (
             "- The supply is wholly taxable.\n",
             "",
+            "missing mandatory section: Assumptions (empty",
+        ),
+        (
+            "- The supply is wholly taxable.\n",
+            "---\n",
             "missing mandatory section: Assumptions (empty",
         ),
         (

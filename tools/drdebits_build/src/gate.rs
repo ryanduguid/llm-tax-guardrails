@@ -19,7 +19,9 @@
 //! the guide makes mandatory, each with content; and every written calculation
 //! of the form `a op b = c`, including each link of a chain, reperformed in
 //! exact decimal arithmetic. A minus sign needs spaces around it, so section
-//! numbers such as `8-1` and years such as `2026-27` are not subtractions.
+//! numbers such as `8-1` and years such as `2026-27` are not subtractions. A
+//! lone bracketed amount such as `(120)` blocks as ambiguous, because it may
+//! be an accounting negative.
 //!
 //! Mandatory sections follow Risk classification for `PROCEED_DRAFT_ONLY` and
 //! `NEEDS_FACTS`. An `ESCALATE` or `HARD_STOP` draft may be the abbreviated
@@ -85,12 +87,17 @@ static CLAIM: LazyLock<fancy_regex::Regex> = LazyLock::new(|| {
     let operand = format!(r"\(*[ \t]*[-−]?(?:{NUM})[ \t]*\)*");
     let op = r"(?:[ \t]*[+×*/÷][ \t]*|[ \t]+[-−x][ \t]+)";
     fancy_regex::Regex::new(&format!(
-        r"(?<![\w.,$/])({operand}(?:{op}{operand})+[ \t]*=[ \t]*(?:{operand}(?:{op}{operand})*[ \t]*=[ \t]*)*)([-−]?(?:{NUM}))(?![\d,.]*\d)(?![ \t]*[+×*/÷=])(?![ \t]+[-−x][ \t])"
+        r"(?<![\w.,$/])({operand}(?:{op}{operand})+[ \t]*=[ \t]*(?:{operand}(?:{op}{operand})*[ \t]*=[ \t]*)*)(\([ \t]*[-−]?(?:{NUM})[ \t]*\)|[-−]?(?:{NUM}))(?![\d,.]*\d)(?![ \t]*[+×*/÷=])(?![ \t]+[-−x][ \t])"
     ))
     .expect("pattern")
 });
 static LEADING: LazyLock<regex::Regex> =
     LazyLock::new(|| regex::Regex::new(&format!("^[-−]?(?:{NUM})")).expect("pattern"));
+static NUMBER: LazyLock<regex::Regex> = LazyLock::new(|| regex::Regex::new(NUM).expect("pattern"));
+/// A lone bracketed amount, `(120)`: grouping, or an accounting negative.
+static BRACKETED: LazyLock<regex::Regex> = LazyLock::new(|| {
+    regex::Regex::new(&format!(r"\([ \t]*[-−]?(?:{NUM})[ \t]*\)")).expect("pattern")
+});
 static DATE: LazyLock<regex::Regex> =
     LazyLock::new(|| regex::Regex::new(r"\d{1,2}/\d{1,2}/\d{2,4}").expect("pattern"));
 static NUMBERED: LazyLock<regex::Regex> =
@@ -311,14 +318,32 @@ pub fn calculations(text: &str) -> Vec<Calculation> {
         if DATE.is_match(left) {
             continue;
         }
+        let text = py::strip(whole).to_string();
+        if BRACKETED.is_match(whole) {
+            out.push(Calculation {
+                text,
+                computed: "ambiguous: a bracketed amount may be negative; write a minus sign"
+                    .into(),
+                matches: false,
+            });
+            continue;
+        }
         let Some((claimed, places, percent)) = number(right) else {
             continue;
         };
-        let links: Vec<&str> = left
+        // An opening bracket of the surrounding prose, as in `(2 + 3 = 5)`.
+        let unopened = left
+            .matches('(')
+            .count()
+            .saturating_sub(left.matches(')').count());
+        let mut links: Vec<&str> = left
             .split('=')
             .map(str::trim)
             .filter(|s| !s.is_empty())
             .collect();
+        for _ in 0..unopened {
+            links[0] = links[0].strip_prefix('(').unwrap_or(links[0]).trim_start();
+        }
         let Some(values) = links
             .iter()
             .map(|l| evaluate(l))
@@ -326,7 +351,6 @@ pub fn calculations(text: &str) -> Vec<Calculation> {
         else {
             continue;
         };
-        let text = py::strip(whole).to_string();
         let Some(values) = values.into_iter().collect::<Option<Vec<Q>>>() else {
             out.push(Calculation {
                 text,
@@ -344,7 +368,15 @@ pub fn calculations(text: &str) -> Vec<Calculation> {
                 .find(links[i + 1])
                 .and_then(|m| number(m.as_str()))
                 .is_some_and(|(q, p, pc)| close(&values[i], &q, p, pc));
-            !leading && !close(&values[i], &values[i + 1], places, percent)
+            // The whole next expression, to the finer of its own written
+            // precision and the final result's.
+            let written = NUMBER
+                .find_iter(links[i + 1])
+                .filter_map(|m| number(m.as_str()))
+                .map(|(_, p, _)| p)
+                .max()
+                .unwrap_or(0);
+            !leading && !close(&values[i], &values[i + 1], places.max(written), percent)
         });
         let shown = failed.unwrap_or(last);
         let percent = percent && shown == last;
@@ -407,7 +439,11 @@ fn section(lines: &[String], heading: &str) -> Option<bool> {
         lines[start + 1..]
             .iter()
             .take_while(|l| heading_of(l).is_none())
-            .any(|l| !l.is_empty()),
+            // A Markdown rule such as `---` or `***` is not content.
+            .any(|l| {
+                !l.chars()
+                    .all(|c| matches!(c, '-' | '*' | '_' | '=') || c.is_whitespace())
+            }),
     )
 }
 
