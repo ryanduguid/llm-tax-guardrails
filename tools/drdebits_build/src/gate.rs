@@ -677,7 +677,7 @@ fn read_response(path: &str) -> Result<String, Fail> {
     }
 }
 
-pub fn main(root: &Option<String>, args: Args) -> u8 {
+pub fn main(root: Option<&str>, args: Args) -> u8 {
     let loaded = crate::root_for(root)
         .and_then(|root| builder::load_sources(&root))
         .and_then(|sources| Ok((sources, read_response(&args.response)?)));

@@ -128,7 +128,7 @@ pub fn destination_problem(network: &dyn Network, url: &str) -> Option<&'static 
     if parts.scheme != "https" {
         return Some("non-https");
     }
-    let Ok(port) = port_number(&parts.port) else {
+    let Ok(port) = port_number(parts.port.as_deref()) else {
         return Some("unparsable-url");
     };
     let Some(host) = parts.hostname else {
@@ -465,7 +465,7 @@ fn outcome<B>(result: Result<ureq::http::Response<B>, ureq::Error>) -> Result<Re
     }
 }
 
-pub fn main(root: &Option<String>, args: Args) -> u8 {
+pub fn main(root: Option<&str>, args: Args) -> u8 {
     run(
         root,
         &Live::default(),
@@ -477,7 +477,7 @@ pub fn main(root: &Option<String>, args: Args) -> u8 {
 /// Check every URL the sources and hand-written files carry through
 /// `network`, and return the exit code `report` gives.
 pub fn run(
-    root: &Option<String>,
+    root: Option<&str>,
     network: &dyn Network,
     timeout: Duration,
     out: &mut dyn std::io::Write,

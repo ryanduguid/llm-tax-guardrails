@@ -624,7 +624,7 @@ fn harness_exit(command: &str, error: &Fail) -> u8 {
     1
 }
 
-pub fn score_main(root: &Option<String>, args: ScoreArgs) -> u8 {
+pub fn score_main(root: Option<&str>, args: ScoreArgs) -> u8 {
     let result = crate::root_for(root)
         .and_then(|root| score_from_file(&root, &args.responses, args.label.as_deref()));
     match result {
@@ -636,7 +636,7 @@ pub fn score_main(root: &Option<String>, args: ScoreArgs) -> u8 {
     }
 }
 
-pub fn assess_main(root: &Option<String>, args: AssessArgs) -> u8 {
+pub fn assess_main(root: Option<&str>, args: AssessArgs) -> u8 {
     match crate::root_for(root).and_then(|root| assessment_lines(&root, &args.responses)) {
         Ok(lines) => {
             for line in lines {

@@ -57,10 +57,10 @@ pub fn urlsplit(url: &str) -> Option<Split> {
 pub struct BadPort;
 
 /// `SplitResult.port`: None for no port, Err where Python raises ValueError.
-pub fn port_number(port: &Option<String>) -> Result<Option<u16>, BadPort> {
+pub fn port_number(port: Option<&str>) -> Result<Option<u16>, BadPort> {
     match port {
         None => Ok(None),
-        Some(p) if p.is_empty() => Ok(None),
+        Some("") => Ok(None),
         Some(p) => {
             if !p.chars().all(|c| c.is_ascii_digit()) {
                 return Err(BadPort);
@@ -193,8 +193,8 @@ mod tests {
             (s.scheme.as_str(), s.hostname.as_deref()),
             ("https", Some("example.com"))
         );
-        assert_eq!(port_number(&s.port), Ok(Some(8443)));
-        assert_eq!(port_number(&Some("99999".into())), Err(BadPort));
+        assert_eq!(port_number(s.port.as_deref()), Ok(Some(8443)));
+        assert_eq!(port_number(Some("99999")), Err(BadPort));
         assert_eq!(
             quote("titleId eq 'C1' and x:y"),
             "titleId%20eq%20%27C1%27%20and%20x%3Ay"
@@ -205,7 +205,7 @@ mod tests {
     fn urlsplit_reads_bracketed_ipv6_hosts() {
         let s = urlsplit("https://[2001:DB8::1]:8443/x").unwrap();
         assert_eq!(s.hostname.as_deref(), Some("2001:db8::1"));
-        assert_eq!(port_number(&s.port), Ok(Some(8443)));
+        assert_eq!(port_number(s.port.as_deref()), Ok(Some(8443)));
         let s = urlsplit("https://[::1]/x").unwrap();
         assert_eq!((s.hostname.as_deref(), s.port), (Some("::1"), None));
         // urlsplit raises "Invalid IPv6 URL" for an unclosed bracket.

@@ -168,7 +168,7 @@ enum Command {
 }
 
 /// The root a command works in: `--root`, or the DrDebits tree above the current directory.
-pub fn root_for(root: &Option<String>) -> Result<PyPath, Fail> {
+pub fn root_for(root: Option<&str>) -> Result<PyPath, Fail> {
     match root {
         Some(r) => Ok(PyPath::new(r)),
         None => {
@@ -283,7 +283,7 @@ fn dispatch(cli: Cli) -> u8 {
             // Root discovery is the first thing a user hits from outside a
             // DrDebits tree, so it produces a clean message. For verify it
             // lands in the 2 band: no root means the checks never started.
-            let root = match root_for(&cli.root) {
+            let root = match root_for(cli.root.as_deref()) {
                 Ok(root) => root,
                 Err(e) => {
                     errln!("{name}: {e}");
@@ -300,15 +300,15 @@ fn dispatch(cli: Cli) -> u8 {
                 _ => run_digests(&root),
             }
         }
-        Command::Compare(args) => compare::main(&cli.root, args),
+        Command::Compare(args) => compare::main(cli.root.as_deref(), args),
         Command::Bundle(args) => bundle::main(args),
-        Command::Linkcheck(args) => linkcheck::main(&cli.root, args),
-        Command::Sources(args) => sources::main(&cli.root, args),
-        Command::Score(args) => harness::score_main(&cli.root, args),
-        Command::Assess(args) => harness::assess_main(&cli.root, args),
+        Command::Linkcheck(args) => linkcheck::main(cli.root.as_deref(), args),
+        Command::Sources(args) => sources::main(cli.root.as_deref(), args),
+        Command::Score(args) => harness::score_main(cli.root.as_deref(), args),
+        Command::Assess(args) => harness::assess_main(cli.root.as_deref(), args),
         Command::ReadSource(args) => harness::read_source_main(args),
         Command::Quote(args) => quotecheck::main(args),
-        Command::Gate(args) => gate::main(&cli.root, args),
+        Command::Gate(args) => gate::main(cli.root.as_deref(), args),
     }
 }
 

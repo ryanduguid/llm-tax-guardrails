@@ -649,7 +649,7 @@ fn run_checks_every_collected_url() {
     assert!(count > 0);
     let mut out = Vec::new();
     let root_arg = Some(dir.path().to_string_lossy().into_owned());
-    assert_eq!(run(&root_arg, &AllOk, T, &mut out), 0);
+    assert_eq!(run(root_arg.as_deref(), &AllOk, T, &mut out), 0);
     assert_eq!(
         String::from_utf8(out).unwrap(),
         format!("checked {count}: ok {count}, dead 0, unreachable 0, manual 0\n")
@@ -657,6 +657,6 @@ fn run_checks_every_collected_url() {
     let empty = tempfile::tempdir().unwrap();
     let mut out = Vec::new();
     let missing = Some(empty.path().to_string_lossy().into_owned());
-    assert_eq!(run(&missing, &AllOk, T, &mut out), 1);
+    assert_eq!(run(missing.as_deref(), &AllOk, T, &mut out), 1);
     assert!(out.is_empty());
 }
