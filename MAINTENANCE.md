@@ -1,6 +1,6 @@
 # DrDebits maintenance protocol
 
-Part of the unreleased [DrDebits](./drdebits.md) `0.4.0` candidate.
+Part of [DrDebits](./drdebits.md) `0.4.0`.
 
 A source-check date does not guarantee continuing currency. Before professional reliance, retrieve the authority operative for the relevant historical event or period and the current duties governing action today.
 
@@ -92,9 +92,9 @@ Versioning convention:
 ## Deployment
 
 Use a trusted checkout of the current build tooling for these commands. The
-installer is new on the unreleased branch; older tags do not contain it.
-The installer accepts the 8 required files plus any subset of the 3 optional
-files, including the 8-file `v0.3.3` bundle. The current manifest hashes all 11
+installer first shipped in `v0.4.0`; older tags do not contain it.
+The installer accepts the 8 required files plus any subset of the 4 optional
+files, including the 8-file `v0.3.3` bundle. The current manifest hashes all 12
 files; `SHA256SUMS` accompanies them and does not hash itself.
 
 1. Obtain the approved release in a separate directory. Verify its signed tag

@@ -3,7 +3,7 @@
 > Versioned, primary-source-grounded instructions and operating guardrails for LLM-assisted Australian accounting and tax work, built on the APES 110 Code of Ethics, the TPB Code of Professional Conduct under the Tax Agent Services Act 2009 and AML/CTF obligations. The guide is normative; this file is an index that routes into it.
 
 Version: `0.4.0`
-Release status: unreleased candidate; proposed tag `v0.4.0`
+Release status: published; signed tag `v0.4.0`
 Sources last checked: 2026-10-14
 
 - Repository: https://github.com/ryanduguid/llm-tax-guardrails

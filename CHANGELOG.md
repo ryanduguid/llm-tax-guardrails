@@ -8,7 +8,7 @@ release.
 
 ## [Unreleased]
 
-## [v0.4.0] - YYYY-MM-DD
+## [v0.4.0] - 2026-10-28
 
 Changes released in `0.4.0`, merged since `v0.3.3` (6 September 2026).
 
@@ -29,6 +29,9 @@ Changes released in `0.4.0`, merged since `v0.3.3` (6 September 2026).
 - `CONTRIBUTING.md` with the change workflow and the checks CI runs (#165).
 - `CLAUDE.md` and project settings that protect generated outputs (#122), and maintenance routing in `AGENTS.md` (#49).
 - `CHANGELOG.md`, this file (#178).
+- TPB Annual Report 2025-26 context in the source-status chapter, kept apart from the dated Guidance Statement count (#202).
+- Builder `gate` command that checks a high-impact draft against the output contract, including the decision status, action authority, mandatory sections and reperformed arithmetic (#208).
+- Builder test that a model returning `HARD_STOP` for everything fails every case expecting another status (#201).
 
 ### Changed
 
@@ -44,13 +47,11 @@ Changes released in `0.4.0`, merged since `v0.3.3` (6 September 2026).
 - Guide data cross-checked and `llms.txt` stamped from the build (#55, #126).
 - Source provenance and quotation checks strengthened (#172).
 - Prose aligned with the Australian Government Style Manual (#60), hand-written prose tightened (#40) and redundant disclaimers trimmed (#176).
-- Python 3.14 required for the builder (#133); CI also runs on Python 3.15 (#145).
-- Builder ported to Rust: `drdebits_build` 1.0.0 replaces the Python package with the same generated files, findings and exit codes, apart from the divergences listed in `tools/drdebits_build/CHANGELOG.md`. CI runs `cargo fmt`, `clippy`, the tests on Ubuntu and Windows and line coverage.
+- Builder ported to Rust: `drdebits_build` 1.0.0 replaces the Python package with the same generated files, findings and exit codes, apart from the divergences listed in `tools/drdebits_build/CHANGELOG.md`. CI runs `cargo fmt`, `clippy`, the tests on Ubuntu and Windows and line coverage (#192, #205, #206, #209). It replaces the interim Python 3.14 requirement (#133, #145).
 - Release checklist status of `v0.3.2` stated accurately (#61); maintenance guidance for evaluation tools and bundle contents corrected (#114).
-- README and diagrams recoloured to the website palette (#136, #137, #142, #143, #155, #160, #173), with README badge styling flattened (#188).
+- README and diagrams recoloured to the website palette (#136, #137, #142, #143, #155, #160, #173), with README badge styling flattened and centred (#188, #191), a phone layout for the banner (#196), a brand footer (#200) and an opening line naming the guide and repository together (#190).
 - Contributor workflow: pull requests and pushed commits carrying an AI authorship credit are refused (#47, #70, #72).
-- README licence section names the CI helper scripts under `.github/ci/` as MIT-licensed code alongside `tools/` (#183).
-- The build tooling under `tools/` and the CI helper scripts under `.github/ci/` are licensed under FSL-1.1-ALv2 (Functional Source License, with Apache-2.0 as the future licence) instead of MIT, and the guide under FSL-1.1-ALv2 instead of CC BY 4.0. A root NOTICE joins the verified bundle. Released versions keep their licence.
+- The build tooling under `tools/` and the CI helper scripts under `.github/ci/` are licensed under FSL-1.1-ALv2 (Functional Source License, with Apache-2.0 as the future licence) instead of MIT, and the guide under FSL-1.1-ALv2 instead of CC BY 4.0. A root NOTICE joins the verified bundle. Released versions keep their licence (#183, #193, #199).
 
 ### Fixed
 
@@ -72,15 +73,17 @@ Changes released in `0.4.0`, merged since `v0.3.3` (6 September 2026).
 - YAML source reader fuzzed, and deeply nested YAML refused (#161).
 - Two regular-expression backtracking risks removed (#162).
 - Hash-pinned installs and a security policy link (#156); issue-writing jobs install only locked wheels (#164).
-- Verify and CodeQL enforced through self-checking aggregate jobs (#115).
+- Verify and CodeQL enforced through self-checking aggregate jobs (#115); required gate checks kept when a workflow or gate is renamed (#203), using the canonical gate checker, which fails on drift (#204).
+- uv raised to 0.13.5 in CI for GHSA-hq85-5cpj-mr62 (#197).
 - Locked dependencies tested with Snyk (#153), OpenSSF Scorecard results published (#151) and release assets scanned with VirusTotal (#150).
 
 Not listed, as they have no user-visible effect: dependency and action pin
-updates (#43, #44, #66, #86, #87, #88, #89, #90, #93, #117, #118, #119, #171, #179, #180, #181, #182),
+updates (#43, #44, #66, #86, #87, #88, #89, #90, #93, #117, #118, #119, #171, #179, #180, #181, #182, #194, #195),
 attribution-policy pin moves (#53, #59, #78, #79, #100, #175), review-bot
 configuration (#39, #57, #58, #62, #63, #97, #98, #128), badges and coverage
 reporting (#99, #144, #149, #152, #154, #157, #158, #166, #167), and CI and
-documentation housekeeping (#48, #101, #111, #135, #184, #185, #186).
+documentation housekeeping (#48, #101, #111, #135, #184, #185, #186, #189, #198,
+#207).
 
 [Unreleased]: https://github.com/ryanduguid/llm-tax-guardrails/compare/v0.4.0...HEAD
 [v0.4.0]: https://github.com/ryanduguid/llm-tax-guardrails/compare/v0.3.3...v0.4.0

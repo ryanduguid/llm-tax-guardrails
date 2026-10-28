@@ -1,7 +1,7 @@
 ---
 title: DrDebits
 guide_version: 0.4.0
-status: candidate
+status: current
 jurisdiction: AU
 owner: Ryan Duguid
 canonical_repository: https://github.com/ryanduguid/llm-tax-guardrails
@@ -41,14 +41,14 @@ guide_end_marker: DRDEBITS-END-v0.4.0
 >
 > Version: `0.4.0`
 >
-> Release status: unreleased candidate; proposed tag `v0.4.0`
+> Release status: published; signed tag `v0.4.0`
 >
 > Jurisdiction: Australia
 >
 > Sources last checked: `2026-10-14` (Australia/Sydney)
 
-The published evaluation records describe release 0.3.3; fresh model
-verification of candidate 0.4.0 is pending. Identify a committed revision by its
+The published evaluation records describe release 0.3.3; no confirmed model
+evaluation covers release 0.4.0 yet. Identify a committed revision by its
 Git commit and guide version. For an uncommitted review, retain the base commit,
 complete diff and diff digest as well as the guide version; the base commit
 alone does not identify the changed guide.
@@ -620,7 +620,7 @@ Retrieve these files when a routing decision needs them. The `SHA256SUMS` file a
 
 | Version | Date | Status | Change |
 |---|---|---|---|
-| 0.4.0 | 2026-10-14 | Unreleased | Adds TPB sanctions controls and corrects the s 15 and s 45 rows for the Tax Agent Services Act and Code of Professional Conduct amendments that apply from 1 October 2026. Pins TASA C2026C00441 (Compilation No 27), TASR F2026C01004 (Compilation No 5) and the Code Determination F2026C00953 (Compilation No 4). Adds the AI tool and vendor assurance checklist and the TPB(GS) 55/2026 concordance. Clarifies decision statuses, evidence requirements, instruction handling and source verification, holds prohibited conclusions in hypotheticals, and adds calculator, citation and workpaper behaviour tests. Sources checked 14 October 2026; review due 14 January 2027. No confirmed model evaluation covers this release yet. |
+| 0.4.0 | 2026-10-28 | Published | Adds TPB sanctions controls and corrects the s 15 and s 45 rows for the Tax Agent Services Act and Code of Professional Conduct amendments that apply from 1 October 2026. Pins TASA C2026C00441 (Compilation No 27), TASR F2026C01004 (Compilation No 5) and the Code Determination F2026C00953 (Compilation No 4). Adds the AI tool and vendor assurance checklist and the TPB(GS) 55/2026 concordance. Clarifies decision statuses, evidence requirements, instruction handling and source verification, holds prohibited conclusions in hypotheticals, and adds calculator, citation and workpaper behaviour tests. Adds TPB Annual Report 2025-26 context to the source status. Relicenses the guide under FSL-1.1-ALv2; v0.3.3 and earlier stay CC BY 4.0. Sources checked 14 October 2026; review due 14 January 2027. No confirmed model evaluation covers this release yet. |
 | 0.3.3 | 2026-09-06 | Published | Repository renamed from DrDebits to llm-tax-guardrails on 6 September 2026; the canonical repository in the metadata, CITATION.cff and llms.txt now name it (the old URL redirects). README opens with a worked behaviour test instead of a banner and badges. Sources were not rechecked for this release: sources_checked_at and review_due are unchanged. No control change. |
 | 0.3.2 | 2026-08-22 | Published | First non-draft version stamp: metadata, header, CITATION.cff and end marker now identify the release as 0.3.2 current (the v0.3.1 GitHub release reused the 0.3.1-draft tree). Corrected the README description of DISCLAIMER.md (general disclaimer, not a TASA safe harbour), repointed the APES 110 and TPB hero badges at their reference maps, rebuilt the routing diagram from the guide's actual intake gate, risk classification, workflow and decision statuses, and scoped the digest wording to the files SHA256SUMS actually lists. AGENTS.md and llms.txt now route into the guide instead of paraphrasing it, and the intake gate consequences item defers to the risk-classification list. No control change. |
 | 0.3.1-draft | 2026-08-18 | Published draft | Wording patch: removed the duplicated action-list paraphrase from the deployment section, aligned the down-classification ban with the instruction-word vocabulary, and clarified the workflow preamble and PROP-002 phrasing. No control change. |
