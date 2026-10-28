@@ -39,6 +39,7 @@ pub mod compare;
 pub mod error;
 pub mod evals;
 pub mod fuzz;
+pub mod gate;
 pub mod harness;
 pub mod linkcheck;
 pub mod model;
@@ -163,6 +164,8 @@ enum Command {
     ReadSource(harness::ReadSourceArgs),
     /// Assess whether a quote appears in supplied source text.
     Quote(quotecheck::Args),
+    /// Check a high-impact draft against the output contract and reperform its arithmetic.
+    Gate(gate::Args),
 }
 
 /// The root a command works in: `--root`, or the DrDebits tree above the current directory.
@@ -306,6 +309,7 @@ fn dispatch(cli: Cli) -> u8 {
         Command::Assess(args) => harness::assess_main(&cli.root, args),
         Command::ReadSource(args) => harness::read_source_main(args),
         Command::Quote(args) => quotecheck::main(args),
+        Command::Gate(args) => gate::main(&cli.root, args),
     }
 }
 

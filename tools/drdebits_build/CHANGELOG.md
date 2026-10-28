@@ -40,6 +40,18 @@ suite replays it on every platform.
 - `read-source --mode live` without approval names the
   `--live-retrieval-approved` flag instead of the Python keyword, and the
   result-record digest hint names `drdebits_build digests`.
+- New `gate` command, with no Python counterpart: checks one high-impact
+  draft against the output contract and recomputes each written `a op b = c`
+  calculation in exact decimal arithmetic. A claimed result passes when it is
+  within one unit of its last decimal place; each link of a chain must equal
+  the next expression or, as in a running total, its leading number; division
+  by zero and a lone bracketed amount such as `(120)`, which may be an
+  accounting negative, block. A mandatory section must have content. Exit 0 is a
+  mechanical pass, 1 a contract or arithmetic breach, 2 a gate that could not
+  run and 3, for human review, a prohibited-conclusion screen match or a
+  recorded state-changing action. An `ESCALATE` or
+  `HARD_STOP` draft may be the abbreviated record the Output contract allows;
+  its other mandatory sections are reported as notes.
 
 ### Documented divergences
 
