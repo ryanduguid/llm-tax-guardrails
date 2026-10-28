@@ -94,10 +94,10 @@ static CLAIM: LazyLock<fancy_regex::Regex> = LazyLock::new(|| {
 static LEADING: LazyLock<regex::Regex> =
     LazyLock::new(|| regex::Regex::new(&format!("^[-−]?(?:{NUM})")).expect("pattern"));
 static NUMBER: LazyLock<regex::Regex> = LazyLock::new(|| regex::Regex::new(NUM).expect("pattern"));
-/// A lone bracketed amount, `(120)`: grouping, or an accounting negative.
-static BRACKETED: LazyLock<regex::Regex> = LazyLock::new(|| {
-    regex::Regex::new(&format!(r"\([ \t]*[-−]?(?:{NUM})[ \t]*\)")).expect("pattern")
-});
+/// A lone unsigned bracketed amount, `(120)`: grouping, or an accounting
+/// negative. `(-120)` carries its sign and is not ambiguous.
+static BRACKETED: LazyLock<regex::Regex> =
+    LazyLock::new(|| regex::Regex::new(&format!(r"\([ \t]*(?:{NUM})[ \t]*\)")).expect("pattern"));
 static DATE: LazyLock<regex::Regex> =
     LazyLock::new(|| regex::Regex::new(r"\d{1,2}/\d{1,2}/\d{2,4}").expect("pattern"));
 static NUMBERED: LazyLock<regex::Regex> =
@@ -328,6 +328,8 @@ pub fn calculations(text: &str) -> Vec<Calculation> {
             });
             continue;
         }
+        // A signed bracketed result, `(-50)`.
+        let right = right.trim_start_matches('(').trim_end_matches(')').trim();
         let Some((claimed, places, percent)) = number(right) else {
             continue;
         };

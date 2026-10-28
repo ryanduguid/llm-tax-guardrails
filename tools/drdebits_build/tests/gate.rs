@@ -298,6 +298,17 @@ fn a_bracketed_amount_is_ambiguous_and_blocks() {
         assert!(found[0].computed.starts_with("ambiguous"), "{text}");
     }
     assert!(calculations("(2 + 3) × 4 = 20")[0].matches);
+    // A signed bracketed amount is explicit and reperforms.
+    for (text, ok) in [
+        ("100 + (-20) = 80", true),
+        ("100 + (-20) = 90", false),
+        ("100 - 150 = (-50)", true),
+        ("100 + (20) = 120", false),
+    ] {
+        let found = calculations(text);
+        assert_eq!(found.len(), 1, "{text}");
+        assert_eq!(found[0].matches, ok, "{text}: {}", found[0].computed);
+    }
 }
 
 #[test]
