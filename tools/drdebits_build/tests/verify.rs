@@ -330,7 +330,7 @@ fn publishing_candidate_requires_an_actual_release_date_and_status() {
         );
     }
     assert!(
-        any(&failures, "MAINTENANCE.md: lacks the line"),
+        any(&failures, "MAINTENANCE.md: first 'Part of' line is not"),
         "{failures:?}"
     );
     label_copies(dir.path(), false);
@@ -364,7 +364,7 @@ fn candidate_status_requires_every_copy_to_say_unreleased() {
         );
     }
     assert!(
-        any(&failures, "MAINTENANCE.md: lacks the line"),
+        any(&failures, "MAINTENANCE.md: first 'Part of' line is not"),
         "{failures:?}"
     );
     label_copies(dir.path(), true);
@@ -407,6 +407,76 @@ fn release_status_line_must_appear_once_and_name_the_tag() {
     assert!(any(
         &verify(&root),
         "README.md: found 0 'Release status:' lines, expected 1"
+    ));
+}
+
+#[test]
+fn release_status_phrase_must_open_the_value() {
+    let (dir, root) = fixture();
+    sync(&root);
+    let llms = dir.path().join("llms.txt");
+    edit(
+        &llms,
+        "Release status: published;",
+        "Release status: unpublished;",
+    );
+    append(
+        &dir.path().join("src/data/metadata.yaml"),
+        "  - key: status\n    value: \"current\"\n",
+    );
+    std::fs::write(
+        dir.path().join("CITATION.cff"),
+        "cff-version: 1.2.0\nversion: 0.9.9-test\ndate-released: 2026-01-01\n",
+    )
+    .unwrap();
+    sync(&root);
+    assert!(any(
+        &verify(&root),
+        "llms.txt: release status line does not mark `v0.9.9-test` as published"
+    ));
+    edit(
+        &llms,
+        "Release status: unpublished;",
+        "Release status: unreleased candidate (now published);",
+    );
+    assert!(any(
+        &verify(&root),
+        "llms.txt: release status line does not mark `v0.9.9-test` as published"
+    ));
+    edit(
+        &llms,
+        "Release status: unreleased candidate (now published);",
+        "Release status: published;",
+    );
+    assert_eq!(verify(&root), Vec::<String>::new());
+}
+
+#[test]
+fn maintenance_label_is_the_first_part_of_line() {
+    let (dir, root) = fixture();
+    append(
+        &dir.path().join("src/data/metadata.yaml"),
+        "  - key: status\n    value: \"current\"\n",
+    );
+    std::fs::write(
+        dir.path().join("CITATION.cff"),
+        "cff-version: 1.2.0\nversion: 0.9.9-test\ndate-released: 2026-01-01\n",
+    )
+    .unwrap();
+    sync(&root);
+    assert_eq!(verify(&root), Vec::<String>::new());
+    let maintenance = dir.path().join("MAINTENANCE.md");
+    let text = std::fs::read_to_string(&maintenance).unwrap();
+    std::fs::write(
+        &maintenance,
+        format!(
+            "Part of the unreleased [DrDebits](./drdebits.md) `0.9.9-test` candidate.\n\n{text}"
+        ),
+    )
+    .unwrap();
+    assert!(any(
+        &verify(&root),
+        "MAINTENANCE.md: first 'Part of' line is not"
     ));
 }
 
@@ -454,6 +524,12 @@ fn maintenance_bundle_counts_match_the_manifest_and_installer() {
         edit(&maintenance, new, old);
     }
     assert_eq!(verify(&root), Vec::<String>::new());
+    edit(&maintenance, "hashes all 3 files", "hashes all 3,000 files");
+    assert!(any(
+        &verify(&root),
+        "found 0 copies of the deployment manifest count"
+    ));
+    edit(&maintenance, "hashes all 3,000 files", "hashes all 3 files");
     edit(&maintenance, "hashes all 3", "hashes every file");
     assert!(any(
         &verify(&root),

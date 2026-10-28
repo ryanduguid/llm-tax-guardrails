@@ -45,11 +45,11 @@ const RELEASE_STATUS_FILES: [&str; 3] = ["drdebits.md", "README.md", "llms.txt"]
 static MANIFEST_COVERS_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"covers\s+the\s+first\s+([0-9]+)\s+files").expect("pattern"));
 static MANIFEST_HASHES_RE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"manifest\s+hashes\s+all\s+([0-9]+)").expect("pattern"));
+    LazyLock::new(|| Regex::new(r"manifest\s+hashes\s+all\s+([0-9]+)\s+files").expect("pattern"));
 static INSTALLER_REQUIRED_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"accepts\s+the\s+([0-9]+)\s+required\s+files").expect("pattern"));
 static INSTALLER_OPTIONAL_RE: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"any\s+subset\s+of\s+the\s+([0-9]+)\s+optional").expect("pattern")
+    Regex::new(r"any\s+subset\s+of\s+the\s+([0-9]+)\s+optional\s+files").expect("pattern")
 });
 
 // The two guide fragments checks (i) and (j) cross-reference the data files
@@ -480,12 +480,17 @@ pub fn run_verify(root: &PyPath, today: Date) -> Result<Vec<String>, Fail> {
                 ));
                 continue;
             };
-            let agrees = line.contains(&tag)
-                && if status == "candidate" {
-                    line.contains("unreleased candidate")
-                } else {
-                    line.contains("published") && !line.contains("unreleased")
-                };
+            // The status is the phrase that opens the line's value, so
+            // "unpublished" or a later aside cannot pass for it.
+            let value = line
+                .split_once("Release status:")
+                .map_or("", |(_, rest)| rest.trim_start());
+            let phrase = if status == "candidate" {
+                "unreleased candidate"
+            } else {
+                "published"
+            };
+            let agrees = value.starts_with(phrase) && value.contains(&tag);
             if !agrees {
                 let expected = if status == "candidate" {
                     "an unreleased candidate"
@@ -502,11 +507,16 @@ pub fn run_verify(root: &PyPath, today: Date) -> Result<Vec<String>, Fail> {
         } else {
             format!("Part of [DrDebits](./drdebits.md) `{version}`.")
         };
+        // The first "Part of" line is the file's own label; a later copy
+        // cannot stand in for a stale one.
         if let Some(text) = rel_text(root, "MAINTENANCE.md")?
-            && !py::splitlines(&text).contains(&part_of.as_str())
+            && py::splitlines(&text)
+                .into_iter()
+                .find(|line| line.starts_with("Part of "))
+                != Some(part_of.as_str())
         {
             failures.push(format!(
-                "MAINTENANCE.md: lacks the line {} for metadata status {status}",
+                "MAINTENANCE.md: first 'Part of' line is not {} for metadata status {status}",
                 py::repr_str(&part_of)
             ));
         }
