@@ -53,6 +53,11 @@ suite replays it on every platform.
   `HARD_STOP` draft may be the abbreviated record the Output contract allows;
   its other mandatory sections are reported as notes.
 
+Standard streams now preserve the Python release's failure behaviour: pending
+stdout that cannot flush exits 120, `PYTHONUNBUFFERED` fails at the print and
+an unwritable diagnostic cannot leave a successful status. Usage messages keep
+argparse's ignored-write behaviour.
+
 ### Documented divergences
 
 - **Unhandled errors.** Where the Python builder let an exception escape, it

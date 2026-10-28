@@ -20,16 +20,14 @@
 /// One line to stdout, written as Python's text-mode `print` writes it.
 macro_rules! outln {
     ($($arg:tt)*) => {{
-        use std::io::Write as _;
-        let _ = writeln!($crate::PyText::stdout(), $($arg)*);
+        $crate::stdio::print(&format!($($arg)*));
     }};
 }
 
 /// One line to stderr, written as Python's text-mode `print` writes it.
 macro_rules! errln {
     ($($arg:tt)*) => {{
-        use std::io::Write as _;
-        let _ = writeln!($crate::PyText::stderr(), $($arg)*);
+        $crate::stdio::eprint(&format!($($arg)*));
     }};
 }
 
@@ -49,6 +47,7 @@ pub mod pyjson;
 pub mod pyunicode;
 pub mod quotecheck;
 pub mod sources;
+mod stdio;
 pub mod templates;
 pub mod verify;
 pub mod yaml;
@@ -100,9 +99,9 @@ impl std::io::Write for PyText {
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
         let bytes = text_mode(buf);
         if self.stderr {
-            std::io::stderr().write_all(&bytes)?;
+            stdio::write_stderr_bytes(&bytes)?;
         } else {
-            std::io::stdout().write_all(&bytes)?;
+            stdio::write_stdout_bytes(&bytes)?;
         }
         Ok(buf.len())
     }
@@ -111,7 +110,7 @@ impl std::io::Write for PyText {
         if self.stderr {
             std::io::stderr().flush()
         } else {
-            std::io::stdout().flush()
+            stdio::flush_stdout()
         }
     }
 }
@@ -315,7 +314,18 @@ fn dispatch(cli: Cli) -> u8 {
 
 /// Run the command line; the binary is a thin wrapper around this.
 pub fn run() -> ExitCode {
-    let cli = Cli::parse();
+    let cli = match Cli::try_parse() {
+        Ok(cli) => cli,
+        Err(error) => {
+            stdio::argparse(&error);
+            return ExitCode::from(stdio::shutdown(error.exit_code()) as u8);
+        }
+    };
+    stdio::command(match &cli.command {
+        Command::Build => "build",
+        Command::Digests => "digests",
+        _ => "other",
+    });
     // The YAML composer recurses once per nesting level, up to the Python
     // builder's own limit; a large stack keeps that well clear of overflow.
     let worker = std::thread::Builder::new()
@@ -325,7 +335,7 @@ pub fn run() -> ExitCode {
         .expect("spawn the worker thread")
         .join()
         .unwrap_or(EXIT_COULD_NOT_RUN);
-    ExitCode::from(code)
+    ExitCode::from(stdio::shutdown(i32::from(code)) as u8)
 }
 
 #[cfg(test)]
