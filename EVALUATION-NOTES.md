@@ -35,7 +35,7 @@ and agent-penalty conclusion, contrary to a separate guide control. Its pass
 does not endorse the whole response. These are results from one run, not a
 compliance certification or a guarantee of repeatable model behaviour.
 
-## Unreleased remediation and verification
+## 0.4.0 remediation and verification
 
 The revised guide makes the trust-boundary stop, unavailable-primary-source
 escalation, NOCLAR status and disqualified-entity allocation gate explicit. It
