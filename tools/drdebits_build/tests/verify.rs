@@ -216,6 +216,43 @@ fn make_candidate_metadata(root: &Path) {
         &root.join("src/data/metadata.yaml"),
         "  - key: status\n    value: \"candidate\"\n",
     );
+    label_copies(root, true);
+}
+
+// The published and candidate wording of each hand-written release-status
+// copy, as MAINTENANCE prescribes them.
+const RELEASE_COPIES: [(&str, &str, &str); 4] = [
+    (
+        "README.md",
+        "> Release status: published. The signed tag is `v0.9.9-test`.",
+        "> Release status: unreleased candidate. The proposed tag is `v0.9.9-test`.",
+    ),
+    (
+        "llms.txt",
+        "Release status: published; signed tag `v0.9.9-test`",
+        "Release status: unreleased candidate; proposed tag `v0.9.9-test`",
+    ),
+    (
+        "src/guide/000-header.md",
+        "> Release status: published; signed tag `v0.9.9-test`",
+        "> Release status: unreleased candidate; proposed tag `v0.9.9-test`",
+    ),
+    (
+        "MAINTENANCE.md",
+        "Part of [DrDebits](./drdebits.md) `0.9.9-test`.",
+        "Part of the unreleased [DrDebits](./drdebits.md) `0.9.9-test` candidate.",
+    ),
+];
+
+fn label_copies(root: &Path, candidate: bool) {
+    for (rel, published, unreleased) in RELEASE_COPIES {
+        let (old, new) = if candidate {
+            (published, unreleased)
+        } else {
+            (unreleased, published)
+        };
+        edit(&root.join(rel), old, new);
+    }
 }
 
 #[test]
@@ -282,7 +319,155 @@ fn publishing_candidate_requires_an_actual_release_date_and_status() {
     .unwrap();
     set_status(dir.path(), "candidate", "current");
     sync(&root);
+    let failures = verify(&root);
+    for rel in ["drdebits.md", "README.md", "llms.txt"] {
+        assert!(
+            any(
+                &failures,
+                &format!("{rel}: release status line does not mark `v0.9.9-test` as published")
+            ),
+            "{rel}: {failures:?}"
+        );
+    }
+    assert!(
+        any(&failures, "MAINTENANCE.md: lacks the line"),
+        "{failures:?}"
+    );
+    label_copies(dir.path(), false);
+    sync(&root);
     assert_eq!(verify(&root), Vec::<String>::new());
+}
+
+#[test]
+fn candidate_status_requires_every_copy_to_say_unreleased() {
+    let (dir, root) = fixture();
+    edit(
+        &dir.path().join("src/data/changelog.yaml"),
+        "status: \"Draft\"",
+        "status: \"Unreleased\"",
+    );
+    append(
+        &dir.path().join("src/data/metadata.yaml"),
+        "  - key: status\n    value: \"candidate\"\n",
+    );
+    sync(&root);
+    let failures = verify(&root);
+    for rel in ["drdebits.md", "README.md", "llms.txt"] {
+        assert!(
+            any(
+                &failures,
+                &format!(
+                    "{rel}: release status line does not mark `v0.9.9-test` as an unreleased candidate"
+                )
+            ),
+            "{rel}: {failures:?}"
+        );
+    }
+    assert!(
+        any(&failures, "MAINTENANCE.md: lacks the line"),
+        "{failures:?}"
+    );
+    label_copies(dir.path(), true);
+    sync(&root);
+    assert_eq!(verify(&root), Vec::<String>::new());
+}
+
+#[test]
+fn release_status_line_must_appear_once_and_name_the_tag() {
+    let (dir, root) = fixture();
+    make_candidate_metadata(dir.path());
+    edit(
+        &dir.path().join("src/data/changelog.yaml"),
+        "status: \"Draft\"",
+        "status: \"Unreleased\"",
+    );
+    sync(&root);
+    assert_eq!(verify(&root), Vec::<String>::new());
+
+    let llms = dir.path().join("llms.txt");
+    edit(&llms, "proposed tag `v0.9.9-test`", "proposed tag `v0.9.8`");
+    assert!(any(
+        &verify(&root),
+        "llms.txt: release status line does not mark"
+    ));
+    edit(&llms, "proposed tag `v0.9.8`", "proposed tag `v0.9.9-test`");
+    append(
+        &llms,
+        "Release status: unreleased candidate; proposed tag `v0.9.9-test`\n",
+    );
+    assert!(any(
+        &verify(&root),
+        "llms.txt: found 2 'Release status:' lines, expected 1"
+    ));
+    edit(
+        &dir.path().join("README.md"),
+        "> Release status: unreleased candidate.",
+        "> Status: unreleased candidate.",
+    );
+    assert!(any(
+        &verify(&root),
+        "README.md: found 0 'Release status:' lines, expected 1"
+    ));
+}
+
+#[test]
+fn status_outside_candidate_and_current_skips_the_release_copies() {
+    let (dir, root) = fixture();
+    append(
+        &dir.path().join("src/data/metadata.yaml"),
+        "  - key: status\n    value: \"superseded\"\n",
+    );
+    label_copies(dir.path(), true);
+    sync(&root);
+    assert!(!any(&verify(&root), "release status"));
+}
+
+#[test]
+fn maintenance_bundle_counts_match_the_manifest_and_installer() {
+    let (dir, root) = fixture();
+    sync(&root);
+    let maintenance = dir.path().join("MAINTENANCE.md");
+    for (old, new, needle) in [
+        (
+            "covers the first 3 files",
+            "covers the first 11 files",
+            "checklist manifest count is 11, expected 3",
+        ),
+        (
+            "hashes all 3",
+            "hashes all 11",
+            "deployment manifest count is 11, expected 3",
+        ),
+        (
+            "accepts the 8\nrequired",
+            "accepts the 7\nrequired",
+            "installer required count is 7, expected 8",
+        ),
+        (
+            "subset of the 4 optional",
+            "subset of the 3 optional",
+            "installer optional count is 3, expected 4",
+        ),
+    ] {
+        edit(&maintenance, old, new);
+        assert!(any(&verify(&root), needle), "{needle}");
+        edit(&maintenance, new, old);
+    }
+    assert_eq!(verify(&root), Vec::<String>::new());
+    edit(&maintenance, "hashes all 3", "hashes every file");
+    assert!(any(
+        &verify(&root),
+        "found 0 copies of the deployment manifest count"
+    ));
+    edit(
+        &maintenance,
+        "hashes every file",
+        "hashes all 3 files; the manifest hashes all 3",
+    );
+    assert!(any(
+        &verify(&root),
+        "found 2 copies of the deployment manifest count"
+    ));
 }
 
 #[test]

@@ -9,6 +9,7 @@ use std::sync::LazyLock;
 use regex::Regex;
 
 use crate::builder::{self, SOURCE_CHECK_DATE_FILES, STAMPED_FILES};
+use crate::bundle;
 use crate::error::Fail;
 use crate::evals;
 use crate::model::meta_get;
@@ -32,6 +33,24 @@ static GS_COUNT_RE: LazyLock<fancy_regex::Regex> = LazyLock::new(|| {
 // deleted or reworded past the patterns is a failure rather than silence.
 // The copies are the ones MAINTENANCE step 8 tells a maintainer to update.
 const GS_COPY_COUNTS: [(&str, usize, usize); 2] = [("drdebits.md", 3, 2), ("README.md", 1, 0)];
+
+// The files that carry one hand-written "Release status:" line, which check
+// (l) compares with the metadata status. drdebits.md's copy comes from the
+// guide header.
+const RELEASE_STATUS_FILES: [&str; 3] = ["drdebits.md", "README.md", "llms.txt"];
+
+// The file counts MAINTENANCE.md states for the bundle, which check (m)
+// compares with checksum_files and the installer's lists. Each must appear
+// exactly once.
+static MANIFEST_COVERS_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"covers\s+the\s+first\s+([0-9]+)\s+files").expect("pattern"));
+static MANIFEST_HASHES_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"manifest\s+hashes\s+all\s+([0-9]+)").expect("pattern"));
+static INSTALLER_REQUIRED_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"accepts\s+the\s+([0-9]+)\s+required\s+files").expect("pattern"));
+static INSTALLER_OPTIONAL_RE: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"any\s+subset\s+of\s+the\s+([0-9]+)\s+optional").expect("pattern")
+});
 
 // The two guide fragments checks (i) and (j) cross-reference the data files
 // against. Named, not discovered: a renamed or deleted fragment must surface
@@ -429,6 +448,102 @@ pub fn run_verify(root: &PyPath, today: Date) -> Result<Vec<String>, Fail> {
                     row.get("id"),
                     py::repr_str(label)
                 ));
+            }
+        }
+    }
+
+    // (l) the hand-written release-status copies must agree with the metadata
+    // status, so publishing a candidate cannot leave a copy calling it
+    // unreleased, or the reverse. Only the two states MAINTENANCE defines are
+    // checked.
+    let status = meta_get(&s.meta, "status");
+    if let Some(status @ ("candidate" | "current")) = status {
+        let tag = format!("`{release_tag}`");
+        for rel in RELEASE_STATUS_FILES {
+            let text = if rel == "drdebits.md" {
+                committed_text.clone()
+            } else {
+                rel_text(root, rel)?
+            };
+            // A missing file is already a finding above.
+            let Some(text) = text else {
+                continue;
+            };
+            let lines: Vec<&str> = py::splitlines(&text)
+                .into_iter()
+                .filter(|line| line.contains("Release status:"))
+                .collect();
+            let [line] = lines[..] else {
+                failures.push(format!(
+                    "{rel}: found {} 'Release status:' lines, expected 1",
+                    lines.len()
+                ));
+                continue;
+            };
+            let agrees = line.contains(&tag)
+                && if status == "candidate" {
+                    line.contains("unreleased candidate")
+                } else {
+                    line.contains("published") && !line.contains("unreleased")
+                };
+            if !agrees {
+                let expected = if status == "candidate" {
+                    "an unreleased candidate"
+                } else {
+                    "published"
+                };
+                failures.push(format!(
+                    "{rel}: release status line does not mark {tag} as {expected} (metadata status {status})"
+                ));
+            }
+        }
+        let part_of = if status == "candidate" {
+            format!("Part of the unreleased [DrDebits](./drdebits.md) `{version}` candidate.")
+        } else {
+            format!("Part of [DrDebits](./drdebits.md) `{version}`.")
+        };
+        if let Some(text) = rel_text(root, "MAINTENANCE.md")?
+            && !py::splitlines(&text).contains(&part_of.as_str())
+        {
+            failures.push(format!(
+                "MAINTENANCE.md: lacks the line {} for metadata status {status}",
+                py::repr_str(&part_of)
+            ));
+        }
+    }
+
+    // (m) the bundle file counts MAINTENANCE.md states must match the files
+    // SHA256SUMS hashes and the installer's required and optional lists.
+    if let Some(text) = rel_text(root, "MAINTENANCE.md")? {
+        let hashed = s.meta("checksum_files").split('|').count();
+        for (re, what, expected) in [
+            (&*MANIFEST_COVERS_RE, "checklist manifest count", hashed),
+            (&*MANIFEST_HASHES_RE, "deployment manifest count", hashed),
+            (
+                &*INSTALLER_REQUIRED_RE,
+                "installer required count",
+                bundle::REQUIRED.len(),
+            ),
+            (
+                &*INSTALLER_OPTIONAL_RE,
+                "installer optional count",
+                bundle::OPTIONAL.len(),
+            ),
+        ] {
+            let found: Vec<&str> = re
+                .captures_iter(&text)
+                .map(|c| c.get(1).expect("group").as_str())
+                .collect();
+            match found[..] {
+                [value] if value == expected.to_string() => {}
+                [value] => failures.push(format!(
+                    "MAINTENANCE.md: {what} is {value}, expected {expected}"
+                )),
+                _ => failures.push(format!(
+                    "MAINTENANCE.md: found {} copies of the {what}, expected 1; it has been removed or reworded \
+                     past this check",
+                    found.len()
+                )),
             }
         }
     }

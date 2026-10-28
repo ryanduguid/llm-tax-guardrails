@@ -189,22 +189,28 @@ pub fn make_repo(root: &Path) -> PyPath {
         root,
         "README.md",
         "> Version: `0.9.9-test`\n\nSources last checked: 2026-01-01\n\n\
+         > Release status: published. The signed tag is `v0.9.9-test`.\n\n\
          | catalogue | Complete live TPB Guidance Statement catalogue, GS01 to GS01 |\n",
     );
     put(
         root,
         "MAINTENANCE.md",
-        "Part of [DrDebits](./drdebits.md) `0.9.9-test`.\n",
+        "Part of [DrDebits](./drdebits.md) `0.9.9-test`.\n\n\
+         The manifest covers the first 3 files. The installer accepts the 8\n\
+         required files plus any subset of the 4 optional files. The current\n\
+         manifest hashes all 3 files.\n",
     );
     put(
         root,
         "llms.txt",
-        "# G\n\nVersion: `0.9.9-test`\nSources last checked: 2026-01-01\n",
+        "# G\n\nVersion: `0.9.9-test`\nRelease status: published; signed tag `v0.9.9-test`\n\
+         Sources last checked: 2026-01-01\n",
     );
     put(
         root,
         "src/guide/000-header.md",
-        "# G\n\n> Version: `0.9.9-test`\n>\n> Sources last checked: `2026-01-01`\n\nIntro.\n",
+        "# G\n\n> Version: `0.9.9-test`\n>\n> Release status: published; signed tag `v0.9.9-test`\n>\n\
+         > Sources last checked: `2026-01-01`\n\nIntro.\n",
     );
     put(root, "src/guide/010-rules.md", "## Rules\n\nBe good.\n");
     put(

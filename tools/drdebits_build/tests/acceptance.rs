@@ -72,6 +72,14 @@ fn version_bump_propagates() {
         let text = tree.read(rel).replace(&current, &bumped);
         tree.write(rel, &text);
     }
+    // The build stamps bare version tokens but not the release tag, so the
+    // tag in the README and llms.txt release-status lines moves by hand.
+    for rel in ["README.md", "llms.txt"] {
+        let text = tree
+            .read(rel)
+            .replace(&format!("`v{current}`"), &format!("`v{bumped}`"));
+        tree.write(rel, &text);
+    }
     let build = run_in(tree.path(), &["build"], true);
     assert_eq!(build.code, 0, "{}", build.stderr);
     assert_eq!(
