@@ -1,17 +1,27 @@
 #!/usr/bin/env sh
 # Refuse AI authorship credit before a commit is written.
 #
-# Enable once per clone:
+# Enable once per clone by copying the hook out of the checked-out tree:
 #
-#     git config core.hooksPath .githooks
+#     cp .githooks/commit-msg .git/hooks/commit-msg && chmod +x .git/hooks/commit-msg
 #
 # or, where the repository already uses pre-commit:
 #
 #     pre-commit install --hook-type commit-msg
 #
-# Use one or the other, never both. `pre-commit install` writes its wrapper
-# into the directory core.hooksPath names, so pointing that at .githooks lets
-# pre-commit overwrite this tracked file with a wrapper that then calls it.
+# Use one or the other, never both: `pre-commit install` writes its wrapper
+# over .git/hooks/commit-msg. Recopy the hook after pulling a change to it.
+#
+# Never set core.hooksPath to .githooks. Git would then run every hook name
+# (post-checkout, pre-commit and so on) from whichever branch is checked out,
+# so checking out a contributor's branch would run that branch's code as you.
+# An absolute hooks directory you control outside the clone is fine. Earlier
+# copies of this header said to set it: check with
+# `git config --show-origin --get-all core.hooksPath` and, if it names
+# .githooks, run `git config --unset core.hooksPath` before checking out any
+# other branch. pre-commit likewise runs whatever the checked-out branch's
+# .pre-commit-config.yaml names, so review that file before committing on a
+# contributor's branch.
 #
 # This is a local copy of the message and identity rules in the shared
 # `No AI attribution` policy (ryanduguid/release-policy, the composite action
@@ -63,12 +73,14 @@ fi
 # alias; either may carry the special value `auto`. Both are passed through
 # rather than resolved here, and an unset value stays unset: the scan treats
 # every configured value as a marker instead of picking between them.
+# Python runs isolated (-I) so the checked-out tree cannot shadow a
+# standard-library module such as unicodedata.
 MSG_FILE=$msg_file \
 AUTHOR_IDENT=$(git var GIT_AUTHOR_IDENT) \
 COMMITTER_IDENT=$(git var GIT_COMMITTER_IDENT) \
 COMMENT_STRING=$(git config --get core.commentString 2>/dev/null || true) \
 COMMENT_CHAR=$(git config --get core.commentChar 2>/dev/null || true) \
-	"$PY" - <<'PY'
+	"$PY" -I - <<'PY'
 import os
 import re
 import sys
