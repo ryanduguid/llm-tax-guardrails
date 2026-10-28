@@ -16,6 +16,7 @@ name = "drdebits_build"
 path = "src/main.rs"
 
 [dependencies]
+anstream = "1.0.0"
 chrono = { version = "0.4.45", default-features = false, features = ["clock", "std"] }
 clap = { version = "4.6.7", features = ["derive"] }
 dns-lookup = "4"
