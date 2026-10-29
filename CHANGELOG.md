@@ -11,6 +11,7 @@ release.
 ### Added
 
 - `verify` checks that the release-status lines in the guide header, README and `llms.txt`, and the first line of `MAINTENANCE.md`, agree with the metadata `status` and release tag, and that the bundle file counts `MAINTENANCE.md` states match `checksum_files` and the installer's lists.
+- `gate --facts FILE` asks for review, never a block, of each dollar amount or percentage in a draft that is neither a supplied fact nor the result of a calculation the draft shows; it flags untraced amounts and cannot certify traced ones.
 
 ## [v0.4.0] - 2026-10-28
 

@@ -33,6 +33,19 @@
 //! Not checked: whether the facts, sources, analysis or conclusion are
 //! right, whether a source is current, whether a refusal was required, or
 //! whether the free-text scope, reason and next human step are adequate.
+//!
+//! With `--facts FILE`, each dollar amount (`$1,100.50`) and percentage
+//! (`12%`) in the draft must be a supplied fact or the written result of a
+//! calculation that reperforms and whose dollar and percentage inputs are
+//! facts or results of earlier calculations; a running total in a chain counts
+//! as a result. Anything else, and any such figure the gate cannot read, asks
+//! for REVIEW; this check never blocks. Values compare exactly by magnitude: a
+//! sign, `$`, commas and trailing zeros do not matter, a percentage matches
+//! only a percentage, and a rounded mention of a fact does not match it.
+//! Plain numbers such as `11` or `12` months are not amounts and are not
+//! checked; neither are scale words (`$1.2 million` reads as `$1.2`), other
+//! currencies' symbols or spaced thousands. The check flags amounts it cannot
+//! trace; an amount it traces is not thereby correct.
 
 use std::sync::LazyLock;
 
@@ -299,6 +312,11 @@ pub struct Calculation {
     pub text: String,
     pub computed: String,
     pub matches: bool,
+    /// Numbers as written that the calculation takes as inputs.
+    pub operands: Vec<String>,
+    /// Numbers as written that the calculation produces: its final result
+    /// and each running total a later link starts from.
+    pub results: Vec<String>,
 }
 
 /// Every `a op b = c` in the text, reperformed. The claimed result matches
@@ -325,6 +343,8 @@ pub fn calculations(text: &str) -> Vec<Calculation> {
                 computed: "ambiguous: a bracketed amount may be negative; write a minus sign"
                     .into(),
                 matches: false,
+                operands: Vec::new(),
+                results: Vec::new(),
             });
             continue;
         }
@@ -358,18 +378,26 @@ pub fn calculations(text: &str) -> Vec<Calculation> {
                 text,
                 computed: "undefined (division by zero)".into(),
                 matches: false,
+                operands: Vec::new(),
+                results: Vec::new(),
             });
             continue;
         };
         let last = values.len() - 1;
+        // Whether link `i + 1` starts from the value of link `i`, as a
+        // running total writes it.
+        let running: Vec<bool> = (0..last)
+            .map(|i| {
+                LEADING
+                    .find(links[i + 1])
+                    .and_then(|m| number(m.as_str()))
+                    .is_some_and(|(q, p, pc)| close(&values[i], &q, p, pc))
+            })
+            .collect();
         let failed = (0..=last).find(|&i| {
             if i == last {
                 return !close(&values[i], &claimed, places, percent);
             }
-            let leading = LEADING
-                .find(links[i + 1])
-                .and_then(|m| number(m.as_str()))
-                .is_some_and(|(q, p, pc)| close(&values[i], &q, p, pc));
             // The whole next expression, to the finer of its own written
             // precision and the final result's.
             let written = NUMBER
@@ -378,8 +406,21 @@ pub fn calculations(text: &str) -> Vec<Calculation> {
                 .map(|(_, p, _)| p)
                 .max()
                 .unwrap_or(0);
-            !leading && !close(&values[i], &values[i + 1], places.max(written), percent)
+            !running[i] && !close(&values[i], &values[i + 1], places.max(written), percent)
         });
+        let mut operands = Vec::new();
+        let mut results: Vec<String> = NUMBER
+            .find(right)
+            .map(|m| m.as_str().to_string())
+            .into_iter()
+            .collect();
+        for (i, link) in links.iter().enumerate() {
+            let mut numbers = NUMBER.find_iter(link).map(|m| m.as_str().to_string());
+            if i > 0 && running[i - 1] {
+                results.extend(numbers.next());
+            }
+            operands.extend(numbers);
+        }
         let shown = failed.unwrap_or(last);
         let percent = percent && shown == last;
         let value = if percent {
@@ -395,6 +436,8 @@ pub fn calculations(text: &str) -> Vec<Calculation> {
                 if percent { "%" } else { "" }
             ),
             matches: failed.is_none(),
+            operands,
+            results,
         });
     }
     out
@@ -626,6 +669,147 @@ pub fn check(response: &str, conclusions: &[Conclusion]) -> Report {
     report
 }
 
+/// A written amount: `$1,100.50`, `1100.5`, `12%`, `-$500`. Thousands are
+/// grouped with commas or not at all; `$` and `%` do not combine.
+static AMOUNT_TEXT: LazyLock<regex::Regex> = LazyLock::new(|| {
+    regex::Regex::new(r"^[-−]?\$?(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?%?$").expect("pattern")
+});
+/// Anything in a draft that looks like a dollar amount or a percentage,
+/// malformed or not, so a figure the check cannot read is reported rather
+/// than skipped.
+static DRAFT_AMOUNT: LazyLock<fancy_regex::Regex> = LazyLock::new(|| {
+    fancy_regex::Regex::new(r"\$\d(?:[\d.,]*\d)?%?|(?<![\w.,$])\d(?:[\d.,]*\d)?%").expect("pattern")
+});
+
+/// An amount's magnitude, and whether it is a percentage. A percentage
+/// matches only a percentage; a dollar amount and a plain number match each
+/// other.
+#[derive(Clone)]
+struct Amount {
+    value: Q,
+    percent: bool,
+}
+
+impl Amount {
+    fn read(text: &str) -> Option<Amount> {
+        if !AMOUNT_TEXT.is_match(text) || (text.contains('$') && text.ends_with('%')) {
+            return None;
+        }
+        let (q, _, percent) = number(text)?;
+        Some(Amount {
+            value: Q::new(q.n.abs(), q.d),
+            percent,
+        })
+    }
+    fn same(&self, other: &Amount) -> bool {
+        self.percent == other.percent
+            && &self.value.n * &other.value.d == &other.value.n * &self.value.d
+    }
+}
+
+/// One supplied fact's amount.
+pub struct Fact {
+    amount: Amount,
+}
+
+/// Read a facts file: a JSON object whose only key, `facts`, maps each fact's
+/// name to its amount written as text, such as `"$1,100.50"`, `"1100.5"` or
+/// `"10%"`. A JSON number is refused, so no amount passes through binary
+/// floating point.
+pub fn load_facts(text: &str) -> Result<Vec<Fact>, String> {
+    let fail = |m: String| format!("facts file: {m}");
+    let payload = pyjson::loads(text).map_err(|e| fail(format!("not valid JSON ({e})")))?;
+    let Json::Object(top) = &payload else {
+        return Err(fail("top level must be an object".into()));
+    };
+    if let Some((key, _)) = top.iter().find(|(k, _)| k != "facts") {
+        return Err(fail(format!(
+            "unknown key {}; the only key is 'facts'",
+            py::repr_str(key)
+        )));
+    }
+    let pairs = match payload.get("facts") {
+        Some(Json::Object(pairs)) if !pairs.is_empty() => pairs,
+        _ => return Err(fail("'facts' must map names to amounts".into())),
+    };
+    pairs
+        .iter()
+        .map(|(name, value)| {
+            let written = value.as_str().ok_or_else(|| {
+                fail(format!(
+                    "{} must be an amount written as text, such as \"$1,100.50\", \"1100.5\" or \"10%\"; found {}",
+                    py::repr_str(name),
+                    value.repr()
+                ))
+            })?;
+            let amount = Amount::read(written).ok_or_else(|| {
+                fail(format!(
+                    "{} is not an amount the gate can read: {}",
+                    py::repr_str(name),
+                    py::repr_str(written)
+                ))
+            })?;
+            Ok(Fact { amount })
+        })
+        .collect()
+}
+
+/// Flag each dollar amount or percentage in the draft that is neither a
+/// supplied fact nor the result of a reperformed calculation whose dollar
+/// and percentage inputs are facts or results of earlier calculations. This
+/// check adds reviews and a note only, never a block: it finds amounts it
+/// cannot trace, and cannot show that a traced amount is right.
+pub fn check_facts(response: &str, facts: &[Fact], report: &mut Report) {
+    let mut known: Vec<Amount> = facts.iter().map(|f| f.amount.clone()).collect();
+    let is_known = |known: &[Amount], a: &Amount| known.iter().any(|k| k.same(a));
+    for c in report.calculations.iter().filter(|c| c.matches) {
+        // Plain numbers such as `11` or `12` months are not amounts.
+        let inputs_known = c
+            .operands
+            .iter()
+            .filter(|t| t.contains('$') || t.ends_with('%'))
+            .all(|t| Amount::read(t).is_some_and(|a| is_known(&known, &a)));
+        if inputs_known {
+            known.extend(
+                c.results
+                    .iter()
+                    .filter(|t| t.contains('$') || t.ends_with('%'))
+                    .filter_map(|t| Amount::read(t)),
+            );
+        }
+    }
+    let mut untraced: Vec<String> = Vec::new();
+    let mut unread: Vec<String> = Vec::new();
+    for line in py::splitlines(response).into_iter().map(normalise) {
+        for m in DRAFT_AMOUNT.find_iter(&line).filter_map(Result::ok) {
+            let list = match Amount::read(m.as_str()) {
+                Some(a) if is_known(&known, &a) => continue,
+                Some(_) => &mut untraced,
+                None => &mut unread,
+            };
+            if !list.iter().any(|t| t == m.as_str()) {
+                list.push(m.as_str().to_string());
+            }
+        }
+    }
+    if !untraced.is_empty() {
+        report.reviews.push(format!(
+            "facts check: {} not in the facts file or derived by a reperformed calculation; a person must trace each to its source",
+            untraced.join(", ")
+        ));
+    }
+    if !unread.is_empty() {
+        report.reviews.push(format!(
+            "facts check: could not read {}; a person must check each",
+            unread.join(", ")
+        ));
+    }
+    report.notes.push(
+        "facts check: it flags amounts it cannot trace; an amount that matches a fact or a calculation is not thereby correct"
+            .into(),
+    );
+}
+
 fn report_json(report: &Report) -> Json {
     let list = |items: &[String]| Json::Array(items.iter().map(|s| Json::str_obj(s)).collect());
     let (verdict, _) = report.verdict();
@@ -664,6 +848,10 @@ pub struct Args {
     /// Print the findings as JSON.
     #[arg(long)]
     json: bool,
+    /// A JSON facts file; each dollar amount or percentage in the draft that
+    /// is neither a fact nor a shown calculation's result asks for review.
+    #[arg(long)]
+    facts: Option<String>,
 }
 
 fn read_response(path: &str) -> Result<String, Fail> {
@@ -688,7 +876,22 @@ pub fn main(root: Option<&str>, args: Args) -> u8 {
             return EXIT_COULD_NOT_RUN;
         }
     };
-    let report = check(&response, &sources.whole_response.prohibited_conclusions);
+    let facts = match args.facts.as_deref().map(|path| {
+        builder::read_text(&PyPath::new(path))
+            .map_err(|e| format!("facts file: {e}"))
+            .and_then(|text| load_facts(&text))
+    }) {
+        None => None,
+        Some(Ok(facts)) => Some(facts),
+        Some(Err(e)) => {
+            errln!("gate: {e}");
+            return EXIT_COULD_NOT_RUN;
+        }
+    };
+    let mut report = check(&response, &sources.whole_response.prohibited_conclusions);
+    if let Some(facts) = &facts {
+        check_facts(&response, facts, &mut report);
+    }
     let (verdict, code) = report.verdict();
     if args.json {
         outln!("{}", pyjson::dumps(&report_json(&report), false));

@@ -77,6 +77,23 @@ action, which a person must resolve. `--json` prints the findings for the
 host. A pass does not establish that the facts,
 sources or conclusion are right; a person still reviews the draft.
 
+`--facts facts.json` also asks for review of any dollar amount or percentage
+in the draft that is neither a supplied fact nor the written result of a
+calculation the gate reperforms from facts or earlier results:
+
+```json
+{"facts": {"invoice total": "$1,100", "GST rate": "10%"}}
+```
+
+Write each amount as text (`"$1,234.50"`, `"1234.5"` or `"12%"`); a malformed
+facts file stops the gate with exit 2. Amounts compare exactly by magnitude,
+so a sign is not checked and a rounded mention of a fact is flagged; a
+percentage matches only a percentage. A figure the gate cannot read is
+listed. Plain numbers without `$` or `%`, scale words such as 'million' and
+other currencies are not checked. This check can only ask for review, never
+block, and it cannot certify a figure: an amount that matches a fact or a
+calculation may still be wrong.
+
 ## Ethical routing and boundary architecture
 
 ```mermaid

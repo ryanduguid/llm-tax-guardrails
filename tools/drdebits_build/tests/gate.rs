@@ -5,7 +5,8 @@ mod common;
 
 use common::*;
 use drdebits::gate::{
-    self, EXIT_BLOCK, EXIT_COULD_NOT_RUN, EXIT_PASS, EXIT_REVIEW, calculations, check,
+    self, EXIT_BLOCK, EXIT_COULD_NOT_RUN, EXIT_PASS, EXIT_REVIEW, calculations, check, check_facts,
+    load_facts,
 };
 use drdebits::model::Conclusion;
 
@@ -432,4 +433,240 @@ fn the_command_reports_and_exits_by_verdict() {
     assert_eq!(missing.code, i32::from(EXIT_COULD_NOT_RUN));
     assert!(missing.stderr.starts_with("gate: "), "{}", missing.stderr);
     let _ = gate::EXIT_PASS;
+}
+
+const FACTS: &str = r#"{"facts": {"invoice total": "$1,100"}}"#;
+
+/// The gate's findings with the facts check run on `text`.
+fn with_facts(text: &str, facts: &str) -> gate::Report {
+    let mut report = check(text, &conclusions());
+    check_facts(text, &load_facts(facts).unwrap(), &mut report);
+    report
+}
+
+fn facts_reviews(report: &gate::Report) -> Vec<&str> {
+    report
+        .reviews
+        .iter()
+        .map(String::as_str)
+        .filter(|r| r.starts_with("facts check:"))
+        .collect()
+}
+
+#[test]
+fn a_supplied_fact_and_a_shown_calculation_pass_the_facts_check() {
+    // $1,100 is supplied; $100.00 and the later $100 are the result of
+    // `$1,100 / 11 = $100.00`.
+    let report = with_facts(DRAFT, FACTS);
+    assert_eq!(
+        report.verdict(),
+        ("PASS", EXIT_PASS),
+        "{:?}",
+        report.reviews
+    );
+    assert_eq!(
+        report.notes,
+        [
+            "facts check: it flags amounts it cannot trace; an amount that matches a fact or a calculation is not thereby correct"
+        ]
+    );
+    // Without --facts the gate adds no facts-check note.
+    assert!(check(DRAFT, &conclusions()).notes.is_empty());
+}
+
+#[test]
+fn an_amount_without_a_fact_or_calculation_asks_for_review() {
+    let text = DRAFT.replace(
+        "- The supply is wholly taxable.",
+        "- The supply is wholly taxable.\n- A deduction of $1,200 at 15% is available.",
+    );
+    let report = with_facts(&text, FACTS);
+    assert_eq!(
+        report.verdict(),
+        ("REVIEW", EXIT_REVIEW),
+        "{:?}",
+        report.blocks
+    );
+    assert_eq!(
+        facts_reviews(&report),
+        [
+            "facts check: $1,200, 15% not in the facts file or derived by a reperformed calculation; a person must trace each to its source"
+        ]
+    );
+    // The result alone, with its calculation gone, is not traced.
+    let text = DRAFT.replace("$1,100 / 11 = $100.00", "GST is $100.00");
+    let report = with_facts(&text, FACTS);
+    assert_eq!(report.verdict().1, EXIT_REVIEW);
+    assert!(facts_reviews(&report)[0].starts_with("facts check: $100.00, $100 not"));
+}
+
+#[test]
+fn the_facts_check_never_blocks() {
+    // A structurally complete draft full of untraced and unreadable amounts
+    // reviews; a draft that already blocks keeps exactly its own blocks.
+    let text = DRAFT.replace(
+        "- None identified.",
+        "- $5, $6.50, 7%, $1,1000 and $10% appear nowhere else.",
+    );
+    let report = with_facts(&text, FACTS);
+    assert!(report.blocks.is_empty(), "{:?}", report.blocks);
+    assert_eq!(report.verdict(), ("REVIEW", EXIT_REVIEW));
+    assert_eq!(facts_reviews(&report).len(), 2, "{:?}", report.reviews);
+    let broken = DRAFT.replace("= $100.00", "= $110.00");
+    let blocks = check(&broken, &conclusions()).blocks;
+    let report = with_facts(&broken, FACTS);
+    assert_eq!(report.blocks, blocks);
+    assert_eq!(report.verdict().1, EXIT_BLOCK);
+}
+
+#[test]
+fn a_calculation_traces_only_from_traced_inputs_written_before_it() {
+    let facts = r#"{"facts": {"a": "$500", "b": "$300", "c": "$200", "rate": "10%"}}"#;
+    for (text, untraced) in [
+        // A running total: $800 is derived, then $1,000.
+        ("$500 + $300 = $800 + $200 = $1,000\nTotal $1,000.", ""),
+        // A result feeds a later calculation.
+        ("$500 + $300 = $800\n$800 × 10% = $80", ""),
+        // A rounded result is traced as written.
+        ("$500 / 3 = $166.67\nShare $166.67.", ""),
+        // An untraced dollar input leaves the result untraced.
+        ("$1,200 × 10% = $120", "$1,200, $120"),
+        // A result used before the calculation that derives it.
+        ("$800 × 10% = $80\n$500 + $300 = $800", "$80"),
+        // A calculation that does not reperform derives nothing.
+        ("$500 + $300 = $900", "$900"),
+        // A rounded mention of a fact is not the fact.
+        ("About $501 in total.", "$501"),
+        // A percentage matches only a percentage, and a dollar amount only a
+        // dollar amount or plain number.
+        ("Rate $10 and 500%.", "$10, 500%"),
+    ] {
+        let report = with_facts(text, facts);
+        let found = facts_reviews(&report);
+        if untraced.is_empty() {
+            assert!(found.is_empty(), "{text}: {found:?}");
+        } else {
+            let expected = format!("facts check: {untraced} not");
+            assert!(
+                found.first().is_some_and(|r| r.starts_with(&expected)),
+                "{text}: {found:?}"
+            );
+        }
+    }
+}
+
+#[test]
+fn amounts_match_by_value_whatever_their_format() {
+    let facts = r#"{"facts": {"a": "1234.5", "b": "-$500", "c": "12.50%", "d": "$2,000.00"}}"#;
+    let text = "$1,234.50 and $1234.5, a loss of -$500 or $500, 12.5% and $2000.";
+    let report = with_facts(text, facts);
+    assert!(facts_reviews(&report).is_empty(), "{:?}", report.reviews);
+}
+
+#[test]
+fn an_unreadable_draft_amount_is_reported() {
+    let report = with_facts("Totals $1,1000 and $10% and $1.2.3.", FACTS);
+    assert_eq!(
+        facts_reviews(&report),
+        ["facts check: could not read $1,1000, $10%, $1.2.3; a person must check each"]
+    );
+}
+
+#[test]
+fn a_malformed_facts_file_is_refused() {
+    for (text, reason) in [
+        ("{", "not valid JSON"),
+        ("[]", "top level must be an object"),
+        (
+            r#"{"facts": {"a": "$1"}, "notes": 1}"#,
+            "unknown key 'notes'",
+        ),
+        (r#"{"facts": {}}"#, "'facts' must map names to amounts"),
+        (r#"{"facts": ["$1"]}"#, "'facts' must map names to amounts"),
+        (
+            r#"{"facts": {"a": 1100}}"#,
+            "'a' must be an amount written as text",
+        ),
+        (
+            r#"{"facts": {"a": "$1,23"}}"#,
+            "'a' is not an amount the gate can read: '$1,23'",
+        ),
+        (r#"{"facts": {"a": "$10%"}}"#, "'a' is not an amount"),
+        (r#"{"facts": {"a": "1 100"}}"#, "'a' is not an amount"),
+        (r#"{"facts": {"a": " $5"}}"#, "'a' is not an amount"),
+        (r#"{"facts": {"a": ""}}"#, "'a' is not an amount"),
+        (r#"{"facts": {"a": "$1", "a": "$2"}}"#, "not valid JSON"),
+    ] {
+        let Err(e) = load_facts(text) else {
+            panic!("{text} was accepted");
+        };
+        assert!(e.starts_with("facts file: "), "{text}: {e}");
+        assert!(e.contains(reason), "{text}: {e}");
+    }
+}
+
+#[test]
+fn the_command_reads_a_facts_file() {
+    let dir = tempfile::tempdir().unwrap();
+    let root = repo_root();
+    let root = root.to_str().unwrap();
+    std::fs::write(dir.path().join("draft.md"), DRAFT).unwrap();
+    std::fs::write(
+        dir.path().join("invented.md"),
+        DRAFT.replace("- None identified.", "- Deduction $1,200."),
+    )
+    .unwrap();
+    std::fs::write(dir.path().join("facts.json"), FACTS).unwrap();
+    std::fs::write(dir.path().join("bad.json"), r#"{"facts": {"a": 1}}"#).unwrap();
+    let gate = |args: &[&str]| {
+        let mut all = vec!["--root", root, "gate"];
+        all.extend(args);
+        run_in(dir.path(), &all, false)
+    };
+    let out = gate(&["--facts", "facts.json", "draft.md"]);
+    assert_eq!(
+        out.code,
+        i32::from(EXIT_PASS),
+        "{}{}",
+        out.stdout,
+        out.stderr
+    );
+    assert!(
+        out.stdout.contains("note: facts check: it flags amounts"),
+        "{}",
+        out.stdout
+    );
+    let out = gate(&["--facts", "facts.json", "--json", "invented.md"]);
+    assert_eq!(
+        out.code,
+        i32::from(EXIT_REVIEW),
+        "{}{}",
+        out.stdout,
+        out.stderr
+    );
+    assert!(
+        out.stdout.contains("\"verdict\": \"REVIEW\""),
+        "{}",
+        out.stdout
+    );
+    assert!(
+        out.stdout.contains("facts check: $1,200 not"),
+        "{}",
+        out.stdout
+    );
+    for facts in ["bad.json", "absent.json"] {
+        let out = gate(&["--facts", facts, "draft.md"]);
+        assert_eq!(
+            out.code,
+            i32::from(EXIT_COULD_NOT_RUN),
+            "{facts}: {}",
+            out.stdout
+        );
+        assert!(
+            out.stderr.starts_with("gate: facts file: "),
+            "{facts}: {}",
+            out.stderr
+        );
+        assert!(out.stdout.is_empty(), "{facts}: {}", out.stdout);
+    }
 }
