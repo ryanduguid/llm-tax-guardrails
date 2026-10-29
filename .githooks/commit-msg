@@ -1,17 +1,36 @@
 #!/usr/bin/env sh
 # Refuse AI authorship credit before a commit is written.
 #
-# Enable once per clone:
+# Enable once per clone by copying the hook out of the checked-out tree, from
+# the default branch:
 #
-#     git config core.hooksPath .githooks
+#     hooks="$(git rev-parse --git-common-dir)/hooks"
+#     mkdir -p "$hooks" && cp .githooks/commit-msg "$hooks/commit-msg" && chmod +x "$hooks/commit-msg"
+#
+# (--git-common-dir also works in a linked worktree, where .git is a file. Do
+# not use --git-path hooks: it resolves to core.hooksPath when one is set.)
 #
 # or, where the repository already uses pre-commit:
 #
 #     pre-commit install --hook-type commit-msg
 #
-# Use one or the other, never both. `pre-commit install` writes its wrapper
-# into the directory core.hooksPath names, so pointing that at .githooks lets
-# pre-commit overwrite this tracked file with a wrapper that then calls it.
+# pre-commit refuses to install while any core.hooksPath is set, including a
+# global one; use the copy above in that case. Use one route, not both:
+# `pre-commit install` moves an existing copy to commit-msg.legacy and still
+# runs it. Recopy the hook after reviewing a change to it on the default branch.
+#
+# Never set core.hooksPath to .githooks. Git would then run every hook name
+# (post-checkout, pre-commit and so on) from whichever branch is checked out,
+# so checking out a contributor's branch would run that branch's code as you.
+# An absolute hooks directory you control outside the clone is fine. Earlier
+# copies of this header said to set it: check with
+# `git config --show-origin --get-all core.hooksPath` and, if it names
+# .githooks, run `git config --unset core.hooksPath` (add --global or
+# --worktree when the origin is that file), then check again before checking
+# out any other branch. pre-commit likewise runs whatever the checked-out
+# branch's .pre-commit-config.yaml names, including tracked scripts such as
+# this file, so review the config and those scripts before committing on a
+# contributor's branch.
 #
 # This is a local copy of the message and identity rules in the shared
 # `No AI attribution` policy (ryanduguid/release-policy, the composite action
@@ -63,12 +82,14 @@ fi
 # alias; either may carry the special value `auto`. Both are passed through
 # rather than resolved here, and an unset value stays unset: the scan treats
 # every configured value as a marker instead of picking between them.
+# Python runs isolated (-I) so the checked-out tree cannot shadow a
+# standard-library module such as unicodedata.
 MSG_FILE=$msg_file \
 AUTHOR_IDENT=$(git var GIT_AUTHOR_IDENT) \
 COMMITTER_IDENT=$(git var GIT_COMMITTER_IDENT) \
 COMMENT_STRING=$(git config --get core.commentString 2>/dev/null || true) \
 COMMENT_CHAR=$(git config --get core.commentChar 2>/dev/null || true) \
-	"$PY" - <<'PY'
+	"$PY" -I - <<'PY'
 import os
 import re
 import sys
