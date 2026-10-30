@@ -33,6 +33,24 @@
 //! Not checked: whether the facts, sources, analysis or conclusion are
 //! right, whether a source is current, whether a refusal was required, or
 //! whether the free-text scope, reason and next human step are adequate.
+//!
+//! With `--facts FILE`, each dollar amount (`$1,100.50`) and percentage
+//! (`12%`) in the draft must be a supplied fact or the written result of a
+//! calculation that reperforms and whose dollar and percentage inputs are
+//! facts or results of earlier calculations; a running total in a chain counts
+//! as a result. A result written without `$` is dollars when its expression
+//! leaves no doubt: dollars plus or minus dollars, or dollars times or divided
+//! by a plain number or percentage; dollars divided by dollars is a ratio.
+//! Anything else asks for REVIEW, and so does any amount-like text the gate
+//! cannot read whole, such as `$1.2 million`, `$5k`, `$ 1,200`, `$1 200`,
+//! `.5%` or `10 %`; it is never matched by a readable prefix. This check
+//! never blocks. Values compare exactly by magnitude: a sign, `$`, commas and
+//! trailing zeros do not matter, a percentage matches only a percentage, and
+//! a rounded mention of a fact does not match it. Plain numbers such as `11`
+//! or `12` months are not amounts and are not checked, so a calculation from
+//! plain numbers alone, such as `30 × 40 = $1,200`, supports its result.
+//! Other currencies' symbols are not read. The check flags amounts it cannot
+//! trace; an amount it traces is not thereby correct.
 
 use std::sync::LazyLock;
 
@@ -161,8 +179,34 @@ fn number(text: &str) -> Option<(Q, u32, bool)> {
     Some((Q::new(n, d), places, percent))
 }
 
+/// What an expression's value measures, so a result written without `$`
+/// can still be dollars. A percentage is a plain number here.
+#[derive(Clone, Copy, PartialEq)]
+enum Unit {
+    Dollars,
+    Plain,
+    Unknown,
+}
+
+impl Unit {
+    /// Dollars only when the operation leaves no doubt: dollars plus or minus
+    /// dollars, dollars times a plain number, or dollars divided by one.
+    /// Dollars divided by dollars is a plain ratio.
+    fn combine(op: char, a: Unit, b: Unit) -> Unit {
+        use Unit::{Dollars, Plain, Unknown};
+        match (op, a, b) {
+            (_, Plain, Plain) | ('/', Dollars, Dollars) => Plain,
+            ('+' | '-', Dollars, Dollars)
+            | ('*', Dollars, Plain)
+            | ('*', Plain, Dollars)
+            | ('/', Dollars, Plain) => Dollars,
+            _ => Unknown,
+        }
+    }
+}
+
 enum Token {
-    Num(Q),
+    Num(Q, Unit),
     Op(char),
 }
 
@@ -174,7 +218,12 @@ fn tokens(text: &str) -> Option<Vec<Token>> {
         if c.is_whitespace() {
             rest = &rest[c.len_utf8()..];
         } else if let Some(m) = number_at.find(rest) {
-            out.push(Token::Num(number(m.as_str())?.0));
+            let unit = if m.as_str().starts_with('$') {
+                Unit::Dollars
+            } else {
+                Unit::Plain
+            };
+            out.push(Token::Num(number(m.as_str())?.0, unit));
             rest = &rest[m.end()..];
         } else {
             let op = match c {
@@ -205,20 +254,21 @@ impl Parser {
             _ => None,
         }
     }
-    fn expr(&mut self) -> Option<Q> {
-        let mut value = self.term()?;
+    fn expr(&mut self) -> Option<(Q, Unit)> {
+        let (mut value, mut unit) = self.term()?;
         while let Some(op @ ('+' | '-')) = self.op() {
             self.at += 1;
-            let right = self.term()?;
+            let (right, right_unit) = self.term()?;
             value = value.add(&right, if op == '+' { 1 } else { -1 });
+            unit = Unit::combine(op, unit, right_unit);
         }
-        Some(value)
+        Some((value, unit))
     }
-    fn term(&mut self) -> Option<Q> {
-        let mut value = self.factor()?;
+    fn term(&mut self) -> Option<(Q, Unit)> {
+        let (mut value, mut unit) = self.factor()?;
         while let Some(op @ ('*' | '/')) = self.op() {
             self.at += 1;
-            let right = self.factor()?;
+            let (right, right_unit) = self.factor()?;
             value = if op == '*' {
                 value.mul(&right)
             } else {
@@ -226,14 +276,16 @@ impl Parser {
                 self.divided_by_zero |= quotient.is_none();
                 quotient?
             };
+            unit = Unit::combine(op, unit, right_unit);
         }
-        Some(value)
+        Some((value, unit))
     }
-    fn factor(&mut self) -> Option<Q> {
+    fn factor(&mut self) -> Option<(Q, Unit)> {
         match self.tokens.get(self.at) {
             Some(Token::Op('-')) => {
                 self.at += 1;
-                Some(self.factor()?.neg())
+                let (value, unit) = self.factor()?;
+                Some((value.neg(), unit))
             }
             Some(Token::Op('(')) => {
                 self.at += 1;
@@ -241,21 +293,29 @@ impl Parser {
                 (self.op() == Some(')')).then(|| self.at += 1)?;
                 Some(value)
             }
-            Some(Token::Num(q)) => {
-                let q = q.clone();
+            Some(Token::Num(q, unit)) => {
+                let found = (q.clone(), *unit);
                 self.at += 1;
-                Some(q)
+                Some(found)
             }
             _ => None,
         }
     }
 }
 
-/// The value of an expression: `None` when it does not parse, `Some(None)`
-/// when it divides by zero.
-fn evaluate(expression: &str) -> Option<Option<Q>> {
+/// The value and unit of an expression: `None` when it does not parse,
+/// `Some(None)` when it divides by zero. `first` replaces the unit of the
+/// first number, a running total carried from the previous link.
+fn parse(expression: &str, first: Option<Unit>) -> Option<Option<(Q, Unit)>> {
+    let mut tokens = tokens(expression)?;
+    if let (Some(carried), Some(Token::Num(_, unit))) = (
+        first,
+        tokens.iter_mut().find(|t| matches!(t, Token::Num(..))),
+    ) {
+        *unit = carried;
+    }
     let mut parser = Parser {
-        tokens: tokens(expression)?,
+        tokens,
         at: 0,
         divided_by_zero: false,
     };
@@ -264,6 +324,11 @@ fn evaluate(expression: &str) -> Option<Option<Q>> {
         return Some(None);
     }
     (parser.at == parser.tokens.len()).then_some(Some(value?))
+}
+
+/// The value of an expression, as `parse` gives it.
+fn evaluate(expression: &str) -> Option<Option<Q>> {
+    parse(expression, None).map(|v| v.map(|(q, _)| q))
 }
 
 /// Whether `a` is within one unit of the last of `places` decimal places of
@@ -299,6 +364,13 @@ pub struct Calculation {
     pub text: String,
     pub computed: String,
     pub matches: bool,
+    /// Numbers as written that the calculation takes as inputs.
+    pub operands: Vec<String>,
+    /// Numbers that the calculation produces: its final result and each
+    /// running total a later link starts from, as written, except that a
+    /// result written without `$` gains one when the expression it ends is
+    /// unambiguously in dollars.
+    pub results: Vec<String>,
 }
 
 /// Every `a op b = c` in the text, reperformed. The claimed result matches
@@ -325,6 +397,8 @@ pub fn calculations(text: &str) -> Vec<Calculation> {
                 computed: "ambiguous: a bracketed amount may be negative; write a minus sign"
                     .into(),
                 matches: false,
+                operands: Vec::new(),
+                results: Vec::new(),
             });
             continue;
         }
@@ -358,18 +432,26 @@ pub fn calculations(text: &str) -> Vec<Calculation> {
                 text,
                 computed: "undefined (division by zero)".into(),
                 matches: false,
+                operands: Vec::new(),
+                results: Vec::new(),
             });
             continue;
         };
         let last = values.len() - 1;
+        // Whether link `i + 1` starts from the value of link `i`, as a
+        // running total writes it.
+        let running: Vec<bool> = (0..last)
+            .map(|i| {
+                LEADING
+                    .find(links[i + 1])
+                    .and_then(|m| number(m.as_str()))
+                    .is_some_and(|(q, p, pc)| close(&values[i], &q, p, pc))
+            })
+            .collect();
         let failed = (0..=last).find(|&i| {
             if i == last {
                 return !close(&values[i], &claimed, places, percent);
             }
-            let leading = LEADING
-                .find(links[i + 1])
-                .and_then(|m| number(m.as_str()))
-                .is_some_and(|(q, p, pc)| close(&values[i], &q, p, pc));
             // The whole next expression, to the finer of its own written
             // precision and the final result's.
             let written = NUMBER
@@ -378,8 +460,31 @@ pub fn calculations(text: &str) -> Vec<Calculation> {
                 .map(|(_, p, _)| p)
                 .max()
                 .unwrap_or(0);
-            !leading && !close(&values[i], &values[i + 1], places.max(written), percent)
+            !running[i] && !close(&values[i], &values[i + 1], places.max(written), percent)
         });
+        // A result in the unit of the expression it ends.
+        let result = |written: &str, unit: Unit| {
+            if unit == Unit::Dollars && !written.starts_with('$') && !written.ends_with('%') {
+                format!("${written}")
+            } else {
+                written.to_string()
+            }
+        };
+        let mut operands = Vec::new();
+        let mut results = Vec::new();
+        let mut unit = Unit::Unknown;
+        for (i, link) in links.iter().enumerate() {
+            let carried = (i > 0 && running[i - 1]).then_some(unit);
+            let mut numbers = NUMBER.find_iter(link).map(|m| m.as_str());
+            if let Some(carried) = carried {
+                results.extend(numbers.next().map(|n| result(n, carried)));
+            }
+            operands.extend(numbers.map(str::to_string));
+            unit = parse(link, carried)
+                .flatten()
+                .map_or(Unit::Unknown, |(_, u)| u);
+        }
+        results.extend(NUMBER.find(right).map(|m| result(m.as_str(), unit)));
         let shown = failed.unwrap_or(last);
         let percent = percent && shown == last;
         let value = if percent {
@@ -395,6 +500,8 @@ pub fn calculations(text: &str) -> Vec<Calculation> {
                 if percent { "%" } else { "" }
             ),
             matches: failed.is_none(),
+            operands,
+            results,
         });
     }
     out
@@ -626,6 +733,171 @@ pub fn check(response: &str, conclusions: &[Conclusion]) -> Report {
     report
 }
 
+/// A written amount: `$1,100.50`, `1100.5`, `12%`, `-$500`. Thousands are
+/// grouped with commas or not at all; `$` and `%` do not combine.
+static AMOUNT_TEXT: LazyLock<regex::Regex> = LazyLock::new(|| {
+    regex::Regex::new(r"^[-−]?\$?(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?%?$").expect("pattern")
+});
+/// Anything in a draft that looks like a dollar amount or a percentage,
+/// malformed or not, taken whole: whitespace after `$` or before `%`, a
+/// leading decimal point, thousands grouped with whitespace and a following
+/// scale word. `\s` is Unicode whitespace, so a run of spaces, a no-break
+/// space or a thin space counts in each position. Only `AMOUNT_TEXT` is
+/// readable, so any other form is reported, never matched by a prefix such
+/// as `$1.2` of `$1.2 million`. The `regex` crate runs in linear time and its
+/// search cannot fail.
+static DRAFT_AMOUNT: LazyLock<regex::Regex> = LazyLock::new(|| {
+    let number = r"\.?\d(?:[\d.,]*\d)?(?:\s+\d{3})*";
+    regex::Regex::new(&format!(
+        r"(?i)\$\s*{number}(?:\s*%)?(?:\s*(?:thousand|million|billion|bn|k|m)\b)?|{number}\s*%"
+    ))
+    .expect("pattern")
+});
+
+/// An amount's magnitude, and whether it is a percentage. A percentage
+/// matches only a percentage; a dollar amount and a plain number match each
+/// other.
+#[derive(Clone)]
+struct Amount {
+    value: Q,
+    percent: bool,
+}
+
+impl Amount {
+    fn read(text: &str) -> Option<Amount> {
+        if !AMOUNT_TEXT.is_match(text) || (text.contains('$') && text.ends_with('%')) {
+            return None;
+        }
+        let (q, _, percent) = number(text)?;
+        Some(Amount {
+            value: Q::new(q.n.abs(), q.d),
+            percent,
+        })
+    }
+    fn same(&self, other: &Amount) -> bool {
+        self.percent == other.percent
+            && &self.value.n * &other.value.d == &other.value.n * &self.value.d
+    }
+}
+
+/// One supplied fact's amount.
+pub struct Fact {
+    amount: Amount,
+}
+
+/// Read a facts file: a JSON object whose only key, `facts`, maps each fact's
+/// name to its amount written as text, such as `"$1,100.50"`, `"1100.5"` or
+/// `"10%"`. A JSON number is refused, so no amount passes through binary
+/// floating point.
+pub fn load_facts(text: &str) -> Result<Vec<Fact>, String> {
+    let fail = |m: String| format!("facts file: {m}");
+    let payload = pyjson::loads(text).map_err(|e| fail(format!("not valid JSON ({e})")))?;
+    let Json::Object(top) = &payload else {
+        return Err(fail("top level must be an object".into()));
+    };
+    if let Some((key, _)) = top.iter().find(|(k, _)| k != "facts") {
+        return Err(fail(format!(
+            "unknown key {}; the only key is 'facts'",
+            py::repr_str(key)
+        )));
+    }
+    let pairs = match payload.get("facts") {
+        Some(Json::Object(pairs)) if !pairs.is_empty() => pairs,
+        _ => return Err(fail("'facts' must map names to amounts".into())),
+    };
+    pairs
+        .iter()
+        .map(|(name, value)| {
+            let written = value.as_str().ok_or_else(|| {
+                fail(format!(
+                    "{} must be an amount written as text, such as \"$1,100.50\", \"1100.5\" or \"10%\"; found {}",
+                    py::repr_str(name),
+                    value.repr()
+                ))
+            })?;
+            let amount = Amount::read(written).ok_or_else(|| {
+                fail(format!(
+                    "{} is not an amount the gate can read: {}",
+                    py::repr_str(name),
+                    py::repr_str(written)
+                ))
+            })?;
+            Ok(Fact { amount })
+        })
+        .collect()
+}
+
+/// Flag each dollar amount or percentage in the draft that is neither a
+/// supplied fact nor the result of a reperformed calculation whose dollar
+/// and percentage inputs are facts or results of earlier calculations. This
+/// check adds reviews and a note only, never a block: it finds amounts it
+/// cannot trace, and cannot show that a traced amount is right.
+pub fn check_facts(response: &str, facts: &[Fact], report: &mut Report) {
+    let mut known: Vec<Amount> = facts.iter().map(|f| f.amount.clone()).collect();
+    let is_known = |known: &[Amount], a: &Amount| known.iter().any(|k| k.same(a));
+    for c in report.calculations.iter().filter(|c| c.matches) {
+        // Plain numbers such as `11` or `12` months are not amounts.
+        let inputs_known = c
+            .operands
+            .iter()
+            .filter(|t| t.contains('$') || t.ends_with('%'))
+            .all(|t| Amount::read(t).is_some_and(|a| is_known(&known, &a)));
+        if inputs_known {
+            known.extend(
+                c.results
+                    .iter()
+                    .filter(|t| t.contains('$') || t.ends_with('%'))
+                    .filter_map(|t| Amount::read(t)),
+            );
+        }
+    }
+    let mut untraced: Vec<String> = Vec::new();
+    let mut unread: Vec<String> = Vec::new();
+    for line in py::splitlines(response).into_iter().map(normalise) {
+        let mut at = 0;
+        while let Some(m) = DRAFT_AMOUNT.find_at(&line, at) {
+            // A percentage inside a word or a longer number, as `x12%` or the
+            // `10%` of a skipped `x1,10%`; a list such as `5%,10%` is read.
+            // Look again from the next character, so `ab1 200%` still finds
+            // `200%`.
+            let mut previous = line[..m.start()].chars().rev();
+            let before = previous.next();
+            let inside = before.is_some_and(|c| c.is_alphanumeric() || matches!(c, '_' | '$'))
+                || (matches!(before, Some('.' | ','))
+                    && previous.next().is_some_and(|c| c.is_ascii_digit()));
+            if !m.as_str().starts_with('$') && inside {
+                at = m.start() + line[m.start()..].chars().next().map_or(1, char::len_utf8);
+                continue;
+            }
+            at = m.end();
+            let list = match Amount::read(m.as_str()) {
+                Some(a) if is_known(&known, &a) => continue,
+                Some(_) => &mut untraced,
+                None => &mut unread,
+            };
+            if !list.iter().any(|t| t == m.as_str()) {
+                list.push(m.as_str().to_string());
+            }
+        }
+    }
+    if !untraced.is_empty() {
+        report.reviews.push(format!(
+            "facts check: {} not in the facts file or derived by a reperformed calculation; a person must trace each to its source",
+            untraced.join(", ")
+        ));
+    }
+    if !unread.is_empty() {
+        report.reviews.push(format!(
+            "facts check: could not read {}; a person must check each",
+            unread.join(", ")
+        ));
+    }
+    report.notes.push(
+        "facts check: it flags amounts it cannot trace; an amount that matches a fact or a calculation is not thereby correct"
+            .into(),
+    );
+}
+
 fn report_json(report: &Report) -> Json {
     let list = |items: &[String]| Json::Array(items.iter().map(|s| Json::str_obj(s)).collect());
     let (verdict, _) = report.verdict();
@@ -664,6 +936,10 @@ pub struct Args {
     /// Print the findings as JSON.
     #[arg(long)]
     json: bool,
+    /// A JSON facts file; each dollar amount or percentage in the draft that
+    /// is neither a fact nor a shown calculation's result asks for review.
+    #[arg(long)]
+    facts: Option<String>,
 }
 
 fn read_response(path: &str) -> Result<String, Fail> {
@@ -688,7 +964,22 @@ pub fn main(root: Option<&str>, args: Args) -> u8 {
             return EXIT_COULD_NOT_RUN;
         }
     };
-    let report = check(&response, &sources.whole_response.prohibited_conclusions);
+    let facts = match args.facts.as_deref().map(|path| {
+        builder::read_text(&PyPath::new(path))
+            .map_err(|e| format!("facts file: {e}"))
+            .and_then(|text| load_facts(&text))
+    }) {
+        None => None,
+        Some(Ok(facts)) => Some(facts),
+        Some(Err(e)) => {
+            errln!("gate: {e}");
+            return EXIT_COULD_NOT_RUN;
+        }
+    };
+    let mut report = check(&response, &sources.whole_response.prohibited_conclusions);
+    if let Some(facts) = &facts {
+        check_facts(&response, facts, &mut report);
+    }
     let (verdict, code) = report.verdict();
     if args.json {
         outln!("{}", pyjson::dumps(&report_json(&report), false));
