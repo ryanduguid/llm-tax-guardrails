@@ -739,15 +739,17 @@ static AMOUNT_TEXT: LazyLock<regex::Regex> = LazyLock::new(|| {
     regex::Regex::new(r"^[-−]?\$?(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?%?$").expect("pattern")
 });
 /// Anything in a draft that looks like a dollar amount or a percentage,
-/// malformed or not, taken whole: a space after `$` or before `%`, a leading
-/// decimal point, thousands grouped with spaces and a following scale word.
-/// Only `AMOUNT_TEXT` is readable, so any other form is reported, never
-/// matched by a prefix such as `$1.2` of `$1.2 million`. The `regex` crate
-/// runs in linear time and its search cannot fail.
+/// malformed or not, taken whole: whitespace after `$` or before `%`, a
+/// leading decimal point, thousands grouped with whitespace and a following
+/// scale word. `\s` is Unicode whitespace, so a run of spaces, a no-break
+/// space or a thin space counts in each position. Only `AMOUNT_TEXT` is
+/// readable, so any other form is reported, never matched by a prefix such
+/// as `$1.2` of `$1.2 million`. The `regex` crate runs in linear time and its
+/// search cannot fail.
 static DRAFT_AMOUNT: LazyLock<regex::Regex> = LazyLock::new(|| {
-    let number = r"\.?\d(?:[\d.,]*\d)?(?:[ \u{a0}\u{202f}]\d{3})*";
+    let number = r"\.?\d(?:[\d.,]*\d)?(?:\s+\d{3})*";
     regex::Regex::new(&format!(
-        r"(?i)\$[ \t]*{number}(?:[ \t]*%)?(?:[ \t]*(?:thousand|million|billion|bn|k|m)\b)?|{number}[ \t]*%"
+        r"(?i)\$\s*{number}(?:\s*%)?(?:\s*(?:thousand|million|billion|bn|k|m)\b)?|{number}\s*%"
     ))
     .expect("pattern")
 });

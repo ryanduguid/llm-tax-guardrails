@@ -675,7 +675,7 @@ fn the_command_reads_a_facts_file() {
 fn an_amount_is_read_whole_or_reported_never_matched_by_a_prefix() {
     // Each prefix of these is a supplied fact, so a prefix match would pass.
     let facts = r#"{"facts": {"a": "$1.2", "b": "$1,200", "c": "0.5%", "d": "10%", "e": "$1", "f": "$5", "invoice": "$1,100"}}"#;
-    for written in [
+    let failed = [
         "$1.2 million",
         "$1.2M",
         "$1.2 Thousand",
@@ -686,19 +686,35 @@ fn an_amount_is_read_whole_or_reported_never_matched_by_a_prefix() {
         ".5%",
         "10 %",
         "$10 %",
-    ] {
+        // Runs of spaces, and no-break (U+00A0), narrow no-break (U+202F)
+        // and thin (U+2009) spaces, in each position.
+        "$1  200",
+        "$  1,200",
+        "10  %",
+        "$1.2  million",
+        "$1.2\u{a0}million",
+        "$\u{a0}1,200",
+        "10\u{a0}%",
+        "$1\u{a0}200",
+        "$1\u{202f}200",
+        "$1.2\u{2009}million",
+        "$\u{2009}1,200",
+        "10\u{2009}%",
+        "$1\u{2009}200",
+        "$10\u{2009}%",
+        "$1\u{2009}200\u{2009}000",
+    ]
+    .into_iter()
+    .filter(|written| {
         let text = DRAFT.replace("- None identified.", &format!("- A figure of {written}."));
         let report = with_facts(&text, facts);
-        assert!(report.blocks.is_empty(), "{written}: {:?}", report.blocks);
-        assert_eq!(report.verdict(), ("REVIEW", EXIT_REVIEW), "{written}");
-        assert_eq!(
-            facts_reviews(&report),
-            [format!(
-                "facts check: could not read {written}; a person must check each"
-            )],
-            "{written}"
-        );
-    }
+        let expected = format!("facts check: could not read {written}; a person must check each");
+        !(report.blocks.is_empty()
+            && report.verdict() == ("REVIEW", EXIT_REVIEW)
+            && facts_reviews(&report) == [expected.as_str()])
+    })
+    .collect::<Vec<_>>();
+    assert!(failed.is_empty(), "not reported whole: {failed:?}");
     // A word that only starts like a scale word, sentence punctuation and a
     // percentage inside a word are not part of an amount.
     for text in ["$5 more", "$1,200.", "$1,200, then", "ref x12%"] {
