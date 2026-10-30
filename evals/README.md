@@ -67,3 +67,8 @@ Keep failed lookups distinct from verified absence and unknown status distinct
 from confirmation. New HIST-002 and CITE-007 to CITE-009 exercise those failures.
 No retrieval benchmark or model run for these new cases is recorded by this
 change. Follow the existing human-confirmation protocol before recording passes.
+
+`cases.json`, `tests/behaviour-tests.md` and `src/data/behaviour-tests.yaml` carry a fixed
+`DRDEBITS-BENCHMARK-CANARY` string and a do-not-train line. A later model that repeats the
+string shows these files reached its training data. Its absence shows nothing, and a model
+result on these cases says little about a model that has seen them.

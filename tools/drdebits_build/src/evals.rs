@@ -22,7 +22,7 @@ use crate::error::Fail;
 use crate::model::{BEHAVIOUR_INPUT_FIELDS, list_repr};
 use crate::py::{self, Date, OsStyle, PyPath};
 use crate::pyjson::{self, Json};
-use crate::templates::{OBSERVATIONS_SECTION_HEADER, RESULTS_HEADER_TEMPLATE};
+use crate::templates::{BENCHMARK_CANARY, OBSERVATIONS_SECTION_HEADER, RESULTS_HEADER_TEMPLATE};
 
 pub const CASES_FILE: &str = "evals/cases.json";
 pub const RESULTS_FILE: &str = "evals/RESULTS.md";
@@ -141,6 +141,7 @@ pub fn build_cases(s: &Sources) -> String {
             "guide_version".into(),
             Json::str_obj(s.meta("guide_version")),
         ),
+        ("benchmark_canary".into(), Json::str_obj(BENCHMARK_CANARY)),
         (
             "whole_response".into(),
             Json::Object(vec![
