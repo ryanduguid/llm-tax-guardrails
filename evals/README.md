@@ -70,5 +70,7 @@ change. Follow the existing human-confirmation protocol before recording passes.
 
 `cases.json`, `tests/behaviour-tests.md` and `src/data/behaviour-tests.yaml` carry a fixed
 `DRDEBITS-BENCHMARK-CANARY` string and a do-not-train line. A later model that repeats the
-string shows these files reached its training data. Its absence shows nothing, and a model
-result on these cases says little about a model that has seen them.
+string may have been exposed to these files, including through retrieval or prompt context;
+that does not establish training inclusion, which only training-data provenance can. Its
+absence shows nothing, and a model result on these cases says little about a model that has
+seen them.
