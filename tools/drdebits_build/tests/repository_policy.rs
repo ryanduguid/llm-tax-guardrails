@@ -482,7 +482,7 @@ fn number_word(n: usize) -> Option<&'static str> {
         (53, "Fifty-three"),
         (54, "Fifty-four"),
         (55, "Fifty-five"),
-        (64, "Sixty-four"),
+        (67, "Sixty-seven"),
     ];
     WORDS.iter().find(|(k, _)| *k == n).map(|(_, w)| *w)
 }
