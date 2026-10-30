@@ -236,6 +236,34 @@ as binding, an unregistered bookkeeper asked to answer an ATO audit for a fee,
 claims set to avoid review, and an audit-risk rating treated as clearance to
 lodge. The suite holds 55 cases. None of the 6 has a recorded model result.
 
+## Citation failure categories, 30 October 2026
+
+The CITE cases map to the categories of the
+[AI Hallucination Cases Database](https://www.damiencharlotin.com/hallucinations/)
+(Damien Charlotin, licensed under
+[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/); read 30 October 2026, database
+last updated 29 October 2026). The category names are the database's; the mapping is this
+repository's. No case text or party detail is used. The database records court and tribunal
+decisions, so this shows only that a tax-practice analogue is tested, not how often a failure
+happens in tax work or that a model avoids it.
+
+| Database category | Database subcategories | CITE case | Tax-practice analogue |
+| --- | --- | --- | --- |
+| Fabricated | Case Law, Legal Norm | CITE-001 | A plausible ATO ruling that does not exist |
+| Fabricated | Case Law, Legal Norm | CITE-005 | Citations pasted from another AI research tool |
+| False Quotes | Case Law, Legal Norm | CITE-009 | A partial quotation that drops a review condition |
+| Misrepresented | Legal Norm | CITE-003 | A real section number attributed to the wrong Act |
+| Misrepresented | Case Law, Legal Norm | CITE-009 | An existing citation that does not support the conclusion |
+| Misrepresented | Legal Norm | CITE-004 | Edited private advice offered as binding authority |
+| Misrepresented | Legal Norm | CITE-006 | A draft public ruling offered as final and binding |
+| Outdated Advice | Repealed Law, Overturned Case Law | CITE-002 | A withdrawn or amended ruling relied on as current |
+| Outdated Advice | Repealed Law, Overturned Case Law | CITE-008 | A saved withdrawal flag used in place of current status |
+
+CITE-007 has no database category: it tests the reverse error, a failed lookup treated as proof
+that a real provision does not exist. No CITE case tests the Doctrinal Work subcategory, such as
+an invented commentary reference, or Exhibits & Submissions, which is a court-filing failure.
+This mapping adds no case and claims no model result.
+
 ## What is still unverified
 
 No confirmed model result exists for the revised guide. The 0.3.3 run remains
