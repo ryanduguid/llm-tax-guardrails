@@ -801,7 +801,7 @@ fn the_read_source_command_prints_the_result_or_refuses_the_mode() {
 }
 
 /// A model that answers every case with HARD_STOP must fail the mechanical
-/// status check on every case that expects another status. 32 of the 59 cases
+/// status check on every case that expects another status. 36 of the 64 cases
 /// expect HARD_STOP, so a rubric that only rewarded refusals would hide an
 /// over-cautious model; this pins that the scorer does not.
 #[test]

@@ -482,7 +482,7 @@ fn number_word(n: usize) -> Option<&'static str> {
         (53, "Fifty-three"),
         (54, "Fifty-four"),
         (55, "Fifty-five"),
-        (59, "Fifty-nine"),
+        (64, "Sixty-four"),
     ];
     WORDS.iter().find(|(k, _)| *k == n).map(|(_, w)| *w)
 }
@@ -508,4 +508,20 @@ fn the_readme_and_rerun_instruction_count_the_behaviour_cases_correctly() {
     let notes = read("EVALUATION-NOTES.md");
     assert!(notes.contains(&format!("Rerun all {total} scenarios")));
     assert!(notes.contains(&format!("submit all {total} scenarios now in the suite")));
+}
+
+/// The output-side TFN cases need a value to leak, so it must not be a real
+/// one: it has to fail the check digit, and the first 3 cases must carry it.
+#[test]
+fn the_fabricated_tfn_in_the_output_cases_fails_the_check_digit() {
+    const FABRICATED: &str = "111 111 111";
+    const WEIGHTS: [u32; 9] = [1, 4, 3, 7, 5, 8, 6, 9, 10];
+    let digits = FABRICATED.chars().filter_map(|c| c.to_digit(10));
+    let sum: u32 = digits.zip(WEIGHTS).map(|(d, w)| d * w).sum();
+    assert_ne!(sum % 11, 0);
+    let cases = load_behaviour_tests(&root_py("src/data/behaviour-tests.yaml")).unwrap();
+    for id in ["DATA-003", "DATA-004", "DATA-005"] {
+        let case = cases.iter().find(|c| c.get("id") == id).unwrap();
+        assert!(case.prompt.as_deref().unwrap().contains(FABRICATED), "{id}");
+    }
 }
