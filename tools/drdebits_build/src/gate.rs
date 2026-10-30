@@ -38,13 +38,18 @@
 //! (`12%`) in the draft must be a supplied fact or the written result of a
 //! calculation that reperforms and whose dollar and percentage inputs are
 //! facts or results of earlier calculations; a running total in a chain counts
-//! as a result. Anything else, and any such figure the gate cannot read, asks
-//! for REVIEW; this check never blocks. Values compare exactly by magnitude: a
-//! sign, `$`, commas and trailing zeros do not matter, a percentage matches
-//! only a percentage, and a rounded mention of a fact does not match it.
-//! Plain numbers such as `11` or `12` months are not amounts and are not
-//! checked; neither are scale words (`$1.2 million` reads as `$1.2`), other
-//! currencies' symbols or spaced thousands. The check flags amounts it cannot
+//! as a result. A result written without `$` is dollars when its expression
+//! leaves no doubt: dollars plus or minus dollars, or dollars times or divided
+//! by a plain number or percentage; dollars divided by dollars is a ratio.
+//! Anything else asks for REVIEW, and so does any amount-like text the gate
+//! cannot read whole, such as `$1.2 million`, `$5k`, `$ 1,200`, `$1 200`,
+//! `.5%` or `10 %`; it is never matched by a readable prefix. This check
+//! never blocks. Values compare exactly by magnitude: a sign, `$`, commas and
+//! trailing zeros do not matter, a percentage matches only a percentage, and
+//! a rounded mention of a fact does not match it. Plain numbers such as `11`
+//! or `12` months are not amounts and are not checked, so a calculation from
+//! plain numbers alone, such as `30 × 40 = $1,200`, supports its result.
+//! Other currencies' symbols are not read. The check flags amounts it cannot
 //! trace; an amount it traces is not thereby correct.
 
 use std::sync::LazyLock;
@@ -174,8 +179,34 @@ fn number(text: &str) -> Option<(Q, u32, bool)> {
     Some((Q::new(n, d), places, percent))
 }
 
+/// What an expression's value measures, so a result written without `$`
+/// can still be dollars. A percentage is a plain number here.
+#[derive(Clone, Copy, PartialEq)]
+enum Unit {
+    Dollars,
+    Plain,
+    Unknown,
+}
+
+impl Unit {
+    /// Dollars only when the operation leaves no doubt: dollars plus or minus
+    /// dollars, dollars times a plain number, or dollars divided by one.
+    /// Dollars divided by dollars is a plain ratio.
+    fn combine(op: char, a: Unit, b: Unit) -> Unit {
+        use Unit::{Dollars, Plain, Unknown};
+        match (op, a, b) {
+            (_, Plain, Plain) | ('/', Dollars, Dollars) => Plain,
+            ('+' | '-', Dollars, Dollars)
+            | ('*', Dollars, Plain)
+            | ('*', Plain, Dollars)
+            | ('/', Dollars, Plain) => Dollars,
+            _ => Unknown,
+        }
+    }
+}
+
 enum Token {
-    Num(Q),
+    Num(Q, Unit),
     Op(char),
 }
 
@@ -187,7 +218,12 @@ fn tokens(text: &str) -> Option<Vec<Token>> {
         if c.is_whitespace() {
             rest = &rest[c.len_utf8()..];
         } else if let Some(m) = number_at.find(rest) {
-            out.push(Token::Num(number(m.as_str())?.0));
+            let unit = if m.as_str().starts_with('$') {
+                Unit::Dollars
+            } else {
+                Unit::Plain
+            };
+            out.push(Token::Num(number(m.as_str())?.0, unit));
             rest = &rest[m.end()..];
         } else {
             let op = match c {
@@ -218,20 +254,21 @@ impl Parser {
             _ => None,
         }
     }
-    fn expr(&mut self) -> Option<Q> {
-        let mut value = self.term()?;
+    fn expr(&mut self) -> Option<(Q, Unit)> {
+        let (mut value, mut unit) = self.term()?;
         while let Some(op @ ('+' | '-')) = self.op() {
             self.at += 1;
-            let right = self.term()?;
+            let (right, right_unit) = self.term()?;
             value = value.add(&right, if op == '+' { 1 } else { -1 });
+            unit = Unit::combine(op, unit, right_unit);
         }
-        Some(value)
+        Some((value, unit))
     }
-    fn term(&mut self) -> Option<Q> {
-        let mut value = self.factor()?;
+    fn term(&mut self) -> Option<(Q, Unit)> {
+        let (mut value, mut unit) = self.factor()?;
         while let Some(op @ ('*' | '/')) = self.op() {
             self.at += 1;
-            let right = self.factor()?;
+            let (right, right_unit) = self.factor()?;
             value = if op == '*' {
                 value.mul(&right)
             } else {
@@ -239,14 +276,16 @@ impl Parser {
                 self.divided_by_zero |= quotient.is_none();
                 quotient?
             };
+            unit = Unit::combine(op, unit, right_unit);
         }
-        Some(value)
+        Some((value, unit))
     }
-    fn factor(&mut self) -> Option<Q> {
+    fn factor(&mut self) -> Option<(Q, Unit)> {
         match self.tokens.get(self.at) {
             Some(Token::Op('-')) => {
                 self.at += 1;
-                Some(self.factor()?.neg())
+                let (value, unit) = self.factor()?;
+                Some((value.neg(), unit))
             }
             Some(Token::Op('(')) => {
                 self.at += 1;
@@ -254,21 +293,29 @@ impl Parser {
                 (self.op() == Some(')')).then(|| self.at += 1)?;
                 Some(value)
             }
-            Some(Token::Num(q)) => {
-                let q = q.clone();
+            Some(Token::Num(q, unit)) => {
+                let found = (q.clone(), *unit);
                 self.at += 1;
-                Some(q)
+                Some(found)
             }
             _ => None,
         }
     }
 }
 
-/// The value of an expression: `None` when it does not parse, `Some(None)`
-/// when it divides by zero.
-fn evaluate(expression: &str) -> Option<Option<Q>> {
+/// The value and unit of an expression: `None` when it does not parse,
+/// `Some(None)` when it divides by zero. `first` replaces the unit of the
+/// first number, a running total carried from the previous link.
+fn parse(expression: &str, first: Option<Unit>) -> Option<Option<(Q, Unit)>> {
+    let mut tokens = tokens(expression)?;
+    if let (Some(carried), Some(Token::Num(_, unit))) = (
+        first,
+        tokens.iter_mut().find(|t| matches!(t, Token::Num(..))),
+    ) {
+        *unit = carried;
+    }
     let mut parser = Parser {
-        tokens: tokens(expression)?,
+        tokens,
         at: 0,
         divided_by_zero: false,
     };
@@ -277,6 +324,11 @@ fn evaluate(expression: &str) -> Option<Option<Q>> {
         return Some(None);
     }
     (parser.at == parser.tokens.len()).then_some(Some(value?))
+}
+
+/// The value of an expression, as `parse` gives it.
+fn evaluate(expression: &str) -> Option<Option<Q>> {
+    parse(expression, None).map(|v| v.map(|(q, _)| q))
 }
 
 /// Whether `a` is within one unit of the last of `places` decimal places of
@@ -314,8 +366,10 @@ pub struct Calculation {
     pub matches: bool,
     /// Numbers as written that the calculation takes as inputs.
     pub operands: Vec<String>,
-    /// Numbers as written that the calculation produces: its final result
-    /// and each running total a later link starts from.
+    /// Numbers that the calculation produces: its final result and each
+    /// running total a later link starts from, as written, except that a
+    /// result written without `$` gains one when the expression it ends is
+    /// unambiguously in dollars.
     pub results: Vec<String>,
 }
 
@@ -408,19 +462,29 @@ pub fn calculations(text: &str) -> Vec<Calculation> {
                 .unwrap_or(0);
             !running[i] && !close(&values[i], &values[i + 1], places.max(written), percent)
         });
-        let mut operands = Vec::new();
-        let mut results: Vec<String> = NUMBER
-            .find(right)
-            .map(|m| m.as_str().to_string())
-            .into_iter()
-            .collect();
-        for (i, link) in links.iter().enumerate() {
-            let mut numbers = NUMBER.find_iter(link).map(|m| m.as_str().to_string());
-            if i > 0 && running[i - 1] {
-                results.extend(numbers.next());
+        // A result in the unit of the expression it ends.
+        let result = |written: &str, unit: Unit| {
+            if unit == Unit::Dollars && !written.starts_with('$') && !written.ends_with('%') {
+                format!("${written}")
+            } else {
+                written.to_string()
             }
-            operands.extend(numbers);
+        };
+        let mut operands = Vec::new();
+        let mut results = Vec::new();
+        let mut unit = Unit::Unknown;
+        for (i, link) in links.iter().enumerate() {
+            let carried = (i > 0 && running[i - 1]).then_some(unit);
+            let mut numbers = NUMBER.find_iter(link).map(|m| m.as_str());
+            if let Some(carried) = carried {
+                results.extend(numbers.next().map(|n| result(n, carried)));
+            }
+            operands.extend(numbers.map(str::to_string));
+            unit = parse(link, carried)
+                .flatten()
+                .map_or(Unit::Unknown, |(_, u)| u);
         }
+        results.extend(NUMBER.find(right).map(|m| result(m.as_str(), unit)));
         let shown = failed.unwrap_or(last);
         let percent = percent && shown == last;
         let value = if percent {
@@ -675,10 +739,17 @@ static AMOUNT_TEXT: LazyLock<regex::Regex> = LazyLock::new(|| {
     regex::Regex::new(r"^[-−]?\$?(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?%?$").expect("pattern")
 });
 /// Anything in a draft that looks like a dollar amount or a percentage,
-/// malformed or not, so a figure the check cannot read is reported rather
-/// than skipped.
-static DRAFT_AMOUNT: LazyLock<fancy_regex::Regex> = LazyLock::new(|| {
-    fancy_regex::Regex::new(r"\$\d(?:[\d.,]*\d)?%?|(?<![\w.,$])\d(?:[\d.,]*\d)?%").expect("pattern")
+/// malformed or not, taken whole: a space after `$` or before `%`, a leading
+/// decimal point, thousands grouped with spaces and a following scale word.
+/// Only `AMOUNT_TEXT` is readable, so any other form is reported, never
+/// matched by a prefix such as `$1.2` of `$1.2 million`. The `regex` crate
+/// runs in linear time and its search cannot fail.
+static DRAFT_AMOUNT: LazyLock<regex::Regex> = LazyLock::new(|| {
+    let number = r"\.?\d(?:[\d.,]*\d)?(?:[ \u{a0}\u{202f}]\d{3})*";
+    regex::Regex::new(&format!(
+        r"(?i)\$[ \t]*{number}(?:[ \t]*%)?(?:[ \t]*(?:thousand|million|billion|bn|k|m)\b)?|{number}[ \t]*%"
+    ))
+    .expect("pattern")
 });
 
 /// An amount's magnitude, and whether it is a percentage. A percentage
@@ -781,7 +852,18 @@ pub fn check_facts(response: &str, facts: &[Fact], report: &mut Report) {
     let mut untraced: Vec<String> = Vec::new();
     let mut unread: Vec<String> = Vec::new();
     for line in py::splitlines(response).into_iter().map(normalise) {
-        for m in DRAFT_AMOUNT.find_iter(&line).filter_map(Result::ok) {
+        let mut at = 0;
+        while let Some(m) = DRAFT_AMOUNT.find_at(&line, at) {
+            // A percentage inside a word or a longer number, as `x12%`. Look
+            // again from the next character, so `ab1 200%` still finds `200%`.
+            let before = line[..m.start()].chars().next_back();
+            if !m.as_str().starts_with('$')
+                && before.is_some_and(|c| c.is_alphanumeric() || matches!(c, '_' | '.' | ',' | '$'))
+            {
+                at = m.start() + line[m.start()..].chars().next().map_or(1, char::len_utf8);
+                continue;
+            }
+            at = m.end();
             let list = match Amount::read(m.as_str()) {
                 Some(a) if is_known(&known, &a) => continue,
                 Some(_) => &mut untraced,

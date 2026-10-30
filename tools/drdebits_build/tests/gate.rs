@@ -670,3 +670,142 @@ fn the_command_reads_a_facts_file() {
         assert!(out.stdout.is_empty(), "{facts}: {}", out.stdout);
     }
 }
+
+#[test]
+fn an_amount_is_read_whole_or_reported_never_matched_by_a_prefix() {
+    // Each prefix of these is a supplied fact, so a prefix match would pass.
+    let facts = r#"{"facts": {"a": "$1.2", "b": "$1,200", "c": "0.5%", "d": "10%", "e": "$1", "f": "$5", "invoice": "$1,100"}}"#;
+    for written in [
+        "$1.2 million",
+        "$1.2M",
+        "$1.2 Thousand",
+        "$5k",
+        "$5 bn",
+        "$ 1,200",
+        "$1 200",
+        ".5%",
+        "10 %",
+        "$10 %",
+    ] {
+        let text = DRAFT.replace("- None identified.", &format!("- A figure of {written}."));
+        let report = with_facts(&text, facts);
+        assert!(report.blocks.is_empty(), "{written}: {:?}", report.blocks);
+        assert_eq!(report.verdict(), ("REVIEW", EXIT_REVIEW), "{written}");
+        assert_eq!(
+            facts_reviews(&report),
+            [format!(
+                "facts check: could not read {written}; a person must check each"
+            )],
+            "{written}"
+        );
+    }
+    // A word that only starts like a scale word, sentence punctuation and a
+    // percentage inside a word are not part of an amount.
+    for text in ["$5 more", "$1,200.", "$1,200, then", "ref x12%"] {
+        let report = with_facts(text, facts);
+        assert!(
+            facts_reviews(&report).is_empty(),
+            "{text}: {:?}",
+            report.reviews
+        );
+    }
+    // A skipped match does not hide an amount that starts inside it.
+    assert_eq!(
+        facts_reviews(&with_facts("ab1 200%", facts)),
+        [
+            "facts check: 200% not in the facts file or derived by a reperformed calculation; a person must trace each to its source"
+        ]
+    );
+}
+
+#[test]
+fn a_bare_result_is_dollars_only_when_its_calculation_leaves_no_doubt() {
+    // The GST example: `100` is dollars, so the later `$100` is traced.
+    let text = DRAFT.replace("$1,100 / 11 = $100.00", "$1,100 / 11 = 100");
+    let report = with_facts(&text, FACTS);
+    assert_eq!(
+        report.verdict(),
+        ("PASS", EXIT_PASS),
+        "{:?}",
+        report.reviews
+    );
+    let facts = r#"{"facts": {"a": "$500", "b": "$250", "rate": "10%"}}"#;
+    for (text, untraced) in [
+        ("$500 + $250 = 750\nTotal $750.", ""),
+        ("$500 × 10% = 50\nTax $50.", ""),
+        (
+            "2 × $250 = 500 + $250 = 750\nSubtotal $500, total $750.",
+            "",
+        ),
+        ("-($500 - $250) = -250\nA loss of $250.", ""),
+        // Dollars divided by dollars is a ratio, not dollars.
+        ("$500 / $250 = 2\nRatio $2.", "$2"),
+        // Mixed or doubtful units establish nothing.
+        ("$500 + 10 = 510\nTotal $510.", "$510"),
+        ("10 / $250 = 0.04\nRate $0.04.", "$0.04"),
+        ("$500 × $250 = 125000\nProduct $125,000.", "$125,000"),
+    ] {
+        let report = with_facts(text, facts);
+        let found = facts_reviews(&report);
+        if untraced.is_empty() {
+            assert!(found.is_empty(), "{text}: {found:?}");
+        } else {
+            let expected = format!("facts check: {untraced} not");
+            assert!(
+                found.first().is_some_and(|r| r.starts_with(&expected)),
+                "{text}: {found:?}"
+            );
+        }
+    }
+}
+
+#[test]
+fn the_facts_check_only_adds_its_own_findings() {
+    // Every gate fixture gives the same status, blocks, calculations and
+    // other findings with and without the facts check.
+    let fixtures = [
+        DRAFT.to_string(),
+        STOP.to_string(),
+        DRAFT.replace("= $100.00", "= $110.00"),
+        DRAFT.replace("$1,100 / 11 = $100.00", "$1,100 / 0 = $0"),
+        DRAFT.replace("DRAFT — PROFESSIONAL REVIEW REQUIRED", "Draft for review"),
+        DRAFT.replace(
+            "state_changing_tool_action: NONE",
+            "state_changing_tool_action: PAY_NOW",
+        ),
+        STOP.replace(
+            "Concluding on the safe harbour is prohibited",
+            "I will not say the safe harbour applies to your position",
+        ),
+        DRAFT.replace("- None identified.", "- ($100) + $50 = $150; $9 and 7%."),
+    ];
+    let facts_finding = |s: &String| s.starts_with("facts check:");
+    for text in &fixtures {
+        let without = check(text, &conclusions());
+        let with = with_facts(text, FACTS);
+        assert_eq!(with.status, without.status, "{text}");
+        assert_eq!(with.blocks, without.blocks, "{text}");
+        let shown = |r: &gate::Report| {
+            r.calculations
+                .iter()
+                .map(|c| (c.text.clone(), c.computed.clone(), c.matches))
+                .collect::<Vec<_>>()
+        };
+        assert_eq!(shown(&with), shown(&without), "{text}");
+        let other = |items: &[String]| {
+            items
+                .iter()
+                .filter(|s| !facts_finding(s))
+                .cloned()
+                .collect::<Vec<_>>()
+        };
+        assert_eq!(other(&with.reviews), without.reviews, "{text}");
+        assert_eq!(other(&with.notes), without.notes, "{text}");
+        assert!(!without.reviews.iter().any(facts_finding), "{text}");
+        assert!(!without.notes.iter().any(facts_finding), "{text}");
+        // The facts check can raise PASS to REVIEW, never to BLOCK.
+        if without.verdict().1 != EXIT_BLOCK {
+            assert_ne!(with.verdict().1, EXIT_BLOCK, "{text}");
+        }
+    }
+}

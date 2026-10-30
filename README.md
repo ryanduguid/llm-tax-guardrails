@@ -88,11 +88,15 @@ calculation the gate reperforms from facts or earlier results:
 Write each amount as text (`"$1,234.50"`, `"1234.5"` or `"12%"`); a malformed
 facts file stops the gate with exit 2. Amounts compare exactly by magnitude,
 so a sign is not checked and a rounded mention of a fact is flagged; a
-percentage matches only a percentage. A figure the gate cannot read is
-listed. Plain numbers without `$` or `%`, scale words such as 'million' and
-other currencies are not checked. This check can only ask for review, never
-block, and it cannot certify a figure: an amount that matches a fact or a
-calculation may still be wrong.
+percentage matches only a percentage. A result written without `$`, as in
+`$1,100 / 11 = 100`, counts as dollars only when its calculation is plainly
+in dollars; dollars divided by dollars is a ratio. Amount-like text the gate
+cannot read whole, such as `$1.2 million`, `$5k`, `$ 1,200` or `10 %`, is
+listed for review rather than matched in part. Plain numbers without `$` or
+`%` are not checked, so a calculation from plain numbers alone supports its
+result, and other currencies are not read. This check can only ask for
+review, never block, and it cannot certify a figure: an amount that matches a
+fact or a calculation may still be wrong.
 
 ## Ethical routing and boundary architecture
 
