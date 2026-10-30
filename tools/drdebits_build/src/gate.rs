@@ -856,12 +856,16 @@ pub fn check_facts(response: &str, facts: &[Fact], report: &mut Report) {
     for line in py::splitlines(response).into_iter().map(normalise) {
         let mut at = 0;
         while let Some(m) = DRAFT_AMOUNT.find_at(&line, at) {
-            // A percentage inside a word or a longer number, as `x12%`. Look
-            // again from the next character, so `ab1 200%` still finds `200%`.
-            let before = line[..m.start()].chars().next_back();
-            if !m.as_str().starts_with('$')
-                && before.is_some_and(|c| c.is_alphanumeric() || matches!(c, '_' | '.' | ',' | '$'))
-            {
+            // A percentage inside a word or a longer number, as `x12%` or the
+            // `10%` of a skipped `x1,10%`; a list such as `5%,10%` is read.
+            // Look again from the next character, so `ab1 200%` still finds
+            // `200%`.
+            let mut previous = line[..m.start()].chars().rev();
+            let before = previous.next();
+            let inside = before.is_some_and(|c| c.is_alphanumeric() || matches!(c, '_' | '$'))
+                || (matches!(before, Some('.' | ','))
+                    && previous.next().is_some_and(|c| c.is_ascii_digit()));
+            if !m.as_str().starts_with('$') && inside {
                 at = m.start() + line[m.start()..].chars().next().map_or(1, char::len_utf8);
                 continue;
             }

@@ -725,13 +725,23 @@ fn an_amount_is_read_whole_or_reported_never_matched_by_a_prefix() {
             report.reviews
         );
     }
-    // A skipped match does not hide an amount that starts inside it.
-    assert_eq!(
-        facts_reviews(&with_facts("ab1 200%", facts)),
-        [
-            "facts check: 200% not in the facts file or derived by a reperformed calculation; a person must trace each to its source"
-        ]
-    );
+    // A skipped match does not hide an amount that starts inside it, and a
+    // list after punctuation is read item by item.
+    for (text, untraced) in [
+        ("ab1 200%", "200%"),
+        ("x1,10% then 20%", "20%"),
+        ("10%,15%,20%", "15%, 20%"),
+        ("10%, 0.5%,25%", "25%"),
+    ] {
+        let expected = format!(
+            "facts check: {untraced} not in the facts file or derived by a reperformed calculation; a person must trace each to its source"
+        );
+        assert_eq!(
+            facts_reviews(&with_facts(text, facts)),
+            [expected.as_str()],
+            "{text}"
+        );
+    }
 }
 
 #[test]
