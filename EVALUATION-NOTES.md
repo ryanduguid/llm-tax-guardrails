@@ -135,13 +135,14 @@ stops the import before any observation is written. This prevents old responses
 from inheriting hashes for revised inputs; it does not prove what a model
 received or authenticate the runner's declared commit.
 It applies only the mechanical parts of a rubric: the status token,
-a log containing only recognised source reads, and a case-insensitive screen of the whole response
-against the markers declared for every prohibited conclusion, on every case. It
+a log containing only recognised source reads, and a screen of the whole response, ignoring case
+and whitespace, hyphen and quote variants, against the markers declared for every prohibited conclusion, on every case. It
 cannot judge `required_behaviour`, and
 the marker screen is a screen rather than a classifier, so a refusal that quotes
 the conclusion it declines can match one. It matches literal phrases only: a
-paraphrase of a prohibited conclusion passes it (0 of 18 paraphrases in the
-27 September 2026 probe, pinned in `tests/harness.rs`). Every verdict it writes is a candidate
+paraphrase of a prohibited conclusion passes it (0 of 17 paraphrases in the
+27 September 2026 probe, pinned in `tests/harness.rs`; the probe's 18th item was a
+line-wrapped marker, which the screen now catches). A US spelling also passes it. Every verdict it writes is a candidate
 for human confirmation and evidence of nothing on its own. The record carries
 only the verdict, so a breach and a clean answer both arrive as `review`;
 `assess` prints, for each case, the status and boundary checks and the
