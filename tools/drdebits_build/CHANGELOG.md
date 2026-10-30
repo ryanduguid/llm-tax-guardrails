@@ -52,6 +52,13 @@ suite replays it on every platform.
   recorded state-changing action. An `ESCALATE` or
   `HARD_STOP` draft may be the abbreviated record the Output contract allows;
   its other mandatory sections are reported as notes.
+- `gate --facts FILE` reads a JSON facts file and asks for review (exit 3),
+  never a block, for each dollar amount or percentage in the draft that is
+  neither a supplied fact nor the written result of a reperformed
+  calculation whose dollar and percentage inputs are facts or earlier
+  results, and for each such figure it cannot read. A malformed facts file
+  exits 2. The check flags amounts it cannot trace and cannot certify one
+  it can; without `--facts` the gate is unchanged.
 
 Standard streams now preserve the Python release's failure behaviour: pending
 stdout that cannot flush exits 120, `PYTHONUNBUFFERED` fails at the print and
