@@ -300,7 +300,11 @@ pub fn build_behaviour_md(s: &Sources) -> String {
     let total = s.behaviour.len().to_string();
     let header = format_named(
         BEHAVIOUR_HEADER_TEMPLATE,
-        &[("version", s.meta("guide_version")), ("total", &total)],
+        &[
+            ("version", s.meta("guide_version")),
+            ("total", &total),
+            ("canary", BENCHMARK_CANARY),
+        ],
     );
     header
         + &render_table(

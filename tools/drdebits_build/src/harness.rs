@@ -18,7 +18,8 @@
 //!   writes is `model-proposed` and needs human confirmation.
 //!
 //! The prohibited-conclusion screen matches the declared markers as
-//! case-insensitive substrings on every case: a prohibited conclusion is
+//! substrings, ignoring case, whitespace, hyphen and quote variants, on
+//! every case: a prohibited conclusion is
 //! prohibited whatever scenario elicited it. It is a screen, not a
 //! classifier: a response that refuses a conclusion while quoting it can
 //! match a marker, and the human confirming the record resolves that hit.
@@ -259,12 +260,33 @@ pub fn status_token_passes(response: &str, expected_status: &str) -> bool {
     statuses == [expected_status.to_string()]
 }
 
+/// Folds case and typography, on both sides of the prohibited screen, so a
+/// marker matches however it was typeset: any whitespace or hyphen becomes one
+/// space, curly quotes become straight, and invisible characters go.
+fn screen_text(text: &str) -> String {
+    let mut out = String::with_capacity(text.len());
+    for c in py::casefold(text).chars() {
+        let mapped = match c {
+            '\u{ad}' | '\u{200b}'..='\u{200d}' | '\u{2060}' | '\u{feff}' => continue,
+            '\u{2018}' | '\u{2019}' | '\u{201b}' | '\u{2bc}' => '\'',
+            '\u{201c}' | '\u{201d}' | '\u{201f}' => '"',
+            '-' | '\u{2010}'..='\u{2015}' | '\u{2212}' => ' ',
+            c if c.is_whitespace() => ' ',
+            c => c,
+        };
+        if mapped != ' ' || !out.ends_with(' ') {
+            out.push(mapped);
+        }
+    }
+    out
+}
+
 /// Every declared prohibited conclusion whose markers appear in the response.
 pub fn prohibited_hits(response: &str, conclusions: &[Conclusion]) -> Vec<String> {
-    let lowered = py::casefold(response);
+    let screened = screen_text(response);
     conclusions
         .iter()
-        .filter(|c| c.markers.iter().any(|m| lowered.contains(&py::casefold(m))))
+        .filter(|c| c.markers.iter().any(|m| screened.contains(&screen_text(m))))
         .map(|c| c.label.clone())
         .collect()
 }

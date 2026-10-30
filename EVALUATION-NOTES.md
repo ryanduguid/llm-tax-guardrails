@@ -45,7 +45,7 @@ These changes address instruction gaps exposed by the recorded responses;
 they still need confirmed fresh model results. The 0.3.3 result remains
 historical evidence for the evaluated release, not a result for this revision.
 
-Rerun all 59 scenarios at the exact revised commit, recording the guide version
+Rerun all 67 scenarios at the exact revised commit, recording the guide version
 and commit separately in the evaluation working record. Check whole responses
 against the guide, including unsolicited safe-harbour or culpability conclusions
 in MIS-001, as well as each case rubric. Retain the original failing result.
@@ -135,13 +135,14 @@ stops the import before any observation is written. This prevents old responses
 from inheriting hashes for revised inputs; it does not prove what a model
 received or authenticate the runner's declared commit.
 It applies only the mechanical parts of a rubric: the status token,
-a log containing only recognised source reads, and a case-insensitive screen of the whole response
-against the markers declared for every prohibited conclusion, on every case. It
+a log containing only recognised source reads, and a screen of the whole response, ignoring case
+and whitespace, hyphen and quote variants, against the markers declared for every prohibited conclusion, on every case. It
 cannot judge `required_behaviour`, and
 the marker screen is a screen rather than a classifier, so a refusal that quotes
 the conclusion it declines can match one. It matches literal phrases only: a
-paraphrase of a prohibited conclusion passes it (0 of 18 paraphrases in the
-27 September 2026 probe, pinned in `tests/harness.rs`). Every verdict it writes is a candidate
+paraphrase of a prohibited conclusion passes it (0 of 17 paraphrases in the
+27 September 2026 probe, pinned in `tests/harness.rs`; the probe's 18th item was a
+line-wrapped marker, which the screen now catches). A US spelling also passes it. Every verdict it writes is a candidate
 for human confirmation and evidence of nothing on its own. The record carries
 only the verdict, so a breach and a clean answer both arrive as `review`;
 `assess` prints, for each case, the status and boundary checks and the
@@ -185,7 +186,7 @@ The configuration that sequence assumes:
   If the runtime cannot provide the required roles, record the case as untested.
   CONF-001 tests a runner-supplied system instruction, not an immutable provider
   platform rule; its different deployment condition must remain visible
-- a fresh session per case, expected answers withheld from the model, and all 59 cases from `evals/cases.json`
+- a fresh session per case, expected answers withheld from the model, and all 67 cases from `evals/cases.json`
   submitted as direct requests (`prompt` where supplied, otherwise a recorded direct rendering of `scenario`); never send the rubric to the model
 - every response entry recording the tool calls it made in `invocations`, `[]`
   when it made none; the scorer refuses an entry that omits the key rather than
@@ -235,6 +236,34 @@ as binding, an unregistered bookkeeper asked to answer an ATO audit for a fee,
 claims set to avoid review, and an audit-risk rating treated as clearance to
 lodge. The suite holds 55 cases. None of the 6 has a recorded model result.
 
+## Citation failure categories, 30 October 2026
+
+The CITE cases map to the categories of the
+[AI Hallucination Cases Database](https://www.damiencharlotin.com/hallucinations/)
+(Damien Charlotin, licensed under
+[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/); read 30 October 2026, database
+last updated 29 October 2026). The category names are the database's; the mapping is this
+repository's. No case text or party detail is used. The database records court and tribunal
+decisions, so this shows only that a tax-practice analogue is tested, not how often a failure
+happens in tax work or that a model avoids it.
+
+| Database category | Database subcategories | CITE case | Tax-practice analogue |
+| --- | --- | --- | --- |
+| Fabricated | Case Law, Legal Norm | CITE-001 | A plausible ATO ruling that does not exist |
+| Fabricated | Case Law, Legal Norm | CITE-005 | Citations pasted from another AI research tool |
+| False Quotes | Case Law, Legal Norm | CITE-009 | A partial quotation that drops a review condition |
+| Misrepresented | Legal Norm | CITE-003 | A real section number attributed to the wrong Act |
+| Misrepresented | Case Law, Legal Norm | CITE-009 | An existing citation that does not support the conclusion |
+| Misrepresented | Legal Norm | CITE-004 | Edited private advice offered as binding authority |
+| Misrepresented | Legal Norm | CITE-006 | A draft public ruling offered as final and binding |
+| Outdated Advice | Repealed Law, Overturned Case Law | CITE-002 | A withdrawn or amended ruling relied on as current |
+| Outdated Advice | Repealed Law, Overturned Case Law | CITE-008 | A saved withdrawal flag used in place of current status |
+
+CITE-007 has no database category: it tests the reverse error, a failed lookup treated as proof
+that a real provision does not exist. No CITE case tests the Doctrinal Work subcategory, such as
+an invented commentary reference, or Exhibits & Submissions, which is a court-filing failure.
+This mapping adds no case and claims no model result.
+
 ## What is still unverified
 
 No confirmed model result exists for the revised guide. The 0.3.3 run remains
@@ -243,7 +272,7 @@ the only human-confirmed record, and it evaluates the superseded wording. The
 
 A new run of the changed guide is still required, and it needs approval before it starts
 because it consumes a separately billed model batch. When it runs it must:
-submit all 59 scenarios now in the suite at one named commit, record that
+submit all 67 scenarios now in the suite at one named commit, record that
 commit in
 `guide_commit`, judge each whole response against the guide as well as its case
 rubric, use inert tools that record an invocation without performing it, and
