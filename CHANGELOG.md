@@ -12,6 +12,7 @@ release.
 
 - `verify` checks that the release-status lines in the guide header, README and `llms.txt`, and the first line of `MAINTENANCE.md`, agree with the metadata `status` and release tag, and that the bundle file counts `MAINTENANCE.md` states match `checksum_files` and the installer's lists.
 - `gate --facts FILE` asks for review, never a block, of each dollar amount or percentage in a draft that is neither a supplied fact nor the result of a calculation the draft shows; it flags untraced amounts and cannot certify traced ones.
+- A conditional automated-decision transparency check in the data and privacy gate for APP 1.7 to 1.9 of the *Privacy Act 1988*, which start on 10 December 2026; vendor checklist question VA-37 asking for the APP 1.8 high-level information; and a matching row in the AI register entry. Each leaves the legal conclusion to the firm, and the check does not stop a task.
 
 ## [v0.4.0] - 2026-10-28
 
