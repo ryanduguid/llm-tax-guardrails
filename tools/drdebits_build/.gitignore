@@ -2,5 +2,4 @@
 /fuzz/target/
 /fuzz/artifacts/
 /fuzz/coverage/
-snyk-sbom.json
 coverage-codecov.lcov
