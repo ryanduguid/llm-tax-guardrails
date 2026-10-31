@@ -1,11 +1,11 @@
 ---
 title: DrDebits
-guide_version: 0.4.0
+guide_version: 0.5.0
 status: current
 jurisdiction: AU
 owner: Ryan Duguid
 canonical_repository: https://github.com/ryanduguid/llm-tax-guardrails
-release_tag: v0.4.0
+release_tag: v0.5.0
 sources_checked_at: 2026-10-14T00:00:00+11:00
 review_due: 2027-01-14
 tasa_compilation: C2026C00441
@@ -32,23 +32,23 @@ apes_ai_alert_label: Technical Alert
 apes_ai_alert_date: 2025-10-31
 tpb_guidance_statement_count: 55
 tpb_library_index_count: 55
-guide_end_marker: DRDEBITS-END-v0.4.0
+guide_end_marker: DRDEBITS-END-v0.5.0
 ---
 
 # DrDebits
 
 > Australian tax-practice and accounting-ethics guardrails for LLM-assisted work
 >
-> Version: `0.4.0`
+> Version: `0.5.0`
 >
-> Release status: published; signed tag `v0.4.0`
+> Release status: published; signed tag `v0.5.0`
 >
 > Jurisdiction: Australia
 >
 > Sources last checked: `2026-10-14` (Australia/Sydney)
 
 The published evaluation records describe release 0.3.3; no confirmed model
-evaluation covers release 0.4.0 yet. Identify a committed revision by its
+evaluation covers release 0.5.0 yet. Identify a committed revision by its
 Git commit and guide version. For an uncommitted review, retain the base commit,
 complete diff and diff digest as well as the guide version; the base commit
 alone does not identify the changed guide.
@@ -233,7 +233,7 @@ If client or other protected information has already been received without confi
 
 ### Automated-decision transparency check
 
-This check was added after release v0.4.0 and is not in that release. From 10 December 2026, APP 1.7 to 1.9 of the *Privacy Act 1988* require an APP entity’s privacy policy to describe certain uses of a computer program in decisions. They apply to decisions made after commencement, including on that day, whether the arrangement, the use of the personal information or its collection happened before or after it ([*Privacy and Other Legislation Amendment Act 2024*](https://www.legislation.gov.au/C2024A00128/asmade) Sch 1 items 88 and 89). Compilation No 104 of the Act, current on 30 October 2026, shows the amendment as uncommenced, so read the amending Act with it until a later compilation incorporates the amendment.
+This check is new in release v0.5.0 and is not in v0.4.0. From 10 December 2026, APP 1.7 to 1.9 of the *Privacy Act 1988* require an APP entity’s privacy policy to describe certain uses of a computer program in decisions. They apply to decisions made after commencement, including on that day, whether the arrangement, the use of the personal information or its collection happened before or after it ([*Privacy and Other Legislation Amendment Act 2024*](https://www.legislation.gov.au/C2024A00128/asmade) Sch 1 items 88 and 89). Compilation No 104 of the Act, current on 30 October 2026, shows the amendment as uncommenced, so read the amending Act with it until a later compilation incorporates the amendment.
 
 Where the firm has no recorded answers for a tool and its use, raise these questions with the authorised privacy lead and record the answers in the firm’s AI register or privacy record:
 
@@ -632,6 +632,7 @@ Retrieve these files when a routing decision needs them. The `SHA256SUMS` file a
 
 | Version | Date | Status | Change |
 |---|---|---|---|
+| 0.5.0 | 2026-10-31 | Published | Adds a conditional automated-decision transparency check to the data and privacy gate for APP 1.7 to 1.9 of the Privacy Act 1988, which start on 10 December 2026, with vendor checklist question VA-37 and a matching row in the AI register entry; each leaves the legal conclusion to the firm. Adds 8 behaviour tests for output-side TFN and cross-client leaks and for assuming a flagged fact, bringing the suite to 67 cases, and a benchmark canary string in the evaluation files. No other control change. Sources were not rechecked for this release: sources_checked_at and review_due are unchanged (14 October 2026; review due 14 January 2027). No confirmed model evaluation covers this release yet. |
 | 0.4.0 | 2026-10-28 | Published | Adds TPB sanctions controls and corrects the s 15 and s 45 rows for the Tax Agent Services Act and Code of Professional Conduct amendments that apply from 1 October 2026. Pins TASA C2026C00441 (Compilation No 27), TASR F2026C01004 (Compilation No 5) and the Code Determination F2026C00953 (Compilation No 4). Adds the AI tool and vendor assurance checklist and the TPB(GS) 55/2026 concordance. Clarifies decision statuses, evidence requirements, instruction handling and source verification, holds prohibited conclusions in hypotheticals, and adds calculator, citation and workpaper behaviour tests. Adds TPB Annual Report 2025-26 context to the source status. Relicenses the guide under FSL-1.1-ALv2; v0.3.3 and earlier stay CC BY 4.0. Sources checked 14 October 2026; review due 14 January 2027. No confirmed model evaluation covers this release yet. |
 | 0.3.3 | 2026-09-06 | Published | Repository renamed from DrDebits to llm-tax-guardrails on 6 September 2026; the canonical repository in the metadata, CITATION.cff and llms.txt now name it (the old URL redirects). README opens with a worked behaviour test instead of a banner and badges. Sources were not rechecked for this release: sources_checked_at and review_due are unchanged. No control change. |
 | 0.3.2 | 2026-08-22 | Published | First non-draft version stamp: metadata, header, CITATION.cff and end marker now identify the release as 0.3.2 current (the v0.3.1 GitHub release reused the 0.3.1-draft tree). Corrected the README description of DISCLAIMER.md (general disclaimer, not a TASA safe harbour), repointed the APES 110 and TPB hero badges at their reference maps, rebuilt the routing diagram from the guide's actual intake gate, risk classification, workflow and decision statuses, and scoped the digest wording to the files SHA256SUMS actually lists. AGENTS.md and llms.txt now route into the guide instead of paraphrasing it, and the intake gate consequences item defers to the risk-classification list. No control change. |
@@ -640,4 +641,4 @@ Retrieve these files when a routing decision needs them. The `SHA256SUMS` file a
 | 0.2.0-draft | 2026-08-16 | Published draft | Added APES 220, the TAA 1953 Sch 1 penalty and safe-harbour layer and an AML/CTF control set; added a low-impact proportionality lane; release integrity now rests on `SHA256SUMS` digests with the end marker demoted to a truncation check; behaviour tests, TPB catalogue, APES 110 map and maintenance protocol split into separate files; added PROP-001 and AML-001 behaviour tests. |
 | 0.1.0-draft | 2026-08-16 | Published draft | Initial source-backed guide; 55-statement TPB catalogue; APES 110 July 2025 mapping; AI, tax-planning, NOCLAR, privacy and independence controls; original DrDebits prose licensed under CC BY 4.0. |
 
-DRDEBITS-END-v0.4.0
+DRDEBITS-END-v0.5.0

@@ -14,7 +14,7 @@ If client or other protected information has already been received without confi
 
 ### Automated-decision transparency check
 
-This check was added after release v0.4.0 and is not in that release. From 10 December 2026, APP 1.7 to 1.9 of the *Privacy Act 1988* require an APP entity’s privacy policy to describe certain uses of a computer program in decisions. They apply to decisions made after commencement, including on that day, whether the arrangement, the use of the personal information or its collection happened before or after it ([*Privacy and Other Legislation Amendment Act 2024*](https://www.legislation.gov.au/C2024A00128/asmade) Sch 1 items 88 and 89). Compilation No 104 of the Act, current on 30 October 2026, shows the amendment as uncommenced, so read the amending Act with it until a later compilation incorporates the amendment.
+This check is new in release v0.5.0 and is not in v0.4.0. From 10 December 2026, APP 1.7 to 1.9 of the *Privacy Act 1988* require an APP entity’s privacy policy to describe certain uses of a computer program in decisions. They apply to decisions made after commencement, including on that day, whether the arrangement, the use of the personal information or its collection happened before or after it ([*Privacy and Other Legislation Amendment Act 2024*](https://www.legislation.gov.au/C2024A00128/asmade) Sch 1 items 88 and 89). Compilation No 104 of the Act, current on 30 October 2026, shows the amendment as uncommenced, so read the amending Act with it until a later compilation incorporates the amendment.
 
 Where the firm has no recorded answers for a tool and its use, raise these questions with the authorised privacy lead and record the answers in the firm’s AI register or privacy record:
 
