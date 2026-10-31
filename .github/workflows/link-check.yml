@@ -108,7 +108,7 @@ jobs:
               gh issue edit "$existing" --repo "$GITHUB_REPOSITORY" --title "$title" --body-file issue-body.txt
             fi
           else
-            gh issue create --repo "$GITHUB_REPOSITORY" --title "$title" --body-file issue-body.txt
+            gh issue create --repo "$GITHUB_REPOSITORY" --title "$title" --body-file issue-body.txt --label monitoring
           fi
           for duplicate in $reports; do
             if [ "$duplicate" != "$existing" ]; then

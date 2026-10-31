@@ -229,6 +229,7 @@ fn monitoring_reuses_legacy_alerts_and_recovers_all_reports() {
                     } else {
                         assert_eq!(operations.len(), 1, "{case}");
                         assert!(operations[0].starts_with("issue create "), "{case}");
+                        assert!(operations[0].contains(" --label monitoring"), "{case}");
                     }
                     assert!(
                         operations.iter().all(|o| !o.contains("issue close 98 ")),
