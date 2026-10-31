@@ -1,6 +1,6 @@
 # DrDebits maintenance protocol
 
-Part of [DrDebits](./drdebits.md) `0.4.0`.
+Part of [DrDebits](./drdebits.md) `0.5.0`.
 
 A source-check date does not guarantee continuing currency. Before professional reliance, retrieve the authority operative for the relevant historical event or period and the current duties governing action today.
 
@@ -105,7 +105,7 @@ files; `SHA256SUMS` accompanies them and does not hash itself.
    when the signing key and trust configuration are available. A successful
    checksum comparison alone does not authenticate the release or its signer.
 2. Choose an unused directory in an existing, access-controlled project parent,
-   for example `vendor/drdebits-v0.4.0`. Keep older installations for rollback.
+   for example `vendor/drdebits-v0.5.0`. Keep older installations for rollback.
    Run the installer below from the tooling checkout using the approved digest,
    not a digest obtained from an untrusted download alongside its files.
 3. Recheck the installed bundle, then add the import to the project's existing
@@ -116,15 +116,15 @@ The commands use absolute paths so the tooling and release checkouts can differ.
 Replace the example paths and `APPROVED_MANIFEST_SHA256` before execution.
 
 ```bash
-cargo run --manifest-path tools/drdebits_build/Cargo.toml --locked --release -- bundle install --source /approved/release --destination /project/vendor/drdebits-v0.4.0 --manifest-sha256 APPROVED_MANIFEST_SHA256
-cargo run --manifest-path tools/drdebits_build/Cargo.toml --locked --release -- bundle verify --source /project/vendor/drdebits-v0.4.0 --manifest-sha256 APPROVED_MANIFEST_SHA256
+cargo run --manifest-path tools/drdebits_build/Cargo.toml --locked --release -- bundle install --source /approved/release --destination /project/vendor/drdebits-v0.5.0 --manifest-sha256 APPROVED_MANIFEST_SHA256
+cargo run --manifest-path tools/drdebits_build/Cargo.toml --locked --release -- bundle verify --source /project/vendor/drdebits-v0.5.0 --manifest-sha256 APPROVED_MANIFEST_SHA256
 ```
 
 PowerShell uses the same arguments with Windows paths:
 
 ```powershell
-cargo run --manifest-path tools/drdebits_build/Cargo.toml --locked --release -- bundle install --source 'C:\approved\release' --destination 'C:\project\vendor\drdebits-v0.4.0' --manifest-sha256 APPROVED_MANIFEST_SHA256
-cargo run --manifest-path tools/drdebits_build/Cargo.toml --locked --release -- bundle verify --source 'C:\project\vendor\drdebits-v0.4.0' --manifest-sha256 APPROVED_MANIFEST_SHA256
+cargo run --manifest-path tools/drdebits_build/Cargo.toml --locked --release -- bundle install --source 'C:\approved\release' --destination 'C:\project\vendor\drdebits-v0.5.0' --manifest-sha256 APPROVED_MANIFEST_SHA256
+cargo run --manifest-path tools/drdebits_build/Cargo.toml --locked --release -- bundle verify --source 'C:\project\vendor\drdebits-v0.5.0' --manifest-sha256 APPROVED_MANIFEST_SHA256
 ```
 
 The installer validates the manifest before reading its allowlisted members,
@@ -136,8 +136,8 @@ destination for the retry. The installer never edits host settings or imports.
 Add these two lines as ordinary text in the project's `CLAUDE.md`:
 
 ```text
-@vendor/drdebits-v0.4.0/drdebits.md
-Resolve links in DrDebits relative to vendor/drdebits-v0.4.0/ and read the relevant bundled reference before a routing decision.
+@vendor/drdebits-v0.5.0/drdebits.md
+Resolve links in DrDebits relative to vendor/drdebits-v0.5.0/ and read the relevant bundled reference before a routing decision.
 ```
 
 The example is shown in a code block here; the import must be outside code

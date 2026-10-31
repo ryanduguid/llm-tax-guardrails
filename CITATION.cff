@@ -1,12 +1,12 @@
 cff-version: 1.2.0
-message: "Identify a review by its exact commit and digests; cite the signed release tag v0.4.0."
+message: "Identify a review by its exact commit and digests; cite the signed release tag v0.5.0."
 title: "DrDebits"
 type: dataset
 authors:
   - family-names: "Duguid"
     given-names: "Ryan"
-version: 0.4.0
-date-released: "2026-10-28"
+version: 0.5.0
+date-released: "2026-10-31"
 repository-code: "https://github.com/ryanduguid/llm-tax-guardrails"
 license-url: "https://github.com/ryanduguid/llm-tax-guardrails/blob/main/LICENSE"
 abstract: "Australian tax-practice and accounting-ethics guardrails for LLM-assisted work: source-linked operating controls derived from the TPB framework, APES 110, APES 220 and the sector's AML/CTF obligations."

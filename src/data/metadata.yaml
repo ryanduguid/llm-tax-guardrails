@@ -2,7 +2,7 @@ fields:
   - key: title
     value: "DrDebits"
   - key: guide_version
-    value: "0.4.0"
+    value: "0.5.0"
   - key: status
     value: "current"
   - key: jurisdiction
@@ -12,7 +12,7 @@ fields:
   - key: canonical_repository
     value: "https://github.com/ryanduguid/llm-tax-guardrails"
   - key: release_tag
-    value: "v0.4.0"
+    value: "v0.5.0"
   - key: sources_checked_at
     value: "2026-10-14T00:00:00+11:00"
   - key: review_due
@@ -66,6 +66,6 @@ fields:
   - key: tpb_library_index_count
     value: "55"
   - key: guide_end_marker
-    value: "DRDEBITS-END-v0.4.0"
+    value: "DRDEBITS-END-v0.5.0"
   - key: checksum_files
     value: "LICENSE|README.md|CITATION.cff|drdebits.md|MAINTENANCE.md|reference/tpb-catalogue.md|reference/apes-110-map.md|reference/ai-vendor-assurance.md|reference/tpb-gs55-concordance.md|tests/behaviour-tests.md|DISCLAIMER.md|NOTICE"

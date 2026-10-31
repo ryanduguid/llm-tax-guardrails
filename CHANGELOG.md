@@ -8,11 +8,25 @@ release.
 
 ## [Unreleased]
 
+## [v0.5.0] - 2026-10-31
+
+Changes released in `0.5.0`, merged since `v0.4.0` (28 October 2026). Sources were not rechecked: they stay as checked on 14 October 2026.
+
 ### Added
 
-- `verify` checks that the release-status lines in the guide header, README and `llms.txt`, and the first line of `MAINTENANCE.md`, agree with the metadata `status` and release tag, and that the bundle file counts `MAINTENANCE.md` states match `checksum_files` and the installer's lists.
-- `gate --facts FILE` asks for review, never a block, of each dollar amount or percentage in a draft that is neither a supplied fact nor the result of a calculation the draft shows; it flags untraced amounts and cannot certify traced ones.
-- A conditional automated-decision transparency check in the data and privacy gate for APP 1.7 to 1.9 of the *Privacy Act 1988*, which start on 10 December 2026; vendor checklist question VA-37 asking for the APP 1.8 high-level information; and a matching row in the AI register entry. Each leaves the legal conclusion to the firm, and the check does not stop a task.
+- `verify` checks that the release-status lines in the guide header, README and `llms.txt`, and the first line of `MAINTENANCE.md`, agree with the metadata `status` and release tag, and that the bundle file counts `MAINTENANCE.md` states match `checksum_files` and the installer's lists (#211).
+- `gate --facts FILE` asks for review, never a block, of each dollar amount or percentage in a draft that is neither a supplied fact nor the result of a calculation the draft shows; it flags untraced amounts and cannot certify traced ones (#215).
+- A conditional automated-decision transparency check in the data and privacy gate for APP 1.7 to 1.9 of the *Privacy Act 1988*, which start on 10 December 2026; vendor checklist question VA-37 asking for the APP 1.8 high-level information; and a matching row in the AI register entry. Each leaves the legal conclusion to the firm, and the check does not stop a task (#217).
+- Eight behaviour tests, bringing the suite to 67: output-side TFN and cross-client leak cases (DATA-003 to DATA-007) and cases where a draft flags a fact and then assumes it (ASSUME-001 to ASSUME-003) (#219).
+- A benchmark canary string and do-not-train line in the evaluation files, and a mapping of the CITE cases to the categories of a public database of AI hallucination cases (#219).
+
+### Changed
+
+- The prohibited-text screen in the builder ignores case, whitespace, hyphen and quote variants, so a marker wrapped across lines is caught (#219).
+- README licence and VirusTotal badges are local assets and the Scorecard badge is a GitHub-hosted file, so they render through GitHub's image proxy; the banners show brand version 8 (#216, #218, #220).
+- The `commit-msg` hook runs its Python in isolated mode, and its header no longer recommends `core.hooksPath=.githooks`, which would run hooks from whichever branch is checked out (#213).
+
+Not listed, as they have no user-visible effect: Clippy-driven changes to builder parameter types (#212, #214).
 
 ## [v0.4.0] - 2026-10-28
 
@@ -91,5 +105,6 @@ reporting (#99, #144, #149, #152, #154, #157, #158, #166, #167), and CI and
 documentation housekeeping (#48, #101, #111, #135, #184, #185, #186, #189, #198,
 #207).
 
-[Unreleased]: https://github.com/ryanduguid/llm-tax-guardrails/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/ryanduguid/llm-tax-guardrails/compare/v0.5.0...HEAD
+[v0.5.0]: https://github.com/ryanduguid/llm-tax-guardrails/compare/v0.4.0...v0.5.0
 [v0.4.0]: https://github.com/ryanduguid/llm-tax-guardrails/compare/v0.3.3...v0.4.0
