@@ -23,7 +23,7 @@ Changes released in `0.5.0`, merged since `v0.4.0` (28 October 2026). Sources we
 ### Changed
 
 - The prohibited-text screen in the builder ignores case, whitespace, hyphen and quote variants, so a marker wrapped across lines is caught (#219).
-- README badges are served from the repository so they render through GitHub's image proxy, and the banners show brand version 8 (#216, #218, #220).
+- README licence and VirusTotal badges are local assets and the Scorecard badge is a GitHub-hosted file, so they render through GitHub's image proxy; the banners show brand version 8 (#216, #218, #220).
 - The `commit-msg` hook runs its Python in isolated mode, and its header no longer recommends `core.hooksPath=.githooks`, which would run hooks from whichever branch is checked out (#213).
 
 Not listed, as they have no user-visible effect: Clippy-driven changes to builder parameter types (#212, #214).
